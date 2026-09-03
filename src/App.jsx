@@ -4,6 +4,7 @@ import Onboarding from './views/Onboarding';
 import Login from './views/Login';
 import CampusHub from './views/CampusHub';
 import StudyRoom from './views/StudyRoom';
+import TasksHub from './views/TasksHub';
 import AdminGateway from './views/AdminGateway';
 
 function App() {
@@ -22,6 +23,8 @@ function App() {
         return <CampusHub navigateTo={setCurrentView} />;
       case 'studyRoom':
         return <StudyRoom navigateTo={setCurrentView} />;
+      case 'tasksHub':
+        return <TasksHub navigateTo={setCurrentView} />;
       case 'adminGateway':
         return <AdminGateway navigateTo={setCurrentView} />;
       default:

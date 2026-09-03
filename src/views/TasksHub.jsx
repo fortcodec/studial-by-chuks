@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { ArrowLeft, Upload, CheckCircle, Clock, XCircle, Award } from 'lucide-react';
 import CCoinBadge from '../components/CCoinBadge';
 
-export default function TasksHub({ navigateTo, userId }) {
+export default function TasksHub({ navigateTo }) {
   const [tasks, setTasks] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [cCoins, setCCoins] = useState(0);
@@ -16,19 +16,29 @@ export default function TasksHub({ navigateTo, userId }) {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const [userId, setUserId] = useState(null);
+
   useEffect(() => {
     fetchData();
-  }, [userId]);
+  }, []);
 
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
+      // 0. Fetch Authenticated User
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error('Not authenticated.');
+      }
+      const currentUserId = user.id;
+      setUserId(currentUserId);
+
       // 1. Fetch user C Coins
       const { data: profile } = await supabase
         .from('profiles')
         .select('c_coins')
-        .eq('id', userId)
+        .eq('id', currentUserId)
         .single();
       
       if (profile) setCCoins(profile.c_coins || 0);
@@ -47,7 +57,7 @@ export default function TasksHub({ navigateTo, userId }) {
       const { data: userSubmissions } = await supabase
         .from('task_submissions')
         .select('*, tasks(title, reward_coins)')
-        .eq('user_id', userId)
+        .eq('user_id', currentUserId)
         .order('created_at', { ascending: false });
 
       if (userSubmissions) setSubmissions(userSubmissions);
@@ -66,7 +76,7 @@ export default function TasksHub({ navigateTo, userId }) {
 
   const handleSubmitProof = async (e) => {
     e.preventDefault();
-    if (!file || !selectedTask) return;
+    if (!file || !selectedTask || !userId) return;
     setSubmitting(true);
 
     try {
@@ -156,7 +166,7 @@ export default function TasksHub({ navigateTo, userId }) {
                 Bounty Board
               </h2>
               <div className="grid gap-4 md:grid-cols-2">
-                {tasks.length === 0 ? (
+                {tasks?.length === 0 ? (
                   <div className="col-span-1 md:col-span-2 bg-white p-10 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
                     <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center text-tertiary-orange mb-4">
                       <Award size={32} />
@@ -165,7 +175,7 @@ export default function TasksHub({ navigateTo, userId }) {
                     <p className="text-gray-500 max-w-md">Check back later for new opportunities to earn C Coins!</p>
                   </div>
                 ) : (
-                  tasks.map(task => (
+                  tasks?.map(task => (
                     <div key={task.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
                       <div>
                         <div className="flex justify-between items-start mb-2">
@@ -198,9 +208,9 @@ export default function TasksHub({ navigateTo, userId }) {
             <section>
               <h2 className="text-lg font-bold text-primary-navy mb-4">My Submissions</h2>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                {submissions.length > 0 ? (
+                {submissions?.length > 0 ? (
                   <ul className="divide-y divide-gray-100">
-                    {submissions.map(sub => (
+                    {submissions?.map(sub => (
                       <li key={sub.id} className="p-4 flex justify-between items-center">
                         <div>
                           <p className="font-semibold text-sm text-gray-900">{sub.tasks?.title || 'Unknown Task'}</p>
