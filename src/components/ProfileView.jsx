@@ -23,6 +23,10 @@ export default function ProfileView({ user, balance }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ full_name: '', username: '' });
   const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Avatar states
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   const getInitials = (name) => {
     return name && name.trim() !== '' ? name.charAt(0).toUpperCase() : 'U';
@@ -33,6 +37,8 @@ export default function ProfileView({ user, balance }) {
       full_name: localProfile.full_name || '',
       username: localProfile.username || ''
     });
+    setAvatarFile(null);
+    setAvatarPreview(localProfile.avatar_url);
     setIsEditing(true);
   };
 
@@ -45,14 +51,36 @@ export default function ProfileView({ user, balance }) {
     
     setIsUpdating(true);
     try {
+      let publicAvatarUrl = localProfile.avatar_url;
+
+      // 1. Upload Avatar if a new file was selected
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}_avatar.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, avatarFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        publicAvatarUrl = publicUrlData.publicUrl;
+      }
+
       const updatedName = editForm.full_name;
       const updatedUsername = editForm.username.replace(/\s+/g, '').toLowerCase();
 
+      // 2. Update Profiles table
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: updatedName,
-          username: updatedUsername
+          username: updatedUsername,
+          avatar_url: publicAvatarUrl
         })
         .eq('id', user.id);
 
@@ -65,7 +93,8 @@ export default function ProfileView({ user, balance }) {
       setLocalProfile(prev => ({
         ...prev,
         full_name: updatedName,
-        username: updatedUsername
+        username: updatedUsername,
+        avatar_url: publicAvatarUrl
       }));
       
       setIsEditing(false);
@@ -163,6 +192,34 @@ export default function ProfileView({ user, balance }) {
             </div>
             
             <form onSubmit={handleUpdateProfile} className="p-6 space-y-4 text-left">
+              
+              {/* Avatar Picker */}
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative w-24 h-24 rounded-full bg-gray-200 border-2 border-gray-100 shadow-sm flex items-center justify-center overflow-hidden mb-3">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl font-bold text-gray-400">{getInitials(editForm.full_name)}</span>
+                  )}
+                  <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+                    <Camera className="text-white" size={24} />
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setAvatarFile(file);
+                          setAvatarPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 font-medium">Tap image to upload avatar</p>
+              </div>
+
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">Full Name</label>
                 <input 
