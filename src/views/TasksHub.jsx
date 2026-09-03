@@ -7,7 +7,8 @@ export default function TasksHub({ navigateTo, userId }) {
   const [tasks, setTasks] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [cCoins, setCCoins] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   
   // Modal state
@@ -20,7 +21,8 @@ export default function TasksHub({ navigateTo, userId }) {
   }, [userId]);
 
   const fetchData = async () => {
-    setLoading(true);
+    setIsLoading(true);
+    setError(null);
     try {
       // 1. Fetch user C Coins
       const { data: profile } = await supabase
@@ -31,27 +33,30 @@ export default function TasksHub({ navigateTo, userId }) {
       
       if (profile) setCCoins(profile.c_coins || 0);
 
-      // 2. Fetch active tasks
-      const { data: activeTasks } = await supabase
+      // 2. Fetch active tasks ordered by creation date
+      const { data: activeTasks, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
       
+      if (tasksError) throw tasksError;
       if (activeTasks) setTasks(activeTasks);
 
       // 3. Fetch user submissions
       const { data: userSubmissions } = await supabase
         .from('task_submissions')
-        .select('*, tasks(title, reward)')
+        .select('*, tasks(title, reward_coins)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (userSubmissions) setSubmissions(userSubmissions);
 
-    } catch (error) {
-      console.error('Error fetching TasksHub data:', error);
+    } catch (err) {
+      console.error('Error fetching TasksHub data:', err);
+      setError('Failed to load tasks. Please check your connection.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -125,8 +130,23 @@ export default function TasksHub({ navigateTo, userId }) {
       </header>
 
       <main className="flex-1 max-w-4xl mx-auto w-full p-4 space-y-8">
-        {loading ? (
-          <p className="text-center mt-10 text-gray-500">Loading tasks...</p>
+        {isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 mt-6">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 animate-pulse h-40">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+                </div>
+                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-xl mt-6 text-center font-medium shadow-sm">
+            {error}
+          </div>
         ) : (
           <>
             {/* Active Tasks */}
@@ -136,26 +156,41 @@ export default function TasksHub({ navigateTo, userId }) {
                 Bounty Board
               </h2>
               <div className="grid gap-4 md:grid-cols-2">
-                {tasks.map(task => (
-                  <div key={task.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-bold text-gray-900">{task.title}</h3>
-                        <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                          +{task.reward} C Coins
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-4">{task.description}</p>
+                {tasks.length === 0 ? (
+                  <div className="col-span-1 md:col-span-2 bg-white p-10 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center text-tertiary-orange mb-4">
+                      <Award size={32} />
                     </div>
-                    <button 
-                      onClick={() => setSelectedTask(task)}
-                      className="w-full bg-secondary-green hover:bg-emerald-600 text-white py-2 rounded-lg text-sm font-semibold transition"
-                    >
-                      Submit Proof
-                    </button>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">No tasks available right now</h3>
+                    <p className="text-gray-500 max-w-md">Check back later for new opportunities to earn C Coins!</p>
                   </div>
-                ))}
-                {tasks.length === 0 && <p className="text-gray-500 text-sm">No active tasks right now. Check back later!</p>}
+                ) : (
+                  tasks.map(task => (
+                    <div key={task.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-bold text-gray-900">{task.title}</h3>
+                          <span className="bg-tertiary-orange text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                            +{task.reward_coins} C Coins
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{task.description}</p>
+                        {task.deadline && (
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-red-500 mb-4">
+                            <Clock size={14} />
+                            Due: {new Date(task.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </div>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => setSelectedTask(task)}
+                        className="w-full bg-secondary-green hover:bg-emerald-600 text-white py-2 rounded-lg text-sm font-semibold transition shadow-sm"
+                      >
+                        Submit Proof
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </section>
 
