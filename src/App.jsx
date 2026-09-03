@@ -3,7 +3,7 @@ import LandingPage from './views/LandingPage';
 import Onboarding from './views/Onboarding';
 import Login from './views/Login';
 import CampusHub from './views/CampusHub';
-import ReadingRoom from './views/ReadingRoom';
+import StudyRoom from './views/StudyRoom';
 import AdminGateway from './views/AdminGateway';
 
 function App() {
@@ -20,8 +20,8 @@ function App() {
         return <Login navigateTo={setCurrentView} />;
       case 'campusHub':
         return <CampusHub navigateTo={setCurrentView} />;
-      case 'readingRoom':
-        return <ReadingRoom navigateTo={setCurrentView} darkMode={darkMode} setDarkMode={setDarkMode} />;
+      case 'studyRoom':
+        return <StudyRoom navigateTo={setCurrentView} />;
       case 'adminGateway':
         return <AdminGateway navigateTo={setCurrentView} />;
       default:

@@ -25,6 +25,15 @@ export default function CampusHub({ navigateTo }) {
   const [userBalance, setUserBalance] = useState(0);
   const [loadingUser, setLoadingUser] = useState(true);
 
+  // Post Submission State
+  const [newPostContent, setNewPostContent] = useState('');
+  const [newPostCourseCode, setNewPostCourseCode] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  // Feed Filter State
+  const [feedFilter, setFeedFilter] = useState('global');
+
   useEffect(() => {
     fetchUser();
     fetchVaultItems();
@@ -93,7 +102,7 @@ export default function CampusHub({ navigateTo }) {
     try {
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select('*, profiles(full_name, username, avatar_url, department)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -102,6 +111,53 @@ export default function CampusHub({ navigateTo }) {
       console.error('Error fetching posts:', error);
     } finally {
       setLoadingPosts(false);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim() || !currentUser) return;
+    
+    setIsPosting(true);
+    try {
+      // 1. Insert post
+      const { data: newPost, error: postError } = await supabase
+        .from('posts')
+        .insert([{
+          author: currentUser.full_name,
+          department: currentUser.department,
+          user_id: currentUser.id,
+          course_code: newPostCourseCode.trim() || null,
+          content: newPostContent.trim(),
+          likes: 0,
+          comments: 0
+        }])
+        .select()
+        .single();
+
+      if (postError) throw postError;
+      
+      // 2. Trigger Reward via RPC
+      const { error: rpcError } = await supabase.rpc('increment_c_coins', { 
+        user_id: currentUser.id, 
+        amount: 5 
+      });
+
+      if (rpcError) throw rpcError;
+
+      // 3. Update local state
+      setNewPostContent('');
+      setNewPostCourseCode('');
+      setUserBalance((prev) => prev + 5);
+      
+      // 4. Show Toast Notification
+      setToastMessage('Post published! +5 C-Coins earned 🪙');
+      setTimeout(() => setToastMessage(null), 3000);
+      
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Failed to publish post. Please try again.');
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -142,7 +198,7 @@ export default function CampusHub({ navigateTo }) {
             >
               <Home size={22} /> Home
             </button>
-            <button onClick={() => navigateTo('readingRoom')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
+            <button onClick={() => navigateTo('studyRoom')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
               <BookOpen size={22} /> Study Room
             </button>
             <button className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
@@ -196,20 +252,60 @@ export default function CampusHub({ navigateTo }) {
             ))}
           </div>
 
+          {/* The Feed Toggle */}
+          <div className="flex gap-2 mb-4 bg-gray-200/50 p-1 rounded-xl w-max">
+            <button 
+              onClick={() => setFeedFilter('global')}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${feedFilter === 'global' ? 'bg-white text-primary-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Global Campus
+            </button>
+            <button 
+              onClick={() => setFeedFilter('department')}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${feedFilter === 'department' ? 'bg-white text-primary-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              My Department
+            </button>
+          </div>
+
           {/* Create Post Input */}
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4 items-start mb-6">
-            <div className="w-10 h-10 rounded-full bg-tertiary-orange flex items-center justify-center text-white font-bold flex-shrink-0">
-              ME
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4 items-start mb-6 relative">
+            {toastMessage && (
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-green-100 text-green-800 text-sm font-bold px-4 py-2 rounded-lg shadow-md animate-in fade-in slide-in-from-bottom-2 whitespace-nowrap z-50">
+                {toastMessage}
+              </div>
+            )}
+            <div className="w-10 h-10 rounded-full bg-tertiary-orange flex items-center justify-center text-white font-bold flex-shrink-0 overflow-hidden">
+              {currentUser?.avatar_url ? (
+                 <img src={currentUser.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                 currentUser?.full_name?.charAt(0).toUpperCase() || 'U'
+              )}
             </div>
             <div className="flex-1">
               <textarea 
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
                 placeholder="Share a resource or ask a question..." 
                 className="w-full bg-gray-50 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-navy text-sm resize-none"
                 rows="2"
+                disabled={isPosting}
               ></textarea>
-              <div className="flex justify-end mt-2">
-                <button className="bg-primary-navy text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-[#112440] transition">
-                  Post
+              <div className="flex justify-between items-center mt-2">
+                <input 
+                  type="text"
+                  value={newPostCourseCode}
+                  onChange={(e) => setNewPostCourseCode(e.target.value)}
+                  placeholder="Course Code (e.g., CSC 201)"
+                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary-navy focus:ring-1 focus:ring-primary-navy w-48"
+                  disabled={isPosting}
+                />
+                <button 
+                  onClick={handleCreatePost}
+                  disabled={isPosting || !newPostContent.trim()}
+                  className={`bg-primary-navy text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-[#112440] transition ${isPosting || !newPostContent.trim() ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {isPosting ? 'Posting...' : 'Post'}
                 </button>
               </div>
             </div>
@@ -219,25 +315,38 @@ export default function CampusHub({ navigateTo }) {
           <div className="space-y-6">
             {loadingPosts ? (
               <div className="text-center text-gray-500 py-8">Loading feed...</div>
-            ) : posts.length === 0 ? (
+            ) : posts.filter(post => feedFilter === 'global' || post.profiles?.department === currentUser?.department).length === 0 ? (
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
                 <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                   <MessageCircle size={24} />
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">No posts yet</h3>
-                <p className="text-gray-500 text-sm">Be the first to share a resource or ask a question!</p>
+                <h3 className="font-bold text-gray-900 mb-2">No posts found</h3>
+                <p className="text-gray-500 text-sm">Be the first to share a resource for this view!</p>
               </div>
             ) : (
-              posts.map((post) => (
+              posts
+                .filter(post => feedFilter === 'global' || post.profiles?.department === currentUser?.department)
+                .map((post) => (
                 <div key={post.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex gap-3 items-center">
-                      <div className="w-10 h-10 rounded-full bg-secondary-green flex items-center justify-center text-white font-bold">
-                        {post.author ? post.author.charAt(0) : 'U'}
+                      <div className="w-10 h-10 rounded-full bg-secondary-green flex items-center justify-center text-white font-bold overflow-hidden">
+                        {post.profiles?.avatar_url ? (
+                          <img src={post.profiles.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          post.profiles?.full_name ? post.profiles.full_name.charAt(0).toUpperCase() : (post.author ? post.author.charAt(0).toUpperCase() : 'U')
+                        )}
                       </div>
                       <div>
-                        <h4 className="font-bold text-gray-900 text-sm">{post.author || 'Anonymous Student'}</h4>
-                        <p className="text-xs text-gray-500">{post.department || 'General'} • {new Date(post.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-gray-900 text-sm">{post.profiles?.full_name || post.author || 'Anonymous Student'}</h4>
+                          {post.course_code && (
+                            <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              {post.course_code}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500">{post.profiles?.department || post.department || 'General'} • {new Date(post.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                       </div>
                     </div>
                   </div>
