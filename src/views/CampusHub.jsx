@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Heart, MessageCircle, Share2, FileText, ChevronRight, BookOpen, 
-  Award, Home, User, LogOut, Plus 
+  Award, Home, User, LogOut, Plus, Menu, X
 } from 'lucide-react';
 import CCoinBadge from '../components/CCoinBadge';
 import { supabase } from '../supabaseClient';
@@ -21,6 +21,7 @@ export default function CampusHub({ navigateTo }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const [activeTab, setActiveTab] = useState('home');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userBalance, setUserBalance] = useState(0);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -174,41 +175,63 @@ export default function CampusHub({ navigateTo }) {
     <div className="min-h-screen bg-gray-50 font-inter">
       {/* Top Mobile Header (visible only on small screens) */}
       <header className="md:hidden bg-white p-4 shadow-sm sticky top-0 z-20 flex justify-between items-center">
-        <div className="flex items-center gap-2 text-primary-navy">
-          <BookOpen size={24} />
-          <h1 className="text-xl font-bold">Studial</h1>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsMobileMenuOpen(true)} className="text-gray-600 hover:text-primary-navy p-1">
+            <Menu size={24} />
+          </button>
+          <div className="flex items-center gap-2 text-primary-navy">
+            <BookOpen size={24} />
+            <h1 className="text-xl font-bold">Studial</h1>
+          </div>
         </div>
         <CCoinBadge balance={userBalance} onClick={() => navigateTo('tasksHub')} />
       </header>
 
       {/* Main 3-Column Layout */}
-      <div className="max-w-7xl mx-auto md:grid md:grid-cols-4 lg:grid-cols-5 gap-6 pt-4 md:pt-8 px-4 h-screen overflow-hidden">
+      <div className="max-w-7xl mx-auto md:grid md:grid-cols-4 lg:grid-cols-5 gap-6 pt-4 md:pt-8 px-4 h-screen overflow-hidden relative">
         
+        {/* Mobile Sidebar Backdrop */}
+        {isMobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+
         {/* LEFT COLUMN: Navigation Sidebar */}
-        <aside className="hidden md:flex flex-col col-span-1 border-r border-gray-200 pr-4 sticky top-8 h-[calc(100vh-4rem)]">
-          <div className="flex items-center gap-2 text-primary-navy mb-8 px-2">
-            <BookOpen size={28} />
-            <h1 className="text-2xl font-bold tracking-tight">Studial</h1>
+        <aside className={`
+          fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out flex flex-col p-6
+          md:relative md:translate-x-0 md:flex md:flex-col md:col-span-1 md:border-r md:border-gray-200 md:p-0 md:pr-4 md:sticky md:top-8 md:h-[calc(100vh-4rem)] md:shadow-none md:z-auto
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}>
+          <div className="flex items-center justify-between text-primary-navy mb-8 px-2">
+            <div className="flex items-center gap-2">
+              <BookOpen size={28} />
+              <h1 className="text-2xl font-bold tracking-tight">Studial</h1>
+            </div>
+            <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-gray-400 hover:text-gray-600 p-1">
+              <X size={24} />
+            </button>
           </div>
 
           <nav className="flex-1 space-y-2">
             <button 
-              onClick={() => setActiveTab('home')}
+              onClick={() => { setActiveTab('home'); setIsMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition ${activeTab === 'home' ? 'bg-gray-100 text-primary-navy' : 'text-gray-600 hover:bg-gray-50'}`}
             >
               <Home size={22} /> Home
             </button>
-            <button onClick={() => navigateTo('studyRoom')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
+            <button onClick={() => { navigateTo('studyRoom'); setIsMobileMenuOpen(false); }} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
               <BookOpen size={22} /> Study Room
             </button>
-            <button className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
+            <button onClick={() => setIsMobileMenuOpen(false)} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
               <FileText size={22} /> The Vault
             </button>
-            <button onClick={() => navigateTo('tasksHub')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
+            <button onClick={() => { navigateTo('tasksHub'); setIsMobileMenuOpen(false); }} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
               <Award size={22} /> Tasks
             </button>
             <button 
-              onClick={() => setActiveTab('profile')}
+              onClick={() => { setActiveTab('profile'); setIsMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition ${activeTab === 'profile' ? 'bg-gray-100 text-primary-navy' : 'text-gray-600 hover:bg-gray-50'}`}
             >
               <User size={22} /> Profile
