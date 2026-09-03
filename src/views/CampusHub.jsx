@@ -6,6 +6,7 @@ import {
 import CCoinBadge from '../components/CCoinBadge';
 import { supabase } from '../supabaseClient';
 import UnlockMaterialModal from '../components/UnlockMaterialModal';
+import ProfileView from '../components/ProfileView';
 
 export default function CampusHub({ navigateTo }) {
   const [vaultItems, setVaultItems] = useState([]);
@@ -19,11 +20,13 @@ export default function CampusHub({ navigateTo }) {
   const [selectedMaterial, setSelectedMaterial] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Dummy balance and user ID for now
-  const dummyBalance = 15;
-  const dummyUserId = "12345-mock-id";
+  const [activeTab, setActiveTab] = useState('home');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userBalance, setUserBalance] = useState(0);
+  const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
+    fetchUser();
     fetchVaultItems();
     fetchPosts();
 
@@ -43,6 +46,31 @@ export default function CampusHub({ navigateTo }) {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const fetchUser = async () => {
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        setLoadingUser(false);
+        return;
+      }
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+        
+      if (profileError) throw profileError;
+      
+      setCurrentUser(profile);
+      setUserBalance(profile.c_coins || 0);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    } finally {
+      setLoadingUser(false);
+    }
+  };
 
   const fetchVaultItems = async () => {
     try {
@@ -94,7 +122,7 @@ export default function CampusHub({ navigateTo }) {
           <BookOpen size={24} />
           <h1 className="text-xl font-bold">Studial</h1>
         </div>
-        <CCoinBadge balance={dummyBalance} onClick={() => navigateTo('tasksHub')} />
+        <CCoinBadge balance={userBalance} onClick={() => navigateTo('tasksHub')} />
       </header>
 
       {/* Main 3-Column Layout */}
@@ -108,7 +136,10 @@ export default function CampusHub({ navigateTo }) {
           </div>
 
           <nav className="flex-1 space-y-2">
-            <button className="w-full flex items-center gap-4 px-4 py-3 bg-gray-100 rounded-xl text-primary-navy font-bold transition">
+            <button 
+              onClick={() => setActiveTab('home')}
+              className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition ${activeTab === 'home' ? 'bg-gray-100 text-primary-navy' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
               <Home size={22} /> Home
             </button>
             <button onClick={() => navigateTo('readingRoom')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
@@ -120,7 +151,10 @@ export default function CampusHub({ navigateTo }) {
             <button onClick={() => navigateTo('tasksHub')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
               <Award size={22} /> Tasks
             </button>
-            <button className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
+            <button 
+              onClick={() => setActiveTab('profile')}
+              className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-bold transition ${activeTab === 'profile' ? 'bg-gray-100 text-primary-navy' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
               <User size={22} /> Profile
             </button>
           </nav>
@@ -132,8 +166,17 @@ export default function CampusHub({ navigateTo }) {
 
         {/* MIDDLE COLUMN: Main Feed */}
         <main className="col-span-1 md:col-span-2 lg:col-span-3 overflow-y-auto h-[calc(100vh-2rem)] hide-scrollbar pb-20 md:pb-8">
-          
-          {/* Stories UI */}
+          {activeTab === 'profile' ? (
+            loadingUser ? (
+              <div className="flex justify-center items-center h-full">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-navy"></div>
+              </div>
+            ) : (
+              <ProfileView user={currentUser} balance={userBalance} />
+            )
+          ) : (
+            <>
+              {/* Stories UI */}
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex overflow-x-auto gap-4 hide-scrollbar">
             {/* Add Story */}
             <div className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer">
@@ -218,6 +261,8 @@ export default function CampusHub({ navigateTo }) {
               ))
             )}
           </div>
+            </>
+          )}
         </main>
 
         {/* RIGHT COLUMN: Sticky Right Panel */}
@@ -227,7 +272,7 @@ export default function CampusHub({ navigateTo }) {
             <div>
               <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Your Balance</p>
               <p className="text-xl font-black text-gray-900 flex items-center gap-1">
-                <span className="text-tertiary-orange">C</span> {dummyBalance}
+                <span className="text-tertiary-orange">C</span> {userBalance}
               </p>
             </div>
             <div className="bg-yellow-50 p-2 rounded-full">
@@ -284,8 +329,8 @@ export default function CampusHub({ navigateTo }) {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         material={selectedMaterial}
-        userCoins={dummyBalance}
-        userId={dummyUserId}
+        userCoins={userBalance}
+        userId={currentUser?.id}
         onSuccess={handleUnlockSuccess}
         navigateTo={navigateTo}
       />

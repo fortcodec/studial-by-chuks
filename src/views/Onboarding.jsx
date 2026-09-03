@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient';
 export default function Onboarding({ navigateTo }) {
   const [formData, setFormData] = useState({
     fullName: '',
+    username: '',
     university: '',
     department: '',
     identifier: '',
@@ -32,6 +33,7 @@ export default function Onboarding({ navigateTo }) {
       }
 
       const isPhone = formData.identifier.startsWith('+') && /\d/.test(formData.identifier);
+      const cleanUsername = formData.username.replace(/\s+/g, '').toLowerCase();
       
       let authResponse;
       if (isPhone) {
@@ -42,6 +44,7 @@ export default function Onboarding({ navigateTo }) {
           options: {
             data: {
               full_name: formData.fullName,
+              username: cleanUsername,
               university: formData.university,
               department: formData.department
             }
@@ -54,6 +57,7 @@ export default function Onboarding({ navigateTo }) {
           options: {
             data: {
               full_name: formData.fullName,
+              username: cleanUsername,
               university: formData.university,
               department: formData.department
             }
@@ -118,6 +122,19 @@ export default function Onboarding({ navigateTo }) {
               value={formData.fullName}
               onChange={handleChange}
               placeholder="e.g., John Doe"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50 text-gray-900"
+              required
+            />
+          </div>
+
+          <div className="space-y-1 text-left">
+            <label className="block text-sm font-medium text-gray-700">Username</label>
+            <input 
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              placeholder="e.g., johndoe"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50 text-gray-900"
               required
             />
