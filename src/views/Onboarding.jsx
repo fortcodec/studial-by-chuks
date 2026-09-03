@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 
 export default function Onboarding({ navigateTo }) {
   const [formData, setFormData] = useState({
+    fullName: '',
     university: '',
     department: '',
     identifier: '',
@@ -40,6 +41,7 @@ export default function Onboarding({ navigateTo }) {
           password: formData.password,
           options: {
             data: {
+              full_name: formData.fullName,
               university: formData.university,
               department: formData.department
             }
@@ -51,6 +53,7 @@ export default function Onboarding({ navigateTo }) {
           password: formData.password,
           options: {
             data: {
+              full_name: formData.fullName,
               university: formData.university,
               department: formData.department
             }
@@ -97,7 +100,7 @@ export default function Onboarding({ navigateTo }) {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-primary-navy tracking-tight">Create Account</h1>
-          <p className="text-gray-500">Join your campus social hub</p>
+          <p className="text-gray-500">Join Studial - your campus social hub</p>
         </div>
 
         {message.text && (
@@ -107,6 +110,19 @@ export default function Onboarding({ navigateTo }) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1 text-left">
+            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <input 
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder="e.g., John Doe"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50 text-gray-900"
+              required
+            />
+          </div>
+
           <div className="space-y-1 text-left">
             <label className="block text-sm font-medium text-gray-700">Select University</label>
             <select 

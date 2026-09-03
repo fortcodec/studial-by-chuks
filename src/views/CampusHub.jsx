@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, FileText, ChevronRight, BookOpen, Award } from 'lucide-react';
+import { 
+  Heart, MessageCircle, Share2, FileText, ChevronRight, BookOpen, 
+  Award, Home, User, LogOut, Plus 
+} from 'lucide-react';
 import CCoinBadge from '../components/CCoinBadge';
 import { supabase } from '../supabaseClient';
 import UnlockMaterialModal from '../components/UnlockMaterialModal';
@@ -7,6 +10,10 @@ import UnlockMaterialModal from '../components/UnlockMaterialModal';
 export default function CampusHub({ navigateTo }) {
   const [vaultItems, setVaultItems] = useState([]);
   const [loadingVault, setLoadingVault] = useState(true);
+  
+  // Realtime Feed State
+  const [posts, setPosts] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
 
   // Modal State
   const [selectedMaterial, setSelectedMaterial] = useState(null);
@@ -18,6 +25,23 @@ export default function CampusHub({ navigateTo }) {
 
   useEffect(() => {
     fetchVaultItems();
+    fetchPosts();
+
+    // Supabase Realtime Subscription for Posts
+    const channel = supabase
+      .channel('public:posts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'posts' },
+        (payload) => {
+          setPosts((currentPosts) => [payload.new, ...currentPosts]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchVaultItems = async () => {
@@ -25,7 +49,8 @@ export default function CampusHub({ navigateTo }) {
       const { data, error } = await supabase
         .from('study_materials')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(5);
 
       if (error) throw error;
       setVaultItems(data || []);
@@ -36,166 +61,223 @@ export default function CampusHub({ navigateTo }) {
     }
   };
 
+  const fetchPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPosts(data || []);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
   const handleMaterialClick = (material) => {
     setSelectedMaterial(material);
     setIsModalOpen(true);
   };
 
   const handleUnlockSuccess = (materialId) => {
-    // Navigate to Reading Room once unlocked
-    // In a real app, you would pass the material ID or data to the reading room
     navigateTo('readingRoom');
   };
 
-  const socialPosts = [
-    {
-      id: 1,
-      author: 'Sarah Johnson',
-      department: 'Computer Science',
-      time: '2h ago',
-      content: 'Just uploaded the complete study guide for CSC 305! Check the vault guys, it covers all the new topics Dr. Smith mentioned.',
-      likes: 45,
-      comments: 12
-    },
-    {
-      id: 2,
-      author: 'David Okafor',
-      department: 'Engineering',
-      time: '5h ago',
-      content: 'Does anyone have the past questions for ENG 202 from 2023? I am struggling with the second section.',
-      likes: 15,
-      comments: 8
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-neutral-background flex flex-col font-inter">
-      {/* Header */}
-      <header className="bg-primary-navy text-white p-4 shadow-md sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <BookOpen size={24} className="text-tertiary-orange" />
-            <h1 className="text-xl font-bold">Campus Hub</h1>
-          </div>
-          <div className="flex gap-4">
-            <button onClick={() => navigateTo('tasksHub')} className="hover:text-tertiary-orange transition text-sm font-medium flex items-center gap-1">
-              <Award size={16} /> Tasks
-            </button>
-            <button onClick={() => navigateTo('readingRoom')} className="hover:text-tertiary-orange transition text-sm font-medium">
-              Reading Room
-            </button>
-            <button onClick={() => navigateTo('onboarding')} className="hover:text-tertiary-orange transition text-sm font-medium">
-              Logout
-            </button>
-            <CCoinBadge balance={dummyBalance} onClick={() => navigateTo('tasksHub')} />
-          </div>
+    <div className="min-h-screen bg-gray-50 font-inter">
+      {/* Top Mobile Header (visible only on small screens) */}
+      <header className="md:hidden bg-white p-4 shadow-sm sticky top-0 z-20 flex justify-between items-center">
+        <div className="flex items-center gap-2 text-primary-navy">
+          <BookOpen size={24} />
+          <h1 className="text-xl font-bold">Studial</h1>
         </div>
+        <CCoinBadge balance={dummyBalance} onClick={() => navigateTo('tasksHub')} />
       </header>
 
-      <main className="flex-1 max-w-4xl mx-auto w-full p-4 space-y-8">
+      {/* Main 3-Column Layout */}
+      <div className="max-w-7xl mx-auto md:grid md:grid-cols-4 lg:grid-cols-5 gap-6 pt-4 md:pt-8 px-4 h-screen overflow-hidden">
         
-        {/* The Vault (Horizontal Scroll) */}
-        <section>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-primary-navy">The Vault</h2>
-            <button className="text-secondary-green text-sm font-semibold flex items-center hover:underline">
-              View All <ChevronRight size={16} />
-            </button>
+        {/* LEFT COLUMN: Navigation Sidebar */}
+        <aside className="hidden md:flex flex-col col-span-1 border-r border-gray-200 pr-4 sticky top-8 h-[calc(100vh-4rem)]">
+          <div className="flex items-center gap-2 text-primary-navy mb-8 px-2">
+            <BookOpen size={28} />
+            <h1 className="text-2xl font-bold tracking-tight">Studial</h1>
           </div>
-          
-          <div className="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar">
-            {loadingVault ? (
-              <div className="text-gray-500 py-4 px-2">Loading materials...</div>
-            ) : vaultItems.length === 0 ? (
-              <div className="text-gray-500 py-4 px-2">No materials available yet.</div>
-            ) : (
-              vaultItems.map((item) => {
-                const fileType = item.file_url ? item.file_url.split('.').pop().toUpperCase() : 'DOC';
-                
-                return (
-                  <div 
-                    key={item.id} 
-                    onClick={() => handleMaterialClick(item)}
-                    className="flex-none w-64 bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition cursor-pointer snap-start relative"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="bg-primary-navy/10 p-2 rounded-lg text-primary-navy">
-                        <FileText size={24} />
-                      </div>
-                      <span className="text-xs font-bold px-2 py-1 bg-gray-100 rounded text-gray-600">
-                        {fileType}
-                      </span>
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">{item.title}</h3>
-                    <p className="text-sm text-gray-500">{item.course_code}</p>
-                    
-                    <div className="absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
-                      {item.cost_coins || 5} C
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </section>
 
-        {/* Social Feed */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-primary-navy mb-4">Campus Feed</h2>
+          <nav className="flex-1 space-y-2">
+            <button className="w-full flex items-center gap-4 px-4 py-3 bg-gray-100 rounded-xl text-primary-navy font-bold transition">
+              <Home size={22} /> Home
+            </button>
+            <button onClick={() => navigateTo('readingRoom')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
+              <BookOpen size={22} /> Study Room
+            </button>
+            <button className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
+              <FileText size={22} /> The Vault
+            </button>
+            <button onClick={() => navigateTo('tasksHub')} className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
+              <Award size={22} /> Tasks
+            </button>
+            <button className="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition">
+              <User size={22} /> Profile
+            </button>
+          </nav>
+
+          <button onClick={() => navigateTo('onboarding')} className="flex items-center gap-4 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl font-medium transition mt-auto mb-4">
+            <LogOut size={22} /> Logout
+          </button>
+        </aside>
+
+        {/* MIDDLE COLUMN: Main Feed */}
+        <main className="col-span-1 md:col-span-2 lg:col-span-3 overflow-y-auto h-[calc(100vh-2rem)] hide-scrollbar pb-20 md:pb-8">
           
-          {/* Create Post */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4 items-start">
+          {/* Stories UI */}
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex overflow-x-auto gap-4 hide-scrollbar">
+            {/* Add Story */}
+            <div className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer">
+              <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-primary-navy transition relative">
+                <Plus size={24} />
+              </div>
+              <span className="text-xs font-medium text-gray-600">Add Story</span>
+            </div>
+            {/* Placeholders */}
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
+                <div className="w-16 h-16 rounded-full border-2 border-primary-navy p-0.5">
+                  <div className="w-full h-full rounded-full bg-gray-200"></div>
+                </div>
+                <span className="text-xs font-medium text-gray-600">User {i}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Create Post Input */}
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4 items-start mb-6">
             <div className="w-10 h-10 rounded-full bg-tertiary-orange flex items-center justify-center text-white font-bold flex-shrink-0">
               ME
             </div>
             <div className="flex-1">
               <textarea 
                 placeholder="Share a resource or ask a question..." 
-                className="w-full bg-gray-50 rounded-lg p-3 outline-none focus:ring-1 focus:ring-primary-navy text-sm resize-none"
+                className="w-full bg-gray-50 rounded-xl p-3 outline-none focus:ring-1 focus:ring-primary-navy text-sm resize-none"
                 rows="2"
               ></textarea>
               <div className="flex justify-end mt-2">
-                <button className="bg-primary-navy text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-[#112440] transition">
+                <button className="bg-primary-navy text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-[#112440] transition">
                   Post
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Feed Posts */}
-          {socialPosts.map((post) => (
-            <div key={post.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex gap-3 items-center">
-                  <div className="w-10 h-10 rounded-full bg-secondary-green flex items-center justify-center text-white font-bold">
-                    {post.author.charAt(0)}
+          {/* Dynamic Feed Posts */}
+          <div className="space-y-6">
+            {loadingPosts ? (
+              <div className="text-center text-gray-500 py-8">Loading feed...</div>
+            ) : posts.length === 0 ? (
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
+                <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                  <MessageCircle size={24} />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">No posts yet</h3>
+                <p className="text-gray-500 text-sm">Be the first to share a resource or ask a question!</p>
+              </div>
+            ) : (
+              posts.map((post) => (
+                <div key={post.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex gap-3 items-center">
+                      <div className="w-10 h-10 rounded-full bg-secondary-green flex items-center justify-center text-white font-bold">
+                        {post.author ? post.author.charAt(0) : 'U'}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm">{post.author || 'Anonymous Student'}</h4>
+                        <p className="text-xs text-gray-500">{post.department || 'General'} • {new Date(post.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 text-sm">{post.author}</h4>
-                    <p className="text-xs text-gray-500">{post.department} • {post.time}</p>
+                  
+                  <p className="text-gray-800 text-sm mb-4 leading-relaxed">
+                    {post.content}
+                  </p>
+                  
+                  <div className="flex items-center gap-6 pt-3 border-t border-gray-50">
+                    <button className="flex items-center gap-1.5 text-gray-500 hover:text-tertiary-orange transition text-sm font-medium">
+                      <Heart size={18} /> {post.likes || 0}
+                    </button>
+                    <button className="flex items-center gap-1.5 text-gray-500 hover:text-primary-navy transition text-sm font-medium">
+                      <MessageCircle size={18} /> {post.comments || 0}
+                    </button>
+                    <button className="flex items-center gap-1.5 text-gray-500 hover:text-secondary-green transition text-sm font-medium ml-auto">
+                      <Share2 size={18} /> Share
+                    </button>
                   </div>
                 </div>
-              </div>
-              
-              <p className="text-gray-700 text-sm mb-4 leading-relaxed">
-                {post.content}
+              ))
+            )}
+          </div>
+        </main>
+
+        {/* RIGHT COLUMN: Sticky Right Panel */}
+        <aside className="hidden lg:flex flex-col col-span-1 sticky top-8 h-[calc(100vh-4rem)]">
+          {/* C-Coins Display */}
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex justify-between items-center cursor-pointer hover:shadow-md transition" onClick={() => navigateTo('tasksHub')}>
+            <div>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Your Balance</p>
+              <p className="text-xl font-black text-gray-900 flex items-center gap-1">
+                <span className="text-tertiary-orange">C</span> {dummyBalance}
               </p>
-              
-              <div className="flex items-center gap-6 pt-3 border-t border-gray-50">
-                <button className="flex items-center gap-1.5 text-gray-500 hover:text-tertiary-orange transition text-sm">
-                  <Heart size={18} /> {post.likes}
-                </button>
-                <button className="flex items-center gap-1.5 text-gray-500 hover:text-primary-navy transition text-sm">
-                  <MessageCircle size={18} /> {post.comments}
-                </button>
-                <button className="flex items-center gap-1.5 text-gray-500 hover:text-secondary-green transition text-sm ml-auto">
-                  <Share2 size={18} /> Share
-                </button>
-              </div>
             </div>
-          ))}
-        </section>
-      </main>
+            <div className="bg-yellow-50 p-2 rounded-full">
+              <Award className="text-tertiary-orange" size={24} />
+            </div>
+          </div>
+
+          {/* The Vault Sidebar Snippet */}
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex-1 overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <FileText size={16} className="text-primary-navy" /> The Vault
+              </h2>
+              <button className="text-secondary-green text-xs font-bold hover:underline">
+                View All
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto space-y-3 hide-scrollbar pr-2">
+              {loadingVault ? (
+                <div className="text-gray-500 text-sm py-4">Loading...</div>
+              ) : vaultItems.length === 0 ? (
+                <div className="text-gray-500 text-sm py-4">No materials yet.</div>
+              ) : (
+                vaultItems.map((item) => {
+                  const fileType = item.file_url ? item.file_url.split('.').pop().toUpperCase() : 'DOC';
+                  return (
+                    <div 
+                      key={item.id} 
+                      onClick={() => handleMaterialClick(item)}
+                      className="p-3 border border-gray-100 rounded-xl hover:bg-gray-50 hover:border-gray-200 transition cursor-pointer flex gap-3 items-center"
+                    >
+                      <div className="bg-primary-navy/10 p-2 rounded-lg text-primary-navy flex-shrink-0">
+                        <FileText size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-gray-900 text-xs truncate mb-0.5">{item.title}</h3>
+                        <p className="text-[10px] text-gray-500 truncate">{item.course_code}</p>
+                      </div>
+                      <div className="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0">
+                        {item.cost_coins || 5} C
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </aside>
+      </div>
 
       {/* Unlock Modal */}
       <UnlockMaterialModal 
