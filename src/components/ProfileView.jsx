@@ -56,7 +56,10 @@ export default function ProfileView({ user, balance }) {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        alert("Error: " + error.message);
+        return;
+      }
 
       // Optimistic UI update
       setLocalProfile(prev => ({
@@ -68,7 +71,7 @@ export default function ProfileView({ user, balance }) {
       setIsEditing(false);
     } catch (err) {
       console.error('Failed to update profile:', err);
-      alert('Failed to update profile. Please try again.');
+      alert("Error: " + (err.message || "An unexpected error occurred."));
     } finally {
       setIsUpdating(false);
     }
