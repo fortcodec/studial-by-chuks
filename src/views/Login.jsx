@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient';
 
 export default function Login({ navigateTo }) {
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -21,16 +21,29 @@ export default function Login({ navigateTo }) {
     setMessage({ type: '', text: '' });
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      const isPhone = formData.identifier.startsWith('+') && /\d/.test(formData.identifier);
+      
+      let authResponse;
+      if (isPhone) {
+        const phoneValue = formData.identifier.replace(/[\s-]/g, '');
+        authResponse = await supabase.auth.signInWithPassword({
+          phone: phoneValue,
+          password: formData.password,
+        });
+      } else {
+        authResponse = await supabase.auth.signInWithPassword({
+          email: formData.identifier,
+          password: formData.password,
+        });
+      }
+
+      const { data, error } = authResponse;
 
       if (error) throw error;
 
       if (data?.user) {
-        // Extract a "name" from the email (e.g. "john.doe" from "john.doe@uni.edu")
-        const studentName = data.user.email.split('@')[0];
+        // Extract a "name" from the email (e.g. "john.doe" from "john.doe@uni.edu") or use phone
+        const studentName = data.user.email ? data.user.email.split('@')[0] : data.user.phone;
         
         // Show success notification toast/alert
         setMessage({ type: 'success', text: `Welcome ${studentName}` });
@@ -82,15 +95,15 @@ export default function Login({ navigateTo }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1 text-left">
-            <label className="block text-sm font-medium text-gray-700">Student Email Address</label>
+            <label className="block text-sm font-medium text-gray-700">Email or Phone Number</label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
               <input 
-                type="email"
-                name="email"
-                value={formData.email}
+                type="text"
+                name="identifier"
+                value={formData.identifier}
                 onChange={handleChange}
-                placeholder="student@university.edu"
+                placeholder="e.g., student@university.edu or +2348012345678"
                 className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50"
                 required
               />

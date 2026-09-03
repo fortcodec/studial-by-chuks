@@ -6,7 +6,7 @@ export default function Onboarding({ navigateTo }) {
   const [formData, setFormData] = useState({
     university: '',
     department: '',
-    email: '',
+    identifier: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -23,10 +23,42 @@ export default function Onboarding({ navigateTo }) {
     setMessage({ type: '', text: '' });
 
     try {
-      const { data, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-      });
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passwordRegex.test(formData.password)) {
+        setMessage({ type: 'error', text: 'Password must be at least 8 characters and include a letter, a number, and a special symbol.' });
+        setLoading(false);
+        return;
+      }
+
+      const isPhone = formData.identifier.startsWith('+') && /\d/.test(formData.identifier);
+      
+      let authResponse;
+      if (isPhone) {
+        const phoneValue = formData.identifier.replace(/[\s-]/g, '');
+        authResponse = await supabase.auth.signUp({
+          phone: phoneValue,
+          password: formData.password,
+          options: {
+            data: {
+              university: formData.university,
+              department: formData.department
+            }
+          }
+        });
+      } else {
+        authResponse = await supabase.auth.signUp({
+          email: formData.identifier,
+          password: formData.password,
+          options: {
+            data: {
+              university: formData.university,
+              department: formData.department
+            }
+          }
+        });
+      }
+
+      const { data, error: authError } = authResponse;
 
       if (authError) {
         setMessage({ type: 'error', text: authError.message });
@@ -34,30 +66,12 @@ export default function Onboarding({ navigateTo }) {
         return;
       }
 
-      if (data?.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: data.user.id,
-              university: formData.university,
-              department: formData.department,
-            }
-          ]);
-
-        if (profileError) {
-          setMessage({ type: 'error', text: profileError.message });
-          setLoading(false);
-          return;
-        }
-
-        setMessage({ type: 'success', text: 'Congratulations! Registration successful' });
-        
-        // Proceed to Campus Hub after registration
-        setTimeout(() => {
-          navigateTo('campusHub');
-        }, 1500);
-      }
+      setMessage({ type: 'success', text: 'Congratulations! Registration successful' });
+      
+      // Proceed to login page after registration
+      setTimeout(() => {
+        navigateTo('login');
+      }, 1500);
     } catch (error) {
       setMessage({ type: 'error', text: error.message || 'An error occurred during registration.' });
       setLoading(false);
@@ -127,15 +141,15 @@ export default function Onboarding({ navigateTo }) {
           </div>
 
           <div className="space-y-1 text-left">
-            <label className="block text-sm font-medium text-gray-700">Student Email Address</label>
+            <label className="block text-sm font-medium text-gray-700">Email or Phone Number</label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
               <input 
-                type="email"
-                name="email"
-                value={formData.email}
+                type="text"
+                name="identifier"
+                value={formData.identifier}
                 onChange={handleChange}
-                placeholder="student@university.edu"
+                placeholder="e.g., student@university.edu or +2348012345678"
                 className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50"
                 required
               />
