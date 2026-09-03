@@ -12,7 +12,7 @@ export default function LandingPage({ navigateTo }) {
       <nav className="p-6 flex justify-between items-center max-w-6xl mx-auto w-full z-20">
         <div className="flex items-center gap-2 text-primary-navy">
           <BookOpen size={28} />
-          <span className="font-bold text-xl tracking-tight">CHUKS E-LIBRARY</span>
+          <span className="font-bold text-xl tracking-tight">Studial</span>
         </div>
 
         {/* Desktop Menu */}
@@ -126,7 +126,7 @@ export default function LandingPage({ navigateTo }) {
             </div>
             
             <p className="text-gray-600 leading-relaxed text-lg">
-              CHUKS E-LIBRARY isn't just a website; it's an answer to a challenge faced by every student in Nigerian tertiary institutions. We understand the frustration of hunts for past questions and study materials. That's why we built this unified platform. Our vision is to empower students by providing a filtered, free, and accessible vault of academic materials tailored exactly to your department.
+              Studial isn't just a website; it's an answer to a challenge faced by every student in Nigerian tertiary institutions. We understand the frustration of hunts for past questions and study materials. That's why we built this unified platform. Our vision is to empower students by providing a filtered, free, and accessible vault of academic materials tailored exactly to your department.
             </p>
 
             <div className="pt-4">
