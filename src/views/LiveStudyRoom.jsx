@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { BottomNav } from '../components/BottomNav';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 
 export default function LiveStudyRoom() {
   const navigate = useNavigate();
+  const { currentUser } = useOutletContext();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [currentUser, setCurrentUser] = useState(null);
   const messagesEndRef = useRef(null);
 
   // Auto-scroll
@@ -23,15 +22,6 @@ export default function LiveStudyRoom() {
   // Fetch initial data & setup realtime
   useEffect(() => {
     let isMounted = true;
-
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && isMounted) {
-        setCurrentUser(user);
-      }
-    };
-    
-    fetchUser();
     
     // Fetch initial messages
     const fetchMessages = async () => {
@@ -112,19 +102,14 @@ export default function LiveStudyRoom() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] relative bg-background overflow-hidden max-w-md mx-auto shadow-2xl">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-surface/95 backdrop-blur-xl px-5 py-4 flex items-center gap-3 border-b border-outline-variant/30 shadow-sm">
-        <button onClick={() => navigate('/dashboard')} className="text-outline hover:text-on-surface transition-colors active:scale-95">
-          <ArrowLeft size={20} />
-        </button>
-        <div className="flex-1 flex items-center gap-2">
-          <div className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-green opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary-green"></span>
-          </div>
-          <h1 className="text-[17px] font-bold text-on-surface tracking-tight">Global Campus Room</h1>
+    <div className="flex flex-col h-full relative">
+      {/* Room Indicator */}
+      <div className="bg-surface/95 backdrop-blur-xl px-5 py-3 flex items-center gap-2 border-b border-outline-variant/30 shadow-sm shrink-0">
+        <div className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-green opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary-green"></span>
         </div>
+        <h2 className="text-[14px] font-bold text-on-surface tracking-tight">Global Campus Room</h2>
       </div>
 
       {/* Chat Feed */}
@@ -176,10 +161,6 @@ export default function LiveStudyRoom() {
         </form>
       </div>
 
-      {/* Bottom Nav */}
-      <div className="shrink-0 bg-surface z-40">
-        <BottomNav />
-      </div>
     </div>
   );
 }
