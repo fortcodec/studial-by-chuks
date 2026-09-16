@@ -3,6 +3,7 @@ import { Bell, Loader2 } from "lucide-react";
 import CreatePost from "../components/CreatePost";
 import PomodoroCard from "../components/PomodoroCard";
 import { PostCard, LiveRoomCard } from "../components/PostCard";
+import QuizModal from "../components/QuizModal";
 import { BottomNav } from "../components/BottomNav";
 import { supabase } from "../supabaseClient";
 
@@ -31,6 +32,9 @@ export default function Dashboard({ navigateTo, currentView }) {
   
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [activeQuizContent, setActiveQuizContent] = useState("");
 
   const topics = ["All Topics", "⚡ Trending in CS", "Calculus III", "Organic Chem"];
 
@@ -200,11 +204,22 @@ export default function Dashboard({ navigateTo, currentView }) {
                 currentUser={currentUser}
                 authorId={post.user_id}
                 onTipSuccess={() => setCurrentUser(prev => ({...prev, c_coins: prev.c_coins - 1}))}
+                onOpenQuiz={() => {
+                  setActiveQuizContent(post.content);
+                  setQuizOpen(true);
+                }}
               />
             </React.Fragment>
           ))
         )}
       </div>
+
+      <QuizModal 
+        isOpen={quizOpen} 
+        onClose={() => setQuizOpen(false)} 
+        postContent={activeQuizContent} 
+        currentUser={currentUser} 
+      />
 
       <BottomNav navigateTo={navigateTo} currentView={currentView} />
     </div>

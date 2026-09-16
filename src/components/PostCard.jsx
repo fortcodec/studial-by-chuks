@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { MoreHorizontal, ThumbsUp, ThumbsDown, MessageSquare, Bookmark, Share2, Download, Radio, Users } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
-export function PostCard({ type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, ...props }) {
+export function PostCard({ type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, onOpenQuiz, ...props }) {
   const [isTipping, setIsTipping] = useState(false);
   const [tipStatus, setTipStatus] = useState(null);
 
@@ -143,6 +143,13 @@ export function PostCard({ type, author, course, topic, timeAgo, content, stats,
             }`}
           >
             {tipStatus === 'success' ? 'Tipped! 🎉' : '🪙 Tip 1'}
+          </button>
+
+          <button 
+            onClick={onOpenQuiz}
+            className="flex items-center gap-1 border border-indigo-200 bg-indigo-50 text-indigo-700 text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-indigo-100 transition-all active:scale-95"
+          >
+            🧠 Quiz Me
           </button>
 
           <button className="flex items-center gap-1 text-outline hover:text-on-surface transition-colors">
