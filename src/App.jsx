@@ -3,6 +3,8 @@ import LandingPage from './views/LandingPage';
 import Onboarding from './views/Onboarding';
 import Login from './views/Login';
 import Dashboard from './views/Dashboard';
+import LiveStudyRoom from './views/LiveStudyRoom';
+import Vault from './views/Vault';
 import StudyRoom from './views/StudyRoom';
 import TasksHub from './views/TasksHub';
 import AdminGateway from './views/AdminGateway';
@@ -21,6 +23,10 @@ function App() {
         return <Login navigateTo={setCurrentView} />;
       case 'dashboard':
         return <Dashboard navigateTo={setCurrentView} currentView={currentView} />;
+      case 'live':
+        return <LiveStudyRoom navigateTo={setCurrentView} currentView={currentView} />;
+      case 'vault':
+        return <Vault navigateTo={setCurrentView} currentView={currentView} />;
       case 'studyRoom':
         return <StudyRoom navigateTo={setCurrentView} />;
       case 'tasksHub':

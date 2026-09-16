@@ -1,19 +1,114 @@
-import React, { useState } from "react";
-import { Bell } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Bell, Loader2 } from "lucide-react";
 import CreatePost from "../components/CreatePost";
+import PomodoroCard from "../components/PomodoroCard";
 import { PostCard, LiveRoomCard } from "../components/PostCard";
 import { BottomNav } from "../components/BottomNav";
+import { supabase } from "../supabaseClient";
+
+// Simple relative time formatter
+function formatTimeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays}d ago`;
+}
 
 export default function Dashboard({ navigateTo, currentView }) {
-  // Prepared dynamic states
   const [currentUser, setCurrentUser] = useState({
-    name: "Fortune",
-    c_coins: 1450,
+    name: "Student",
+    c_coins: 0,
     avatar: "https://i.pravatar.cc/150?img=33",
   });
   const [hasNotifications, setHasNotifications] = useState(true);
+  
+  const [posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const topics = ["All Topics", "⚡ Trending in CS", "Calculus III", "Organic Chem"];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // Fetch User
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && isMounted) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setCurrentUser({
+            id: user.id,
+            name: profile.full_name || profile.username || 'Student',
+            c_coins: profile.c_coins || 1450,
+            avatar: profile.avatar_url || "https://i.pravatar.cc/150?img=33"
+          });
+        }
+      }
+    };
+    
+    // Fetch Posts
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles:user_id (username, full_name, avatar_url)
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (!error && data && isMounted) {
+        setPosts(data);
+      }
+      if (isMounted) setIsLoading(false);
+    };
+
+    fetchUser();
+    fetchPosts();
+
+    // Realtime Updates for Posts
+    const channel = supabase
+      .channel('public:posts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'posts' },
+        async (payload) => {
+          // Fetch the profile for the new post
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, full_name, avatar_url')
+            .eq('id', payload.new.user_id)
+            .single();
+
+          const newPost = {
+            ...payload.new,
+            profiles: profile
+          };
+
+          if (isMounted) {
+            setPosts(prev => [newPost, ...prev]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col h-[100dvh] relative bg-background overflow-hidden max-w-md mx-auto shadow-2xl">
@@ -70,36 +165,45 @@ export default function Dashboard({ navigateTo, currentView }) {
           ))}
         </div>
 
+        {/* Pomodoro Timer */}
+        <PomodoroCard currentUser={currentUser} />
+
         {/* Feed Posts */}
-        <PostCard 
-          type="bounty"
-          author={{ name: "Marcus Chen", school: "Stanford '26", avatar: "https://i.pravatar.cc/150?img=11" }}
-          course="CS 106B"
-          topic="Algorithmic Analysis"
-          timeAgo="12m ago"
-          content="Can anyone help explain why Dijkstra's algorithm fails with negative edge weights? Preparing for tomorrow's midterm exam! Here's my graph diagram sketch 📝"
-          bountyAmount={50}
-          bountyDesc="best formal proof"
-          attachmentImage="https://images.unsplash.com/photo-1596495578065-6e0763fa1178?q=80&w=2071&auto=format&fit=crop"
-          stats={{ upvotes: 42, answers: 8 }}
-        />
-
-        <LiveRoomCard />
-
-        <PostCard 
-          type="document"
-          author={{ name: "Elena Rostova", school: "MIT '25", avatar: "https://i.pravatar.cc/150?img=5" }}
-          course="BioE 120"
-          topic="Cellular Bio"
-          timeAgo="1h ago"
-          content="Uploaded my complete cheatsheet for Cellular Metabolism (Glycolysis & Krebs Cycle) with high-res mnemonics! Free download for peer study circle members."
-          docTitle="Krebs_Cycle_Summary_v..."
-          docPages={8}
-          docRating={4.9}
-          docReviews={148}
-          docSaves="1.2k"
-          stats={{ upvotes: 184, answers: 22 }}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center py-10">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-10 text-outline">
+            <p className="font-semibold">No posts yet.</p>
+            <p className="text-sm mt-1">Be the first to share something!</p>
+          </div>
+        ) : (
+          posts.map((post, index) => (
+            <React.Fragment key={post.id}>
+              {/* Insert Live Room card dynamically after the first post */}
+              {index === 1 && <LiveRoomCard />}
+              
+              <PostCard 
+                type="normal"
+                author={{ 
+                  name: post.profiles?.full_name || post.profiles?.username || 'Anonymous', 
+                  school: post.department || 'University', 
+                  avatar: post.profiles?.avatar_url || 'https://i.pravatar.cc/150?img=33' 
+                }}
+                course="General"
+                topic="Discussion"
+                timeAgo={formatTimeAgo(post.created_at)}
+                content={post.content}
+                attachmentImage={post.media_url}
+                stats={{ upvotes: post.likes || 0, answers: post.comments || 0 }}
+                currentUser={currentUser}
+                authorId={post.user_id}
+                onTipSuccess={() => setCurrentUser(prev => ({...prev, c_coins: prev.c_coins - 1}))}
+              />
+            </React.Fragment>
+          ))
+        )}
       </div>
 
       <BottomNav navigateTo={navigateTo} currentView={currentView} />

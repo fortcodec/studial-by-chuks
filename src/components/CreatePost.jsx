@@ -1,9 +1,39 @@
-import React, { useState, useRef } from 'react';
-import { Edit3, Users, HelpCircle, FileText } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Edit3, Users, HelpCircle, FileText, Link as LinkIcon, BarChart2, Send, Loader2, X, Image as ImageIcon } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
-export default function CreatePost() {
+export default function CreatePost({ onPostCreated }) {
   const [content, setContent] = useState('');
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [showMediaInput, setShowMediaInput] = useState(false);
+  const [pollOptions, setPollOptions] = useState([]);
+  const [showPollInput, setShowPollInput] = useState(false);
+  
+  // Image Upload state
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  
   const textareaRef = useRef(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        setCurrentUser(profile || { id: user.id, email: user.email });
+      }
+    };
+    fetchUser();
+  }, []);
 
   // Auto-expand textarea
   const handleInput = (e) => {
@@ -14,59 +44,279 @@ export default function CreatePost() {
     }
   };
 
+  const handleAddPollOption = () => {
+    if (pollOptions.length < 4) {
+      setPollOptions([...pollOptions, '']);
+    }
+  };
+
+  const handlePollOptionChange = (index, value) => {
+    const newOptions = [...pollOptions];
+    newOptions[index] = value;
+    setPollOptions(newOptions);
+  };
+
+  const handleRemovePollOption = (index) => {
+    const newOptions = pollOptions.filter((_, i) => i !== index);
+    setPollOptions(newOptions);
+    if (newOptions.length === 0) setShowPollInput(false);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+      // Close other inputs
+      setShowMediaInput(false);
+      setMediaUrl('');
+      setShowPollInput(false);
+      setPollOptions([]);
+    }
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!content.trim() && !mediaUrl.trim() && !selectedImage && pollOptions.length === 0) return;
+    if (!currentUser) {
+      alert("You must be logged in to post.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      let finalMediaUrl = mediaUrl.trim() || null;
+
+      // Handle Image Upload
+      if (selectedImage) {
+        const fileExt = selectedImage.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${currentUser.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('post-images')
+          .upload(filePath, selectedImage);
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from('post-images')
+          .getPublicUrl(filePath);
+
+        finalMediaUrl = publicUrlData.publicUrl;
+      }
+
+      let pollData = null;
+      const validPollOptions = pollOptions.filter(opt => opt.trim() !== '');
+      if (validPollOptions.length > 0) {
+        pollData = {
+          options: validPollOptions.map(opt => ({ [opt]: 0 }))
+        };
+      }
+
+      const { error } = await supabase.from('posts').insert([
+        {
+          user_id: currentUser.id,
+          author: currentUser.full_name || currentUser.username || currentUser.email?.split('@')[0] || 'Anonymous',
+          department: currentUser.department || null,
+          content: content.trim(),
+          media_url: finalMediaUrl,
+          poll_data: pollData,
+          likes: 0,
+          comments: 0
+        }
+      ]);
+
+      if (error) throw error;
+
+      // Clear form
+      setContent('');
+      setMediaUrl('');
+      setShowMediaInput(false);
+      setPollOptions([]);
+      setShowPollInput(false);
+      clearImage();
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
+
+      if (onPostCreated) {
+        onPostCreated();
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Failed to post. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-[24px] shadow-surface-1 p-4 mb-6 border border-outline-variant/30">
       <div className="flex gap-3">
         {/* Avatar Placeholder */}
         <div className="flex-shrink-0 relative">
           <img 
-            src="https://i.pravatar.cc/150?img=33" 
+            src={currentUser?.avatar_url || "https://i.pravatar.cc/150?img=33"} 
             alt="User Avatar" 
             className="w-10 h-10 rounded-full object-cover border border-outline-variant/30"
           />
           <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-container border-2 border-white rounded-full"></div>
         </div>
 
-        {/* Text Area */}
-        <div className="flex-grow bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-3 py-2 flex items-center">
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={handleInput}
-            placeholder="Share notes, ask doubts, or start a study sprint..."
-            className="w-full resize-none border-none focus:ring-0 p-1 text-on-surface placeholder-outline bg-transparent min-h-[24px] text-sm leading-relaxed overflow-hidden outline-none font-medium"
-            rows={1}
-          />
-          <Edit3 className="w-5 h-5 text-primary ml-2 flex-shrink-0" />
+        {/* Form Area */}
+        <div className="flex-grow flex flex-col gap-3">
+          <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-3 py-2 flex items-center transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={handleInput}
+              placeholder="Share notes, ask doubts, or start a study sprint..."
+              className="w-full resize-none border-none focus:ring-0 p-1 text-on-surface placeholder-outline bg-transparent min-h-[24px] text-sm leading-relaxed overflow-hidden outline-none font-medium"
+              rows={1}
+              disabled={isSubmitting}
+            />
+            <Edit3 className="w-5 h-5 text-primary ml-2 flex-shrink-0 opacity-50" />
+          </div>
+
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="relative w-max animate-slide-up">
+              <img 
+                src={imagePreview} 
+                alt="Upload preview" 
+                className="max-h-32 rounded-xl object-cover border border-outline-variant/30"
+              />
+              <button 
+                onClick={clearImage}
+                disabled={isSubmitting}
+                className="absolute -top-2 -right-2 bg-white text-error rounded-full p-1 shadow-md border border-outline-variant/30 hover:bg-red-50 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          {/* Media Input */}
+          {showMediaInput && !selectedImage && (
+            <div className="flex items-center gap-2 bg-surface-container-low rounded-xl px-3 py-2 animate-slide-up">
+              <LinkIcon size={16} className="text-outline" />
+              <input 
+                type="url"
+                value={mediaUrl}
+                onChange={(e) => setMediaUrl(e.target.value)}
+                placeholder="Paste video or image URL here..."
+                className="bg-transparent border-none outline-none flex-grow text-[13px] text-on-surface font-medium placeholder:text-outline"
+                disabled={isSubmitting}
+              />
+              <button onClick={() => { setMediaUrl(''); setShowMediaInput(false); }} className="text-error hover:text-red-700 active:scale-95 transition-transform p-1">
+                <X size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* Poll Input */}
+          {showPollInput && !selectedImage && (
+            <div className="flex flex-col gap-2 bg-surface-container-low rounded-xl p-3 animate-slide-up">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-bold text-outline uppercase tracking-wider">Poll Options</span>
+                <button onClick={() => { setPollOptions([]); setShowPollInput(false); }} className="text-error hover:text-red-700 active:scale-95 transition-transform p-1">
+                  <X size={16} />
+                </button>
+              </div>
+              {pollOptions.map((opt, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={opt}
+                    onChange={(e) => handlePollOptionChange(index, e.target.value)}
+                    placeholder={`Option ${index + 1}`}
+                    className="bg-surface-container-lowest border border-outline-variant/40 rounded-lg px-3 py-1.5 text-[13px] font-medium flex-grow outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-on-surface"
+                    disabled={isSubmitting}
+                  />
+                  <button onClick={() => handleRemovePollOption(index)} className="text-outline hover:text-error transition-colors p-1">
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+              {pollOptions.length < 4 && (
+                <button 
+                  type="button" 
+                  onClick={handleAddPollOption}
+                  className="text-[12px] font-bold text-primary mt-1 self-start hover:underline opacity-90 hover:opacity-100 transition-opacity"
+                  disabled={isSubmitting}
+                >
+                  + Add Option
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Hidden File Input */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        hidden 
+        accept="image/*" 
+        onChange={handleImageChange} 
+      />
+
       {/* Bottom Bar: Action Chips */}
-      <div className="flex items-center gap-2 mt-4 overflow-x-auto scrollbar-hide pb-1">
-        <button
-          type="button"
-          className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low border border-outline-variant/30 rounded-full whitespace-nowrap hover:bg-surface-container transition-colors active:scale-95"
-        >
-          <FileText className="w-4 h-4 text-secondary-container" />
-          <span className="text-sm font-semibold text-on-surface">Upload Notes</span>
-          <span className="text-[10px] font-bold text-primary bg-primary-container/10 px-1.5 py-0.5 rounded-md ml-1">
-            +15 C
-          </span>
-        </button>
+      <div className="flex items-center justify-between mt-4 border-t border-outline-variant/20 pt-3">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low border border-outline-variant/30 rounded-full whitespace-nowrap hover:bg-surface-container transition-colors active:scale-95 disabled:opacity-50"
+            disabled={isSubmitting || !!selectedImage}
+          >
+            <ImageIcon className="w-4 h-4 text-secondary-green" />
+            <span className="text-[13px] font-semibold text-on-surface">Image</span>
+          </button>
 
-        <button
-          type="button"
-          className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low border border-outline-variant/30 rounded-full whitespace-nowrap hover:bg-surface-container transition-colors active:scale-95"
-        >
-          <HelpCircle className="w-4 h-4 text-error" />
-          <span className="text-sm font-semibold text-on-surface">Ask Doubt</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => { setShowMediaInput(true); setShowPollInput(false); clearImage(); }}
+            className="flex items-center justify-center p-2 bg-surface-container-low border border-outline-variant/30 rounded-full hover:bg-surface-container transition-colors active:scale-95 disabled:opacity-50"
+            disabled={isSubmitting || !!selectedImage}
+          >
+            <LinkIcon className="w-4 h-4 text-primary" />
+          </button>
 
+          <button
+            type="button"
+            onClick={() => { 
+              setShowPollInput(true); 
+              setShowMediaInput(false);
+              clearImage();
+              if (pollOptions.length === 0) setPollOptions(['', '']); 
+            }}
+            className="flex items-center justify-center p-2 bg-surface-container-low border border-outline-variant/30 rounded-full hover:bg-surface-container transition-colors active:scale-95 disabled:opacity-50"
+            disabled={isSubmitting || !!selectedImage}
+          >
+            <BarChart2 className="w-4 h-4 text-primary" />
+          </button>
+        </div>
+        
         <button
           type="button"
-          className="flex items-center justify-center p-2 bg-surface-container-low border border-outline-variant/30 rounded-full hover:bg-surface-container transition-colors active:scale-95"
+          onClick={handleSubmit}
+          disabled={isSubmitting || (!content.trim() && !mediaUrl.trim() && !selectedImage && pollOptions.filter(o => o.trim()).length === 0)}
+          className="flex items-center gap-1.5 px-5 py-2 bg-primary text-white rounded-full font-bold text-[13px] shadow-md shadow-primary/20 hover:bg-primary-container transition-all active:scale-95 disabled:opacity-50 disabled:shadow-none ml-2 flex-shrink-0"
         >
-          <Users className="w-4 h-4 text-primary" />
+          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 mr-0.5" />}
+          {isSubmitting ? 'Posting...' : 'Post'}
         </button>
       </div>
     </div>

@@ -1,7 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MoreHorizontal, ThumbsUp, ThumbsDown, MessageSquare, Bookmark, Share2, Download, Radio, Users } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
-export function PostCard({ type, author, course, topic, timeAgo, content, stats, ...props }) {
+export function PostCard({ type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, ...props }) {
+  const [isTipping, setIsTipping] = useState(false);
+  const [tipStatus, setTipStatus] = useState(null);
+
+  const handleTip = async () => {
+    if (!currentUser || !authorId) {
+      alert("Unable to process tip at this moment.");
+      return;
+    }
+    if (currentUser.id === authorId) {
+      alert("You cannot tip yourself!");
+      return;
+    }
+    
+    setIsTipping(true);
+    
+    try {
+      const { error } = await supabase.rpc('tip_creator', {
+        p_sender_id: currentUser.id,
+        p_receiver_id: authorId,
+        p_amount: 1
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      setTipStatus('success');
+      if (onTipSuccess) onTipSuccess();
+      setTimeout(() => setTipStatus(null), 3000);
+      
+    } catch (err) {
+      alert(err.message || "Failed to tip. Insufficient C Coins?");
+    } finally {
+      setIsTipping(false);
+    }
+  };
   return (
     <div className="bg-white rounded-[24px] shadow-surface-1 p-5 mb-5 border border-outline-variant/30">
       {/* Header */}
@@ -41,7 +78,7 @@ export function PostCard({ type, author, course, topic, timeAgo, content, stats,
       </p>
 
       {/* Attachments */}
-      {type === 'bounty' && props.attachmentImage && (
+      {props.attachmentImage && (
         <div className="rounded-2xl border border-outline-variant/30 overflow-hidden mb-4 bg-surface-container-lowest">
           <img src={props.attachmentImage} alt="Attachment" className="w-full h-auto object-cover" />
         </div>
@@ -96,18 +133,24 @@ export function PostCard({ type, author, course, topic, timeAgo, content, stats,
         </div>
 
         <div className="flex items-center gap-3">
-          {type === 'document' ? (
-            <button className="flex items-center gap-1 bg-warning/10 border border-warning/20 text-[12px] font-bold text-on-surface px-3 py-1.5 rounded-full hover:bg-warning/20 transition-colors">
-              🪙 Tip 10
-            </button>
-          ) : (
-            <button className="flex items-center gap-1 text-outline hover:text-on-surface transition-colors">
-              <Bookmark className="w-4 h-4" />
-              <span className="text-[13px] font-semibold">Save</span>
-            </button>
-          )}
+          <button 
+            onClick={handleTip}
+            disabled={isTipping || tipStatus === 'success'}
+            className={`flex items-center gap-1 border text-[12px] font-bold px-3 py-1.5 rounded-full transition-all active:scale-95 ${
+              tipStatus === 'success' 
+                ? 'bg-secondary-green/20 border-secondary-green/30 text-secondary-green' 
+                : 'bg-warning/10 border-warning/20 text-on-surface hover:bg-warning/20'
+            }`}
+          >
+            {tipStatus === 'success' ? 'Tipped! 🎉' : '🪙 Tip 1'}
+          </button>
+
+          <button className="flex items-center gap-1 text-outline hover:text-on-surface transition-colors">
+            <Bookmark className="w-4 h-4" />
+            <span className="text-[13px] font-semibold hidden sm:inline">Save</span>
+          </button>
           <button className="text-outline hover:text-on-surface transition-colors">
-            {type === 'document' ? <Bookmark className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+            <Share2 className="w-4 h-4" />
           </button>
         </div>
       </div>

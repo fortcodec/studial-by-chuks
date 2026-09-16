@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserPlus, Mail, Lock, BookOpen, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Mail, Lock, BookOpen, ArrowLeft, Eye, EyeOff, Key } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 export default function Onboarding({ navigateTo }) {
@@ -9,7 +9,8 @@ export default function Onboarding({ navigateTo }) {
     university: '',
     department: '',
     identifier: '',
-    password: ''
+    password: '',
+    accessCode: ''
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -34,6 +35,23 @@ export default function Onboarding({ navigateTo }) {
 
       const isPhone = formData.identifier.startsWith('+') && /\d/.test(formData.identifier);
       const cleanUsername = formData.username.replace(/\s+/g, '').toLowerCase();
+
+      // Phase 2: Verify Access Code
+      if (!formData.accessCode.trim()) {
+        setMessage({ type: 'error', text: 'An access code is required.' });
+        setLoading(false);
+        return;
+      }
+
+      const { error: rpcError } = await supabase.rpc('verify_and_consume_code', {
+        p_code: formData.accessCode.trim()
+      });
+
+      if (rpcError) {
+        setMessage({ type: 'error', text: rpcError.message || 'Invalid or expired access code.' });
+        setLoading(false);
+        return;
+      }
       
       let authResponse;
       if (isPhone) {
@@ -171,6 +189,22 @@ export default function Onboarding({ navigateTo }) {
               <option value="Estate Management">Estate Management</option>
               <option value="Mass Communication">Mass Communication</option>
             </select>
+          </div>
+
+          <div className="space-y-1 text-left">
+            <label className="block text-sm font-medium text-gray-700">Access Code</label>
+            <div className="relative">
+              <Key className="absolute left-3 top-3 text-gray-400" size={20} />
+              <input 
+                type="text"
+                name="accessCode"
+                value={formData.accessCode}
+                onChange={handleChange}
+                placeholder="Enter your student access code"
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50 text-gray-900"
+                required
+              />
+            </div>
           </div>
 
           <div className="space-y-1 text-left">
