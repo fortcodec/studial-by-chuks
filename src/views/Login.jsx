@@ -50,7 +50,7 @@ export default function Login({ navigateTo }) {
         
         // Delay redirect to allow user to see the message
         setTimeout(() => {
-          navigateTo('campusHub');
+          navigateTo('dashboard');
         }, 1500);
       }
     } catch (error) {

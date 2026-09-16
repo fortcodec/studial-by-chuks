@@ -1,0 +1,42 @@
+import React from "react";
+import { FileText, Radio, Bot, User } from "lucide-react";
+
+export function BottomNav({ currentView, navigateTo }) {
+  const navItems = [
+    { name: "Feed", href: "dashboard", icon: FileText, badge: null },
+    { name: "Live", href: "live", icon: Radio, badge: 3 },
+    { name: "AI Tutor", href: "aiTutor", icon: Bot, badge: null },
+    { name: "Profile", href: "profile", icon: User, badge: null },
+  ];
+
+  return (
+    <nav className="w-full glass-panel-heavy border-t border-outline-variant px-6 py-2 flex justify-between items-center z-50 relative pb-safe mt-auto">
+      {navItems.map((item) => {
+        const isActive = currentView === item.href;
+        const Icon = item.icon;
+
+        return (
+          <button
+            key={item.name}
+            onClick={() => navigateTo && navigateTo(item.href)}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active:scale-95 ${
+              isActive ? "text-primary font-bold" : "text-outline hover:text-primary hover:bg-surface-container"
+            }`}
+          >
+            <div className="relative mb-1">
+              <Icon className={`w-6 h-6 ${isActive ? "fill-primary-container/20 stroke-2" : "stroke-[1.5]"}`} />
+              {item.badge !== null && (
+                <span className="absolute -top-1 -right-2 bg-error text-on-error text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-surface shadow-sm">
+                  {item.badge}
+                </span>
+              )}
+            </div>
+            <span className="text-[11px] font-semibold tracking-wide">
+              {item.name}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}

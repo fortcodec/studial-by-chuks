@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import LandingPage from './views/LandingPage';
 import Onboarding from './views/Onboarding';
 import Login from './views/Login';
-import CampusHub from './views/CampusHub';
+import Dashboard from './views/Dashboard';
 import StudyRoom from './views/StudyRoom';
 import TasksHub from './views/TasksHub';
 import AdminGateway from './views/AdminGateway';
@@ -19,8 +19,8 @@ function App() {
         return <Onboarding navigateTo={setCurrentView} />;
       case 'login':
         return <Login navigateTo={setCurrentView} />;
-      case 'campusHub':
-        return <CampusHub navigateTo={setCurrentView} />;
+      case 'dashboard':
+        return <Dashboard navigateTo={setCurrentView} currentView={currentView} />;
       case 'studyRoom':
         return <StudyRoom navigateTo={setCurrentView} />;
       case 'tasksHub':

@@ -1,156 +1,175 @@
-import React, { useState, useEffect } from 'react';
-import ReactPlayer from 'react-player';
-import { supabase } from '../supabaseClient'; // Adjusted path to root src
-import QuizModal from './QuizModal';
+import React from 'react';
+import { MoreHorizontal, ThumbsUp, ThumbsDown, MessageSquare, Bookmark, Share2, Download, Radio, Users } from 'lucide-react';
 
-const PostCard = ({ post, currentUser }) => {
-  const [pollData, setPollData] = useState(post.poll_data);
-  const [hasVoted, setHasVoted] = useState(false);
-  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
-
-  // Check if user has already voted on this poll
-  useEffect(() => {
-    const checkIfVoted = async () => {
-      if (!currentUser || !post.poll_data) return;
-      
-      const { data } = await supabase
-        .from('poll_votes')
-        .select('*')
-        .eq('post_id', post.id)
-        .eq('user_id', currentUser.id)
-        .single();
-      
-      if (data) setHasVoted(true);
-    };
-    checkIfVoted();
-  }, [post.id, currentUser, post.poll_data]);
-
-  // Calculate total votes for percentage bars
-  const totalVotes = pollData?.options 
-    ? pollData.options.reduce((sum, opt) => sum + Object.values(opt)[0], 0) 
-    : 0;
-
-  const handleVote = async (optionKey) => {
-    if (hasVoted || !currentUser) return;
-    
-    // 1. Optimistic UI Update for instant feedback
-    const newOptions = pollData.options.map(opt => {
-      const key = Object.keys(opt)[0];
-      if (key === optionKey) {
-        return { [key]: opt[key] + 1 };
-      }
-      return opt;
-    });
-    
-    setPollData({ options: newOptions });
-    setHasVoted(true);
-
-    try {
-      // 2. Insert the vote record
-      await supabase.from('poll_votes').insert({
-        post_id: post.id,
-        user_id: currentUser.id,
-        voted_option: optionKey
-      });
-
-      // 3. Update the post's JSONB poll_data
-      await supabase.from('posts').update({
-        poll_data: { options: newOptions }
-      }).eq('id', post.id);
-
-    } catch (error) {
-      console.error('Error recording vote:', error);
-    }
-  };
-
+export function PostCard({ type, author, course, topic, timeAgo, content, stats, ...props }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4 mb-4 flex flex-col gap-3">
+    <div className="bg-white rounded-[24px] shadow-surface-1 p-5 mb-5 border border-outline-variant/30">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">
-          {post.author_username?.charAt(0).toUpperCase() || 'A'}
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex gap-3">
+          <img src={author.avatar} alt={author.name} className="w-11 h-11 rounded-full object-cover" />
+          <div>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-[15px] font-bold text-on-surface leading-tight">{author.name}</h3>
+              <span className="text-outline text-xs">&bull; {author.school}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="bg-primary-container/10 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full">
+                {course} &bull; {topic}
+              </span>
+              <span className="text-outline text-xs">{timeAgo}</span>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col">
-          <span className="font-semibold text-gray-900 leading-none">{post.author_username || 'Anonymous'}</span>
-          <span className="text-xs text-gray-500 mt-1">2 hours ago</span>
-        </div>
-      </div>
-      
-      {/* Content */}
-      <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-        {post.content}
-      </p>
-      
-      {/* Media Player */}
-      {post.media_url && (
-        <div className="rounded-xl overflow-hidden relative pt-[56.25%] bg-black mt-2">
-          <ReactPlayer 
-            url={post.media_url} 
-            className="absolute top-0 left-0"
-            width="100%" 
-            height="100%" 
-            controls 
-            light={true}
-          />
-        </div>
-      )}
-
-      {/* Interactive Poll */}
-      {pollData?.options && (
-        <div className="flex flex-col gap-2 mt-3">
-          {pollData.options.map((opt, index) => {
-            const key = Object.keys(opt)[0];
-            const votes = opt[key];
-            const percentage = totalVotes === 0 ? 0 : Math.round((votes / totalVotes) * 100);
-            
-            return (
-              <button
-                key={index}
-                onClick={() => handleVote(key)}
-                disabled={hasVoted}
-                className={`relative h-11 w-full rounded-lg border overflow-hidden text-left focus:outline-none transition-all duration-300 disabled:cursor-default
-                  ${hasVoted ? 'border-indigo-200' : 'border-gray-200 hover:border-indigo-300 active:scale-[0.98]'}`}
-              >
-                {/* Animated Progress Bar */}
-                <div 
-                  className={`absolute top-0 left-0 h-full ${hasVoted ? 'bg-indigo-100' : 'bg-transparent'}`}
-                  style={{ width: `${hasVoted ? percentage : 0}%`, transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)' }}
-                />
-                
-                <div className="absolute inset-0 flex justify-between items-center px-4">
-                  <span className={`font-medium z-10 ${hasVoted ? 'text-indigo-900' : 'text-gray-700'}`}>
-                    {key}
-                  </span>
-                  {hasVoted && (
-                    <span className="text-sm font-semibold text-indigo-700 z-10">{percentage}%</span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-          <div className="text-xs text-gray-500 font-medium mt-1 ml-1">{totalVotes} votes</div>
-        </div>
-      )}
-
-      {/* Action Footer */}
-      <div className="pt-3 border-t border-gray-50 mt-2">
-        <button 
-          onClick={() => setIsQuizModalOpen(true)}
-          className="flex items-center justify-center w-full gap-2 bg-indigo-50 text-indigo-600 font-semibold py-2.5 rounded-xl hover:bg-indigo-100 active:bg-indigo-200 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-          Test My Knowledge
+        <button className="text-outline hover:text-on-surface">
+          <MoreHorizontal className="w-5 h-5" />
         </button>
       </div>
 
-      <QuizModal 
-        isOpen={isQuizModalOpen} 
-        onClose={() => setIsQuizModalOpen(false)} 
-        postContent={post.content} 
-        currentUser={currentUser}
-      />
+      {/* Bounty Banner */}
+      {type === 'bounty' && props.bountyAmount && (
+        <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl px-3 py-2 mb-3 flex items-center gap-2 w-fit">
+          <span className="bg-warning/20 text-[10px] w-5 h-5 rounded-full flex items-center justify-center border border-warning/50 shadow-sm shadow-warning/20">🪙</span>
+          <span className="text-[13px] font-bold text-on-surface">{props.bountyAmount} C-Coins Bounty</span>
+          <span className="text-[13px] text-outline">for {props.bountyDesc}</span>
+        </div>
+      )}
+
+      {/* Content */}
+      <p className="text-[15px] text-on-surface-variant leading-relaxed mb-4">
+        {content}
+      </p>
+
+      {/* Attachments */}
+      {type === 'bounty' && props.attachmentImage && (
+        <div className="rounded-2xl border border-outline-variant/30 overflow-hidden mb-4 bg-surface-container-lowest">
+          <img src={props.attachmentImage} alt="Attachment" className="w-full h-auto object-cover" />
+        </div>
+      )}
+
+      {type === 'document' && props.docTitle && (
+        <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-3 flex gap-4 items-center mb-4">
+          <div className="w-14 h-16 bg-error/10 border border-error/20 rounded-lg flex flex-col items-center justify-center flex-shrink-0">
+            <FilePdfIcon className="w-6 h-6 text-error mb-1" />
+            <span className="text-[9px] font-bold text-error uppercase">{props.docPages} Pages</span>
+          </div>
+          <div className="flex-grow">
+            <h4 className="text-[15px] font-bold text-on-surface leading-tight mb-1">{props.docTitle}</h4>
+            <div className="flex items-center gap-2 text-xs text-outline mb-2">
+              <span className="flex items-center text-warning font-bold">
+                ⭐ {props.docRating} <span className="text-outline font-normal ml-0.5">({props.docReviews})</span>
+              </span>
+              <span>&bull;</span>
+              <span className="flex items-center gap-1"><Download className="w-3 h-3" /> {props.docSaves} saves</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="bg-primary/10 text-primary text-[11px] font-bold px-3 py-1 rounded-full hover:bg-primary/20 transition-colors">
+                Preview Deck
+              </button>
+              <button className="text-outline text-[11px] font-medium hover:text-on-surface">
+                Report typo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Bar */}
+      <div className="flex items-center justify-between pt-1 border-t border-outline-variant/20">
+        <div className="flex items-center gap-4">
+          {/* Upvote / Downvote Toggle */}
+          <div className="flex items-center bg-primary/5 rounded-full border border-primary/10 overflow-hidden">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-primary/10 text-primary transition-colors">
+              <ThumbsUp className="w-4 h-4" />
+              <span className="text-[13px] font-bold">{stats.upvotes}</span>
+            </button>
+            <div className="w-px h-4 bg-primary/20"></div>
+            <button className="px-3 py-1.5 hover:bg-primary/10 text-outline hover:text-on-surface transition-colors">
+              <ThumbsDown className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <button className="flex items-center gap-1.5 text-outline hover:text-on-surface transition-colors">
+            <MessageSquare className="w-4 h-4" />
+            <span className="text-[13px] font-semibold">{stats.answers} {stats.answers === 1 ? 'Answer' : 'Answers'}</span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {type === 'document' ? (
+            <button className="flex items-center gap-1 bg-warning/10 border border-warning/20 text-[12px] font-bold text-on-surface px-3 py-1.5 rounded-full hover:bg-warning/20 transition-colors">
+              🪙 Tip 10
+            </button>
+          ) : (
+            <button className="flex items-center gap-1 text-outline hover:text-on-surface transition-colors">
+              <Bookmark className="w-4 h-4" />
+              <span className="text-[13px] font-semibold">Save</span>
+            </button>
+          )}
+          <button className="text-outline hover:text-on-surface transition-colors">
+            {type === 'document' ? <Bookmark className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
-export default PostCard;
+export function LiveRoomCard() {
+  return (
+    <div className="bg-surface-container-low rounded-[24px] shadow-surface-1 p-5 mb-5 border border-primary/20 relative overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
+      
+      <div className="flex justify-between items-center mb-3 relative z-10">
+        <div className="flex items-center gap-2 text-error text-[11px] font-bold tracking-wider uppercase">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-error"></span>
+          </span>
+          Live Room Happening Now
+        </div>
+        <div className="flex items-center gap-1.5 bg-surface-container-highest px-2.5 py-1 rounded-full border border-outline-variant/40">
+          <Users className="w-3.5 h-3.5 text-on-surface" />
+          <span className="text-[11px] font-bold text-on-surface">24 Active</span>
+        </div>
+      </div>
+
+      <div className="relative z-10">
+        <h3 className="text-xl font-extrabold text-on-surface tracking-tight mb-1">Quiet Pomodoro Sprint (50/10)</h3>
+        <p className="text-[14px] text-on-surface-variant leading-relaxed mb-4">
+          Lofi soundscape, camera-on silent accountability, study stats tracking.
+        </p>
+      </div>
+
+      <div className="flex justify-between items-center relative z-10 mt-2">
+        <div className="flex -space-x-3">
+          <img src="https://i.pravatar.cc/150?img=11" className="w-9 h-9 rounded-full border-2 border-surface-container-low" alt="Active user" />
+          <img src="https://i.pravatar.cc/150?img=12" className="w-9 h-9 rounded-full border-2 border-surface-container-low" alt="Active user" />
+          <img src="https://i.pravatar.cc/150?img=13" className="w-9 h-9 rounded-full border-2 border-surface-container-low" alt="Active user" />
+          <div className="w-9 h-9 rounded-full border-2 border-surface-container-low bg-surface-variant flex items-center justify-center text-[10px] font-bold text-primary">
+            +21
+          </div>
+        </div>
+        
+        <button className="bg-primary text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-md hover:bg-primary-container transition-all active:scale-95 flex items-center gap-2">
+          <Radio className="w-4 h-4" />
+          Join Sprint
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FilePdfIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <path d="M10 12v6" />
+      <path d="M8 14h4" />
+      <path d="M16 12v6" />
+      <path d="M16 15h3" />
+    </svg>
+  );
+}
