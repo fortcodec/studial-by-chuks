@@ -14,11 +14,6 @@ export default function Layout() {
   const [showLoginReward, setShowLoginReward] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem('show_login_banner') === 'true') {
-      setShowLoginReward(true);
-      sessionStorage.removeItem('show_login_banner');
-      setTimeout(() => setShowLoginReward(false), 5000);
-    }
     let isMounted = true;
 
     const fetchUser = async () => {
@@ -31,12 +26,39 @@ export default function Layout() {
           .single();
         
         if (profile) {
-          setCurrentUser({
-            id: user.id,
-            name: profile.full_name || profile.username || 'Student',
-            c_coins: profile.c_coins || 0,
-            avatar: profile.avatar_url || ""
-          });
+          let currentCoins = profile.c_coins || 0;
+          
+          // Enforce Once-Per-Day Login Reward
+          const todayStr = new Date().toDateString();
+          const lastClaimed = localStorage.getItem('last_login_reward_date');
+          
+          if (lastClaimed !== todayStr) {
+            // New day! Award the coins
+            currentCoins += 2;
+            
+            // 1. Update localStorage
+            localStorage.setItem('last_login_reward_date', todayStr);
+            
+            // 2. Update Database
+            await supabase.from('profiles').update({ c_coins: currentCoins }).eq('id', user.id);
+            
+            // 3. Show UI Banner
+            if (isMounted) {
+              setShowLoginReward(true);
+              setTimeout(() => {
+                if (isMounted) setShowLoginReward(false);
+              }, 5000);
+            }
+          }
+
+          if (isMounted) {
+            setCurrentUser({
+              id: user.id,
+              name: profile.full_name || profile.username || 'Student',
+              c_coins: currentCoins,
+              avatar: profile.avatar_url || ""
+            });
+          }
         }
       }
     };

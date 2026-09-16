@@ -13,6 +13,7 @@ import TasksHub from './views/TasksHub';
 import AdminGateway from './views/AdminGateway';
 import Layout from './components/Layout';
 import ProfileView from './views/ProfileView';
+import AdminGuard from './components/AdminGuard';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -65,7 +66,9 @@ function App() {
               <Route path="/vault" element={<Vault />} />
               <Route path="/studyRoom" element={<StudyRoom />} />
               <Route path="/tasksHub" element={<TasksHub />} />
-              <Route path="/adminGateway" element={<AdminGateway />} />
+              <Route element={<AdminGuard />}>
+                <Route path="/admin" element={<AdminGateway />} />
+              </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
           ) : (

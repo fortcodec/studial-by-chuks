@@ -46,18 +46,6 @@ export default function Login() {
       if (data?.user) {
         const studentName = data.user.email ? data.user.email.split('@')[0] : data.user.phone;
         setMessage({ type: 'success', text: `Welcome ${studentName}` });
-        
-        // Handle Login Reward
-        if (sessionStorage.getItem('login_reward_claimed') !== 'true') {
-          try {
-            await supabase.rpc('reward_login_coins', { target_user_id: data.user.id });
-            sessionStorage.setItem('login_reward_claimed', 'true');
-            sessionStorage.setItem('show_login_banner', 'true');
-          } catch (e) {
-            console.error("Failed to grant login reward", e);
-          }
-        }
-        
         setTimeout(() => {
           navigate('/');
         }, 1500);
