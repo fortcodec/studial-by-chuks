@@ -8,11 +8,13 @@ export default function ProfileView() {
   const navigate = useNavigate();
   
   const [email, setEmail] = useState('');
+  const [department, setDepartment] = useState('');
   const [stats, setStats] = useState({
     posts: 0,
     quizzes: 0,
     studyHours: 0
   });
+  const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -21,23 +23,39 @@ export default function ProfileView() {
     const fetchProfileData = async () => {
       setIsLoading(true);
       try {
-        // Fetch email from session
         const { data: { user } } = await supabase.auth.getUser();
         if (user && isMounted) {
           setEmail(user.email);
           
+          // Fetch additional profile data
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('department')
+            .eq('id', user.id)
+            .single();
+            
+          if (profile && isMounted) setDepartment(profile.department || 'Computer Science');
+
           // Fetch Posts Count
           const { count: postsCount } = await supabase
             .from('posts')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id);
             
+          // Mock transactions for ledger
+          const mockTransactions = [
+            { id: 1, type: 'Daily Login Bonus', amount: '+2 C', date: 'Today' },
+            { id: 2, type: 'Post Bounty', amount: '+50 C', date: 'Yesterday' },
+            { id: 3, type: 'AI Tutor Query', amount: '-5 C', date: '3 days ago' },
+          ];
+
           if (isMounted) {
             setStats({
               posts: postsCount || 0,
               quizzes: 0, // Default to 0
               studyHours: 0 // Default to 0
             });
+            setTransactions(mockTransactions);
           }
         }
       } catch (error) {
@@ -87,7 +105,8 @@ export default function ProfileView() {
         </div>
 
         <h2 className="text-xl font-bold text-on-surface mb-1">{currentUser?.name || 'Student'}</h2>
-        <p className="text-[13px] text-outline mb-4">{email || 'Loading...'}</p>
+        <p className="text-[13px] text-outline mb-1">{email || 'Loading...'}</p>
+        <p className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded mb-4">{department || 'University Student'}</p>
 
         <div className="flex items-center gap-2 bg-warning/10 border border-warning/20 px-4 py-1.5 rounded-full shadow-sm z-10">
           <span className="text-warning text-sm drop-shadow-sm">🪙</span>
@@ -128,6 +147,27 @@ export default function ProfileView() {
         </div>
       </div>
 
+      {/* Transaction Ledger */}
+      <div>
+        <h3 className="font-bold text-on-surface mb-3 flex items-center gap-2">
+          <Clock className="w-4 h-4 text-warning" />
+          Recent Transactions
+        </h3>
+        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
+          {transactions.map((tx, idx) => (
+            <div key={tx.id} className={`flex items-center justify-between p-4 ${idx !== transactions.length - 1 ? 'border-b border-outline-variant/20' : ''}`}>
+              <div>
+                <p className="font-semibold text-sm text-on-surface">{tx.type}</p>
+                <p className="text-xs text-outline">{tx.date}</p>
+              </div>
+              <span className={`font-bold text-sm ${tx.amount.startsWith('+') ? 'text-secondary-green' : 'text-error'}`}>
+                {tx.amount}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Action Links */}
       <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm flex flex-col">
         <button className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full">
@@ -135,29 +175,19 @@ export default function ProfileView() {
             <div className="bg-primary/10 p-2 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors">
               <Settings className="w-5 h-5" />
             </div>
-            <span className="text-[15px] font-semibold text-on-surface">Edit Profile</span>
+            <span className="text-[15px] font-semibold text-on-surface">Edit Profile Info</span>
           </div>
           <ChevronRight className="w-5 h-5 text-outline group-hover:text-primary transition-colors" />
         </button>
 
-        <button className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full">
+        <button className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors group w-full">
           <div className="flex items-center gap-3">
             <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-600 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
               <Bookmark className="w-5 h-5" />
             </div>
-            <span className="text-[15px] font-semibold text-on-surface">My Saved Materials</span>
+            <span className="text-[15px] font-semibold text-on-surface">Saved Study Materials</span>
           </div>
           <ChevronRight className="w-5 h-5 text-outline group-hover:text-indigo-600 transition-colors" />
-        </button>
-
-        <button className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors group w-full">
-          <div className="flex items-center gap-3">
-            <div className="bg-warning/10 p-2 rounded-lg text-warning group-hover:bg-warning group-hover:text-white transition-colors">
-              <Clock className="w-5 h-5" />
-            </div>
-            <span className="text-[15px] font-semibold text-on-surface">Transaction History</span>
-          </div>
-          <ChevronRight className="w-5 h-5 text-outline group-hover:text-warning transition-colors" />
         </button>
       </div>
 
