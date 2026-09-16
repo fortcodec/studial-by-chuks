@@ -22,7 +22,7 @@ export function PostCard({ type, author, course, topic, timeAgo, content, stats,
       const { error } = await supabase.rpc('tip_creator', {
         p_sender_id: currentUser.id,
         p_receiver_id: authorId,
-        p_amount: 1
+        p_amount: 10
       });
       
       if (error) {
@@ -148,7 +148,7 @@ export function PostCard({ type, author, course, topic, timeAgo, content, stats,
                 : 'bg-warning/10 border-warning/20 text-on-surface hover:bg-warning/20'
             }`}
           >
-            {tipStatus === 'success' ? 'Tipped! 🎉' : '🪙 Tip 1'}
+            {tipStatus === 'success' ? 'Tipped! 🎉' : '🪙 Tip 10'}
           </button>
 
           <button 

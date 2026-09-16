@@ -129,7 +129,9 @@ export default function Dashboard() {
               {index === 1 && <LiveRoomCard />}
               
               <PostCard 
-                type="normal"
+                type={post.type || "normal"}
+                bountyAmount={post.bounty_amount}
+                bountyDesc="best answer"
                 author={{ 
                   name: post.profiles?.full_name || post.profiles?.username || 'Anonymous', 
                   school: post.department || 'University', 
@@ -143,7 +145,7 @@ export default function Dashboard() {
                 stats={{ upvotes: post.likes || 0, answers: post.comments || 0 }}
                 currentUser={currentUser}
                 authorId={post.user_id}
-                onTipSuccess={() => setCurrentUser(prev => ({...prev, c_coins: prev.c_coins - 1}))}
+                onTipSuccess={() => setCurrentUser(prev => ({...prev, c_coins: prev.c_coins - 10}))}
                 onOpenQuiz={() => {
                   setActiveQuizContent(post.content);
                   setQuizOpen(true);

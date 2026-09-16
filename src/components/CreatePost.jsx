@@ -9,6 +9,9 @@ export default function CreatePost({ onPostCreated }) {
   const [pollOptions, setPollOptions] = useState([]);
   const [showPollInput, setShowPollInput] = useState(false);
   
+  const [bountyAmount, setBountyAmount] = useState('');
+  const [showBountyInput, setShowBountyInput] = useState(false);
+
   // Image Upload state
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -72,6 +75,8 @@ export default function CreatePost({ onPostCreated }) {
       setMediaUrl('');
       setShowPollInput(false);
       setPollOptions([]);
+      setShowBountyInput(false);
+      setBountyAmount('');
     }
   };
 
@@ -123,6 +128,30 @@ export default function CreatePost({ onPostCreated }) {
         };
       }
 
+      const parsedBounty = parseInt(bountyAmount, 10);
+      const isBounty = !isNaN(parsedBounty) && parsedBounty > 0;
+
+      if (isBounty) {
+        if ((currentUser.c_coins || 0) < parsedBounty) {
+          alert("You don't have enough C-Coins for this bounty.");
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Deduct from profile
+        const { error: deductError } = await supabase
+          .from('profiles')
+          .update({ c_coins: currentUser.c_coins - parsedBounty })
+          .eq('id', currentUser.id);
+          
+        if (deductError) {
+          console.error("Failed to deduct bounty coins", deductError);
+          alert("Failed to process bounty transaction.");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const { error } = await supabase.from('posts').insert([
         {
           user_id: currentUser.id,
@@ -132,7 +161,9 @@ export default function CreatePost({ onPostCreated }) {
           media_url: finalMediaUrl,
           poll_data: pollData,
           likes: 0,
-          comments: 0
+          comments: 0,
+          type: isBounty ? 'bounty' : 'normal',
+          bounty_amount: isBounty ? parsedBounty : null
         }
       ]);
 
@@ -144,6 +175,8 @@ export default function CreatePost({ onPostCreated }) {
       setShowMediaInput(false);
       setPollOptions([]);
       setShowPollInput(false);
+      setBountyAmount('');
+      setShowBountyInput(false);
       clearImage();
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -230,6 +263,25 @@ export default function CreatePost({ onPostCreated }) {
             </div>
           )}
 
+          {/* Bounty Input */}
+          {showBountyInput && !selectedImage && (
+            <div className="flex items-center gap-2 bg-warning/10 border border-warning/30 rounded-xl px-3 py-2 animate-slide-up">
+              <span className="text-warning text-lg drop-shadow-sm">🪙</span>
+              <input 
+                type="number"
+                value={bountyAmount}
+                onChange={(e) => setBountyAmount(e.target.value)}
+                placeholder="Attach C-Coin Bounty amount..."
+                className="bg-transparent border-none outline-none flex-grow text-[13px] text-warning font-bold placeholder:text-warning/60 placeholder:font-medium"
+                disabled={isSubmitting}
+                min="1"
+              />
+              <button onClick={() => { setBountyAmount(''); setShowBountyInput(false); }} className="text-warning hover:text-orange-700 active:scale-95 transition-transform p-1">
+                <X size={16} />
+              </button>
+            </div>
+          )}
+
           {/* Poll Input */}
           {showPollInput && !selectedImage && (
             <div className="flex flex-col gap-2 bg-surface-container-low rounded-xl p-3 animate-slide-up">
@@ -305,6 +357,7 @@ export default function CreatePost({ onPostCreated }) {
             onClick={() => { 
               setShowPollInput(true); 
               setShowMediaInput(false);
+              setShowBountyInput(false);
               clearImage();
               if (pollOptions.length === 0) setPollOptions(['', '']); 
             }}
@@ -312,6 +365,20 @@ export default function CreatePost({ onPostCreated }) {
             disabled={isSubmitting || !!selectedImage}
           >
             <BarChart2 className="w-4 h-4 text-primary" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { 
+              setShowBountyInput(true); 
+              setShowPollInput(false); 
+              setShowMediaInput(false);
+              clearImage();
+            }}
+            className="flex items-center gap-1 p-2 bg-warning/10 border border-warning/30 rounded-full hover:bg-warning/20 transition-colors active:scale-95 disabled:opacity-50"
+            disabled={isSubmitting || !!selectedImage}
+          >
+            <span className="text-[12px] font-bold text-warning leading-none px-1">🪙 Bounty</span>
           </button>
         </div>
         
