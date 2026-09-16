@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Search, Download, FileText, ArrowLeft, Loader2, ThumbsUp, BookOpen } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { BottomNav } from '../components/BottomNav';
+import { useNavigate } from 'react-router-dom';
 
-export default function Vault({ navigateTo, currentView }) {
+export default function Vault() {
+  const navigate = useNavigate();
   const [resources, setResources] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,7 +42,7 @@ export default function Vault({ navigateTo, currentView }) {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-surface/95 backdrop-blur-xl px-5 pt-4 pb-2 border-b border-outline-variant/30 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => navigateTo('dashboard')} className="text-outline hover:text-on-surface transition-colors">
+          <button onClick={() => navigate('/dashboard')} className="text-outline hover:text-on-surface transition-colors">
             <ArrowLeft size={20} />
           </button>
           <div className="flex-1 flex justify-center">
@@ -137,7 +139,7 @@ export default function Vault({ navigateTo, currentView }) {
       </div>
 
       <div className="shrink-0 bg-surface z-40">
-        <BottomNav navigateTo={navigateTo} currentView={currentView} />
+        <BottomNav />
       </div>
     </div>
   );

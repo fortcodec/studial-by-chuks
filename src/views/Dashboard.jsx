@@ -22,7 +22,7 @@ function formatTimeAgo(dateString) {
   return `${diffInDays}d ago`;
 }
 
-export default function Dashboard({ navigateTo, currentView }) {
+export default function Dashboard() {
   const [currentUser, setCurrentUser] = useState({
     name: "Student",
     c_coins: 0,
@@ -35,10 +35,16 @@ export default function Dashboard({ navigateTo, currentView }) {
 
   const [quizOpen, setQuizOpen] = useState(false);
   const [activeQuizContent, setActiveQuizContent] = useState("");
+  const [showLoginReward, setShowLoginReward] = useState(false);
 
   const topics = ["All Topics", "⚡ Trending in CS", "Calculus III", "Organic Chem"];
 
   useEffect(() => {
+    if (sessionStorage.getItem('show_login_banner') === 'true') {
+      setShowLoginReward(true);
+      sessionStorage.removeItem('show_login_banner');
+      setTimeout(() => setShowLoginReward(false), 5000);
+    }
     let isMounted = true;
 
     // Fetch User
@@ -56,7 +62,7 @@ export default function Dashboard({ navigateTo, currentView }) {
             id: user.id,
             name: profile.full_name || profile.username || 'Student',
             c_coins: profile.c_coins || 1450,
-            avatar: profile.avatar_url || "https://i.pravatar.cc/150?img=33"
+            avatar: profile.avatar_url || ""
           });
         }
       }
@@ -116,6 +122,16 @@ export default function Dashboard({ navigateTo, currentView }) {
 
   return (
     <div className="flex flex-col h-[100dvh] relative bg-background overflow-hidden max-w-md mx-auto shadow-2xl">
+      {/* Login Reward Banner */}
+      {showLoginReward && (
+        <div className="bg-green-500 text-white text-center py-2 px-4 text-sm font-bold shadow-md animate-slide-down flex justify-center items-center gap-2 relative z-50">
+          <span>🎉 +2 C-Coins for logging in today!</span>
+          <button onClick={() => setShowLoginReward(false)} className="absolute right-4 text-white hover:text-green-200">
+            &times;
+          </button>
+        </div>
+      )}
+
       {/* Sticky Header */}
       <div className="sticky top-0 z-40 bg-surface/90 backdrop-blur-xl px-5 py-4 flex justify-between items-center border-b border-outline-variant/30">
         <div className="flex items-center gap-2">
@@ -141,11 +157,17 @@ export default function Dashboard({ navigateTo, currentView }) {
             )}
           </button>
           
-          <img 
-            src={currentUser.avatar} 
-            alt="Profile" 
-            className="w-9 h-9 rounded-full object-cover border-2 border-surface-container-low shadow-sm"
-          />
+          {currentUser.avatar ? (
+            <img 
+              src={currentUser.avatar} 
+              alt="Profile" 
+              className="w-9 h-9 rounded-full object-cover border-2 border-surface-container-low shadow-sm"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border-2 border-surface-container-low shadow-sm text-sm">
+              {currentUser.name.charAt(0).toUpperCase()}
+            </div>
+          )}
         </div>
       </div>
 
@@ -221,7 +243,7 @@ export default function Dashboard({ navigateTo, currentView }) {
         currentUser={currentUser} 
       />
 
-      <BottomNav navigateTo={navigateTo} currentView={currentView} />
+      <BottomNav />
     </div>
   );
 }

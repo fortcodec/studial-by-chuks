@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Users, ShieldAlert, Coins, TrendingUp, LogOut } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { useNavigate } from 'react-router-dom';
 
-export default function AdminGateway({ navigateTo }) {
+export default function AdminGateway() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -10,7 +12,7 @@ export default function AdminGateway({ navigateTo }) {
     const checkAdmin = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigateTo('login');
+        navigate('/login');
         return;
       }
       
@@ -23,11 +25,11 @@ export default function AdminGateway({ navigateTo }) {
       if (profile?.role === 'admin') {
         setIsAuthorized(true);
       } else {
-        navigateTo('dashboard');
+        navigate('/dashboard');
       }
     };
     checkAdmin();
-  }, [navigateTo]);
+  }, [navigate]);
 
   if (!isAuthorized) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Authenticating...</div>;
@@ -77,7 +79,7 @@ export default function AdminGateway({ navigateTo }) {
 
         <div className="p-4 border-t border-gray-100">
           <button 
-            onClick={() => navigateTo('login')}
+            onClick={() => navigate('/login')}
             className="w-full flex items-center gap-3 px-4 py-3 text-red-600 font-semibold hover:bg-red-50 rounded-xl transition-colors"
           >
             <LogOut className="w-5 h-5" />

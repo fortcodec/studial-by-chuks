@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, Users } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { useNavigate } from 'react-router-dom';
 
-export default function StudyRoom({ navigateTo }) {
+export default function StudyRoom() {
+  const navigate = useNavigate();
   const [activeUsers, setActiveUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   
@@ -105,7 +107,7 @@ export default function StudyRoom({ navigateTo }) {
       {/* Header */}
       <header className={`px-6 py-4 flex items-center justify-between border-b ${isFocusTime ? 'border-gray-800' : 'border-blue-200'}`}>
         <div className="flex items-center gap-4">
-          <button onClick={() => navigateTo('campusHub')} className={`p-2 rounded-full transition ${isFocusTime ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-blue-200 text-gray-600'}`}>
+          <button onClick={() => navigate(-1)} className={`p-2 rounded-full transition ${isFocusTime ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-blue-200 text-gray-600'}`}>
             <ArrowLeft size={24} />
           </button>
           <h1 className="text-xl font-bold tracking-tight">Study Room</h1>

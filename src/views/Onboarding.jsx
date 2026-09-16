@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { UserPlus, Mail, Lock, BookOpen, ArrowLeft, Eye, EyeOff, Key } from 'lucide-react';
+import { UserPlus, Mail, Lock, BookOpen, ArrowLeft, Eye, EyeOff, Key, User, CheckCircle, ArrowRight } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { useNavigate, Link } from 'react-router-dom';
 
-export default function Onboarding({ navigateTo }) {
+export default function Onboarding() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
     username: '',
@@ -95,7 +97,7 @@ export default function Onboarding({ navigateTo }) {
       
       // Proceed to login page after registration
       setTimeout(() => {
-        navigateTo('login');
+        navigate('/dashboard');
       }, 1500);
     } catch (error) {
       setMessage({ type: 'error', text: error.message || 'An error occurred during registration.' });
@@ -108,7 +110,7 @@ export default function Onboarding({ navigateTo }) {
       
       {/* Back to Landing Page Button */}
       <button 
-        onClick={() => navigateTo('landing')}
+        onClick={() => navigate('/')}
         className="absolute top-6 left-6 text-gray-500 hover:text-primary-navy flex items-center gap-2 transition font-medium"
       >
         <ArrowLeft size={20} /> Back
@@ -257,7 +259,10 @@ export default function Onboarding({ navigateTo }) {
         </form>
         
         <p className="text-sm text-gray-500 text-center mt-6">
-          Admin access? <button onClick={() => navigateTo('adminGateway')} className="text-secondary-green hover:underline font-semibold">Login here</button>
+          Already have an account?{' '}
+          <Link to="/login" className="text-primary-navy hover:underline font-semibold">
+            Log In
+          </Link>
         </p>
       </div>
     </div>

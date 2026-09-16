@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Mail, Lock, BookOpen, ArrowLeft, LogIn, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { useNavigate, Link } from 'react-router-dom';
 
-export default function Login({ navigateTo }) {
+export default function Login() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     identifier: '',
     password: ''
@@ -42,15 +44,22 @@ export default function Login({ navigateTo }) {
       if (error) throw error;
 
       if (data?.user) {
-        // Extract a "name" from the email (e.g. "john.doe" from "john.doe@uni.edu") or use phone
         const studentName = data.user.email ? data.user.email.split('@')[0] : data.user.phone;
-        
-        // Show success notification toast/alert
         setMessage({ type: 'success', text: `Welcome ${studentName}` });
         
-        // Delay redirect to allow user to see the message
+        // Handle Login Reward
+        if (sessionStorage.getItem('login_reward_claimed') !== 'true') {
+          try {
+            await supabase.rpc('reward_login_coins', { target_user_id: data.user.id });
+            sessionStorage.setItem('login_reward_claimed', 'true');
+            sessionStorage.setItem('show_login_banner', 'true');
+          } catch (e) {
+            console.error("Failed to grant login reward", e);
+          }
+        }
+        
         setTimeout(() => {
-          navigateTo('dashboard');
+          navigate('/dashboard');
         }, 1500);
       }
     } catch (error) {
@@ -65,7 +74,7 @@ export default function Login({ navigateTo }) {
       
       {/* Back to Landing Page Button */}
       <button 
-        onClick={() => navigateTo('landing')}
+        onClick={() => navigate('/')}
         className="absolute top-6 left-6 text-gray-500 hover:text-primary-navy flex items-center gap-2 transition font-medium"
       >
         <ArrowLeft size={20} /> Back
@@ -148,9 +157,9 @@ export default function Login({ navigateTo }) {
         
         <p className="text-sm text-gray-500 text-center mt-6">
           Don't have an account?{' '}
-          <button onClick={() => navigateTo('onboarding')} className="text-primary-navy hover:underline font-semibold">
+          <Link to="/onboarding" className="text-primary-navy hover:underline font-semibold">
             Get Started
-          </button>
+          </Link>
         </p>
       </div>
     </div>

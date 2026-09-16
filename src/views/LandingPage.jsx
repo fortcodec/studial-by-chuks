@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { BookOpen, LogIn, ArrowRight, Menu, X } from 'lucide-react';
 import studentsImg from '../assets/students-collaborating.jpg';
+import { useNavigate } from 'react-router-dom';
 
-export default function LandingPage({ navigateTo }) {
+export default function LandingPage() {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -85,14 +87,14 @@ export default function LandingPage({ navigateTo }) {
 
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">
           <button 
-            onClick={() => navigateTo('onboarding')}
+            onClick={() => navigate('/onboarding')}
             className="bg-primary-navy hover:bg-[#112440] text-white px-8 py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-navy/20 hover:shadow-primary-navy/40 active:scale-95"
           >
             Get Started <ArrowRight size={20} />
           </button>
           
           <button 
-            onClick={() => navigateTo('login')}
+            onClick={() => navigate('/login')}
             className="bg-white hover:bg-gray-50 text-primary-navy border border-gray-200 px-8 py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
           >
             <LogIn size={20} /> Log In
@@ -131,7 +133,7 @@ export default function LandingPage({ navigateTo }) {
 
             <div className="pt-4">
               <button 
-                onClick={() => navigateTo('onboarding')}
+                onClick={() => navigate('/onboarding')}
                 className="bg-secondary-green hover:bg-[#047857] text-white px-8 py-4 rounded-xl font-semibold transition-all flex items-center gap-2 shadow-lg shadow-secondary-green/20 hover:shadow-secondary-green/40 active:scale-95 inline-flex"
               >
                 Get Started <ArrowRight size={20} />

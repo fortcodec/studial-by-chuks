@@ -1,7 +1,10 @@
 import React from "react";
 import { FileText, Radio, Bot, User } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
-export function BottomNav({ currentView, navigateTo }) {
+export function BottomNav() {
+  const location = useLocation();
+  const currentView = location.pathname.substring(1);
   const navItems = [
     { name: "Feed", href: "dashboard", icon: FileText, badge: null },
     { name: "Live", href: "live", icon: Radio, badge: 3 },
@@ -16,9 +19,9 @@ export function BottomNav({ currentView, navigateTo }) {
         const Icon = item.icon;
 
         return (
-          <button
+          <Link
             key={item.name}
-            onClick={() => navigateTo && navigateTo(item.href)}
+            to={`/${item.href}`}
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active:scale-95 ${
               isActive ? "text-primary font-bold" : "text-outline hover:text-primary hover:bg-surface-container"
             }`}
@@ -34,7 +37,7 @@ export function BottomNav({ currentView, navigateTo }) {
             <span className="text-[11px] font-semibold tracking-wide">
               {item.name}
             </span>
-          </button>
+          </Link>
         );
       })}
     </nav>

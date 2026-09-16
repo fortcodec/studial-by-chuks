@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './views/LandingPage';
 import Onboarding from './views/Onboarding';
 import Login from './views/Login';
@@ -10,37 +11,26 @@ import TasksHub from './views/TasksHub';
 import AdminGateway from './views/AdminGateway';
 
 function App() {
-  const [currentView, setCurrentView] = useState('landing');
   const [darkMode, setDarkMode] = useState(false);
-
-  const renderView = () => {
-    switch (currentView) {
-      case 'landing':
-        return <LandingPage navigateTo={setCurrentView} />;
-      case 'onboarding':
-        return <Onboarding navigateTo={setCurrentView} />;
-      case 'login':
-        return <Login navigateTo={setCurrentView} />;
-      case 'dashboard':
-        return <Dashboard navigateTo={setCurrentView} currentView={currentView} />;
-      case 'live':
-        return <LiveStudyRoom navigateTo={setCurrentView} currentView={currentView} />;
-      case 'vault':
-        return <Vault navigateTo={setCurrentView} currentView={currentView} />;
-      case 'studyRoom':
-        return <StudyRoom navigateTo={setCurrentView} />;
-      case 'tasksHub':
-        return <TasksHub navigateTo={setCurrentView} />;
-      case 'adminGateway':
-        return <AdminGateway navigateTo={setCurrentView} />;
-      default:
-        return <LandingPage navigateTo={setCurrentView} />;
-    }
-  };
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
-      {renderView()}
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/landing" replace />} />
+          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/live" element={<LiveStudyRoom />} />
+          <Route path="/vault" element={<Vault />} />
+          <Route path="/studyRoom" element={<StudyRoom />} />
+          <Route path="/tasksHub" element={<TasksHub />} />
+          <Route path="/adminGateway" element={<AdminGateway />} />
+          <Route path="/aiTutor" element={<div className="flex h-screen items-center justify-center">AI Tutor Coming Soon</div>} />
+          <Route path="/profile" element={<div className="flex h-screen items-center justify-center">Profile Coming Soon</div>} />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }

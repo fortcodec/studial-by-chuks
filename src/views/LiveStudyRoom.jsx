@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { BottomNav } from '../components/BottomNav';
+import { useNavigate } from 'react-router-dom';
 
-export default function LiveStudyRoom({ navigateTo, currentView }) {
+export default function LiveStudyRoom() {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
@@ -113,7 +115,7 @@ export default function LiveStudyRoom({ navigateTo, currentView }) {
     <div className="flex flex-col h-[100dvh] relative bg-background overflow-hidden max-w-md mx-auto shadow-2xl">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-surface/95 backdrop-blur-xl px-5 py-4 flex items-center gap-3 border-b border-outline-variant/30 shadow-sm">
-        <button onClick={() => navigateTo && navigateTo('dashboard')} className="text-outline hover:text-on-surface transition-colors active:scale-95">
+        <button onClick={() => navigate('/dashboard')} className="text-outline hover:text-on-surface transition-colors active:scale-95">
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1 flex items-center gap-2">
@@ -176,7 +178,7 @@ export default function LiveStudyRoom({ navigateTo, currentView }) {
 
       {/* Bottom Nav */}
       <div className="shrink-0 bg-surface z-40">
-        <BottomNav navigateTo={navigateTo} currentView={currentView} />
+        <BottomNav />
       </div>
     </div>
   );

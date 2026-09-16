@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { ArrowLeft, Upload, CheckCircle, Clock, XCircle, Award } from 'lucide-react';
 import CCoinBadge from '../components/CCoinBadge';
+import { useNavigate } from 'react-router-dom';
 
-export default function TasksHub({ navigateTo }) {
+export default function TasksHub() {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [cCoins, setCCoins] = useState(0);
@@ -131,7 +133,7 @@ export default function TasksHub({ navigateTo }) {
       {/* Header */}
       <header className="bg-primary-navy text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigateTo('campusHub')} className="hover:text-tertiary-orange transition">
+          <button onClick={() => navigate('/dashboard')} className="hover:text-tertiary-orange transition">
             <ArrowLeft size={20} />
           </button>
           <h1 className="text-xl font-bold">Weekly Tasks</h1>
