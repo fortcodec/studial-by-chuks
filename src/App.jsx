@@ -14,6 +14,7 @@ import AdminGateway from './views/AdminGateway';
 import Layout from './components/Layout';
 import ProfileView from './views/ProfileView';
 import AdminGuard from './components/AdminGuard';
+import AITutorView from './views/AITutorView';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -59,7 +60,7 @@ function App() {
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/live" element={<LiveStudyRoom />} />
-                <Route path="/ai-tutor" element={<div className="flex h-screen items-center justify-center font-bold">AI Tutor Coming Soon</div>} />
+                <Route path="/ai-tutor" element={<AITutorView />} />
                 <Route path="/profile" element={<ProfileView />} />
               </Route>
               
