@@ -42,7 +42,7 @@ export default function Vault() {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-surface/95 backdrop-blur-xl px-5 pt-4 pb-2 border-b border-outline-variant/30 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => navigate('/dashboard')} className="text-outline hover:text-on-surface transition-colors">
+          <button onClick={() => navigate('/')} className="text-outline hover:text-on-surface transition-colors">
             <ArrowLeft size={20} />
           </button>
           <div className="flex-1 flex justify-center">

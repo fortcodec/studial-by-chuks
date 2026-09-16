@@ -165,11 +165,17 @@ export default function CreatePost({ onPostCreated }) {
       <div className="flex gap-3">
         {/* Avatar Placeholder */}
         <div className="flex-shrink-0 relative">
-          <img 
-            src={currentUser?.avatar_url || "https://i.pravatar.cc/150?img=33"} 
-            alt="User Avatar" 
-            className="w-10 h-10 rounded-full object-cover border border-outline-variant/30"
-          />
+          {currentUser?.avatar_url ? (
+            <img 
+              src={currentUser.avatar_url} 
+              alt="User Avatar" 
+              className="w-10 h-10 rounded-full object-cover border border-outline-variant/30"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border border-outline-variant/30 text-sm shadow-sm">
+              {(currentUser?.username || currentUser?.full_name || currentUser?.email || 'S').charAt(0).toUpperCase()}
+            </div>
+          )}
           <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-container border-2 border-white rounded-full"></div>
         </div>
 

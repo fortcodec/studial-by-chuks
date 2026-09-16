@@ -133,7 +133,7 @@ export default function TasksHub() {
       {/* Header */}
       <header className="bg-primary-navy text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/dashboard')} className="hover:text-tertiary-orange transition">
+          <button onClick={() => navigate('/')} className="hover:text-tertiary-orange transition">
             <ArrowLeft size={20} />
           </button>
           <h1 className="text-xl font-bold">Weekly Tasks</h1>

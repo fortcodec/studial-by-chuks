@@ -97,7 +97,7 @@ export default function Onboarding() {
       
       // Proceed to login page after registration
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/');
       }, 1500);
     } catch (error) {
       setMessage({ type: 'error', text: error.message || 'An error occurred during registration.' });

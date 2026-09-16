@@ -6,9 +6,9 @@ export function BottomNav() {
   const location = useLocation();
   const currentView = location.pathname.substring(1);
   const navItems = [
-    { name: "Feed", href: "dashboard", icon: FileText, badge: null },
+    { name: "Feed", href: "", icon: FileText, badge: null },
     { name: "Live", href: "live", icon: Radio, badge: 3 },
-    { name: "AI Tutor", href: "aiTutor", icon: Bot, badge: null },
+    { name: "AI Tutor", href: "ai-tutor", icon: Bot, badge: null },
     { name: "Profile", href: "profile", icon: User, badge: null },
   ];
 

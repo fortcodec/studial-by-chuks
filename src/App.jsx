@@ -18,14 +18,13 @@ function App() {
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/landing" replace />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/login" element={<Login />} />
           <Route element={<Layout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/" element={<Dashboard />} />
             <Route path="/live" element={<LiveStudyRoom />} />
-            <Route path="/aiTutor" element={<div className="flex h-screen items-center justify-center font-bold">AI Tutor Coming Soon</div>} />
+            <Route path="/ai-tutor" element={<div className="flex h-screen items-center justify-center font-bold">AI Tutor Coming Soon</div>} />
             <Route path="/profile" element={<div className="flex h-screen items-center justify-center font-bold">Profile Coming Soon</div>} />
           </Route>
           

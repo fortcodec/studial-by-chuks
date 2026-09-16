@@ -25,7 +25,7 @@ export default function AdminGateway() {
       if (profile?.role === 'admin') {
         setIsAuthorized(true);
       } else {
-        navigate('/dashboard');
+        navigate('/');
       }
     };
     checkAdmin();
@@ -93,11 +93,13 @@ export default function AdminGateway() {
         <header className="bg-white border-b border-gray-200 p-6 flex justify-between items-center sticky top-0 z-10">
           <h2 className="text-2xl font-bold text-gray-900">{activeTab}</h2>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <img src="https://i.pravatar.cc/150?img=11" alt="Admin" className="w-10 h-10 rounded-full border-2 border-indigo-100" />
-              <div className="text-sm">
-                <p className="font-bold text-gray-900 leading-tight">Admin User</p>
-                <p className="text-gray-500">Super Admin</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full border-2 border-indigo-100 bg-indigo-500 text-white flex items-center justify-center font-bold">
+                A
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 leading-none mb-1">Admin User</h3>
+                <span className="text-xs font-semibold text-secondary-green uppercase tracking-wider">Super Admin</span>
               </div>
             </div>
           </div>

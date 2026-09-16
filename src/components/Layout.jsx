@@ -34,7 +34,7 @@ export default function Layout() {
           setCurrentUser({
             id: user.id,
             name: profile.full_name || profile.username || 'Student',
-            c_coins: profile.c_coins || 1450,
+            c_coins: profile.c_coins || 0,
             avatar: profile.avatar_url || ""
           });
         }

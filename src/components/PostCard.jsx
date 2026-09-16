@@ -44,7 +44,13 @@ export function PostCard({ type, author, course, topic, timeAgo, content, stats,
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
         <div className="flex gap-3">
-          <img src={author.avatar} alt={author.name} className="w-11 h-11 rounded-full object-cover" />
+          {author.avatar && author.avatar.startsWith('http') ? (
+            <img src={author.avatar} alt={author.name} className="w-11 h-11 rounded-full object-cover" />
+          ) : (
+            <div className="w-11 h-11 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
+              {(author.name || 'A').charAt(0).toUpperCase()}
+            </div>
+          )}
           <div>
             <div className="flex items-center gap-1.5">
               <h3 className="text-[15px] font-bold text-on-surface leading-tight">{author.name}</h3>
@@ -194,9 +200,9 @@ export function LiveRoomCard() {
 
       <div className="flex justify-between items-center relative z-10 mt-2">
         <div className="flex -space-x-3">
-          <img src="https://i.pravatar.cc/150?img=11" className="w-9 h-9 rounded-full border-2 border-surface-container-low" alt="Active user" />
-          <img src="https://i.pravatar.cc/150?img=12" className="w-9 h-9 rounded-full border-2 border-surface-container-low" alt="Active user" />
-          <img src="https://i.pravatar.cc/150?img=13" className="w-9 h-9 rounded-full border-2 border-surface-container-low" alt="Active user" />
+          <div className="w-9 h-9 rounded-full border-2 border-surface-container-low bg-blue-500 flex items-center justify-center text-[12px] text-white font-bold">J</div>
+          <div className="w-9 h-9 rounded-full border-2 border-surface-container-low bg-emerald-500 flex items-center justify-center text-[12px] text-white font-bold">S</div>
+          <div className="w-9 h-9 rounded-full border-2 border-surface-container-low bg-amber-500 flex items-center justify-center text-[12px] text-white font-bold">M</div>
           <div className="w-9 h-9 rounded-full border-2 border-surface-container-low bg-surface-variant flex items-center justify-center text-[10px] font-bold text-primary">
             +21
           </div>

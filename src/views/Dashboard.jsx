@@ -87,6 +87,7 @@ export default function Dashboard() {
     };
   }, []);
 
+  return (
     <div className="flex flex-col h-full relative">
       {/* Main Feed */}
       <div className="flex-1 px-5 py-6 overflow-y-auto pb-24 scrollbar-hide">
@@ -132,7 +133,7 @@ export default function Dashboard() {
                 author={{ 
                   name: post.profiles?.full_name || post.profiles?.username || 'Anonymous', 
                   school: post.department || 'University', 
-                  avatar: post.profiles?.avatar_url || 'https://i.pravatar.cc/150?img=33' 
+                  avatar: post.profiles?.avatar_url || '' 
                 }}
                 course="General"
                 topic="Discussion"
