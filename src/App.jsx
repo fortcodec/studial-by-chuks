@@ -13,7 +13,7 @@ const Login = lazy(() => import('./views/Login'));
 const UpdatePassword = lazy(() => import('./views/UpdatePassword'));
 const Dashboard = lazy(() => import('./views/Dashboard'));
 const LiveStudyRoom = lazy(() => import('./views/LiveStudyRoom'));
-const Vault = lazy(() => import('./views/Vault'));
+const Library = lazy(() => import('./views/Library'));
 const StudyRoom = lazy(() => import('./views/StudyRoom'));
 const TasksHub = lazy(() => import('./views/TasksHub'));
 const AdminGateway = lazy(() => import('./views/AdminGateway'));
@@ -70,11 +70,11 @@ function App() {
                   <Route element={<Layout />}>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/live" element={<LiveStudyRoom />} />
-                    <Route path="/ai-tutor" element={<AITutorView />} />
+                    <Route path="/samuel" element={<AITutorView />} />
                     <Route path="/profile" element={<ProfileView />} />
                   </Route>
                   
-                  <Route path="/vault" element={<Vault />} />
+                  <Route path="/library" element={<Library />} />
                   <Route path="/studyRoom" element={<StudyRoom />} />
                   <Route path="/tasksHub" element={<TasksHub />} />
                 </Route>

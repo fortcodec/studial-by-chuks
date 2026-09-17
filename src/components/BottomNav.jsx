@@ -8,8 +8,8 @@ export function BottomNav() {
   const navItems = [
     { name: "Feed", href: "", icon: FileText, badge: null },
     { name: "Live", href: "live", icon: Radio, badge: 3 },
-    { name: "Vault", href: "vault", icon: BookOpen, badge: null },
-    { name: "AI Tutor", href: "ai-tutor", icon: Bot, badge: null },
+    { name: "Library", href: "library", icon: BookOpen, badge: null },
+    { name: "Samuel", href: "samuel", icon: Bot, badge: null },
     { name: "Profile", href: "profile", icon: User, badge: null },
   ];
 

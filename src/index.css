@@ -62,6 +62,27 @@
   --shadow-ambient-focus: 0 0 0 3px rgba(99, 102, 241, 0.25);
 }
 
+.dark {
+  --color-surface: #0f172a;
+  --color-surface-dim: #1e293b;
+  --color-surface-bright: #334155;
+  --color-surface-container-lowest: #0f172a;
+  --color-surface-container-low: #1e293b;
+  --color-surface-container: #334155;
+  --color-surface-container-high: #475569;
+  --color-surface-container-highest: #64748b;
+  --color-on-surface: #f8fafc;
+  --color-on-surface-variant: #cbd5e1;
+  --color-inverse-surface: #e2e8f0;
+  --color-inverse-on-surface: #0f172a;
+  --color-outline: #94a3b8;
+  --color-outline-variant: #475569;
+  
+  --color-background: #0f172a;
+  --color-on-background: #f8fafc;
+  --color-neutral-background: #0f172a;
+}
+
 @layer base {
   body {
     background-color: var(--color-neutral-background);

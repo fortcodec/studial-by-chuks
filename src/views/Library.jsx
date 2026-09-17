@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient';
 import { BottomNav } from '../components/BottomNav';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 
-export default function Vault() {
+export default function Library() {
   const { currentUser } = useOutletContext();
   const navigate = useNavigate();
   const [resources, setResources] = useState([]);
@@ -103,7 +103,7 @@ export default function Vault() {
           </button>
           <div className="flex-1 flex justify-center">
             <h1 className="text-lg font-extrabold text-on-surface tracking-tight flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary" /> The Vault
+              <BookOpen className="w-5 h-5 text-primary" /> The Library
             </h1>
           </div>
           <div className="w-5" /> {/* Spacer for alignment */}
@@ -165,7 +165,7 @@ export default function Vault() {
         ) : pageError ? (
           <div className="text-center py-12 px-4">
             <AlertCircle className="w-12 h-12 text-error mx-auto mb-3" />
-            <h3 className="text-on-surface font-bold text-error">Error Loading Vault</h3>
+            <h3 className="text-on-surface font-bold text-error">Error Loading Library</h3>
             <p className="text-error/80 text-[14px] mt-1">{pageError}</p>
             <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-error/10 text-error rounded-full font-bold text-sm">Try Again</button>
           </div>
@@ -198,10 +198,10 @@ export default function Vault() {
                       </span>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <button
-                          onClick={() => navigate('/ai-tutor', { state: { studyContext: resource } })}
+                          onClick={() => navigate('/samuel', { state: { studyContext: resource } })}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition-colors shadow-sm active:scale-95 text-[11px] font-bold"
                         >
-                          <Bot className="w-3.5 h-3.5" /> AI Explain
+                          <Bot className="w-3.5 h-3.5" /> Ask Samuel
                         </button>
                         <button
                         onClick={() => handleToggleSave(resource?.id)}

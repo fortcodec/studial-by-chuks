@@ -143,6 +143,14 @@ export default function Layout() {
         </div>
 
         <div className="flex items-center gap-4">
+          <button 
+            onClick={() => document.documentElement.classList.toggle('dark')}
+            className="p-1.5 rounded-full bg-surface-container-low border border-outline-variant/30 text-outline hover:text-on-surface shadow-sm active:scale-95 transition-all"
+          >
+            <span className="dark:hidden flex items-center justify-center w-5 h-5">🌙</span>
+            <span className="hidden dark:flex items-center justify-center w-5 h-5">☀️</span>
+          </button>
+          
           <div className="flex items-center gap-1.5 bg-surface-container-low border border-outline-variant/30 px-3 py-1.5 rounded-full shadow-sm">
             <span className="text-warning text-sm drop-shadow-sm">🪙</span>
             <span className="text-[13px] font-bold text-on-surface">{currentUser.c_coins.toLocaleString()} C</span>
@@ -160,7 +168,7 @@ export default function Layout() {
             </button>
 
             {isNotificationsOpen && (
-              <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-outline-variant/30 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute right-0 mt-3 w-80 bg-surface-container-lowest rounded-2xl shadow-xl border border-outline-variant/30 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
                 <div className="p-4 border-b border-outline-variant/30 bg-surface-container-low flex justify-between items-center">
                   <h3 className="font-bold text-on-surface">C-Coin History</h3>
                 </div>

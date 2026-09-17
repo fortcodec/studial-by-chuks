@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MoreHorizontal, ThumbsUp, ThumbsDown, MessageSquare, Bookmark, Share2, Download, Radio, Users, Trash2, Send } from 'lucide-react';
+import { MoreHorizontal, ThumbsUp, ThumbsDown, MessageSquare, Bookmark, Share2, Download, Radio, Users, Trash2, Send, Bot } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { askSamuel } from '../utils/gemini';
 
 export function PostCard({ postId, type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, onOpenQuiz, onDelete, ...props }) {
   const [isTipping, setIsTipping] = useState(false);
@@ -203,18 +205,36 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
     } else {
       // Increment aggregate comments count on posts table
       await supabase.from('posts').update({ comments: (stats?.answers || 0) + 1 }).eq('id', postId);
+
+      // Handle @Samuel AI Tagging in Comments
+      if (text.toLowerCase().includes('@samuel')) {
+        askSamuel(`You are Samuel. The user is asking about the following content: "${content}". Their question is: "${text}". Please provide a helpful response.`).then(async (aiResponse) => {
+          if (!aiResponse) return;
+          const aiComment = {
+            post_id: postId,
+            user_id: currentUser.id,
+            content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
+          };
+          
+          const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles:user_id(username, full_name, avatar_url)').single();
+          if (!aiError && insertedComment) {
+            setComments(prev => [...prev, insertedComment]);
+            await supabase.from('posts').update({ comments: (stats?.answers || 0) + 2 }).eq('id', postId);
+          }
+        }).catch(err => console.error("Samuel failed to respond:", err));
+      }
     }
   };
 
   return (
-    <div className="bg-white rounded-[24px] shadow-surface-1 p-5 mb-5 border border-outline-variant/30 transition-all hover:shadow-surface-2 relative">
+    <div className="bg-surface-container-lowest rounded-[24px] shadow-surface-1 p-4 mb-4 border border-outline-variant/30 transition-all hover:shadow-surface-2 relative">
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
         <div className="flex gap-3">
           {author?.avatar && author.avatar.startsWith('http') ? (
-            <img src={author.avatar} alt={author.name} className="w-11 h-11 rounded-full object-cover" />
+            <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full object-cover border border-outline-variant/30 shadow-sm" />
           ) : (
-            <div className="w-11 h-11 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
+            <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0 border border-outline-variant/30 shadow-sm">
               {(author?.name || 'A').charAt(0).toUpperCase()}
             </div>
           )}
@@ -242,7 +262,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
           </button>
           
           {isMenuOpen && (
-            <div className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-surface-2 border border-outline-variant/30 py-1.5 z-20 animate-slide-up">
+            <div className="absolute right-0 mt-1 w-40 bg-surface-container-lowest rounded-xl shadow-surface-2 border border-outline-variant/30 py-1.5 z-20 animate-slide-up">
               <button 
                 onClick={handleShare}
                 className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2"
@@ -379,7 +399,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                 type="text"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Write an answer..."
+                placeholder="Write an answer, or tag @Samuel for help..."
                 className="w-full bg-transparent border-none outline-none text-sm text-on-surface placeholder-outline"
               />
               <button 
@@ -399,28 +419,42 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
             <div className="text-center py-4 text-outline text-sm font-medium bg-surface-container-low rounded-xl">No answers yet. Be the first to help!</div>
           ) : (
             <div className="space-y-4 max-h-60 overflow-y-auto scrollbar-hide pr-2">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3">
-                  {comment.profiles?.avatar_url ? (
-                    <img src={comment.profiles.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover shrink-0" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
-                      {(comment.profiles?.username || comment.profiles?.full_name || 'A').charAt(0).toUpperCase()}
+              {comments.map((comment) => {
+                const isSamuel = comment.content.startsWith('[AI_SAMUEL_RESPONSE]');
+                const cleanContent = isSamuel ? comment.content.replace('[AI_SAMUEL_RESPONSE]', '').trim() : comment.content;
+                
+                return (
+                  <div key={comment.id} className="flex gap-3">
+                    {isSamuel ? (
+                      <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-600">
+                        <Bot className="w-4 h-4" />
+                      </div>
+                    ) : comment.profiles?.avatar_url ? (
+                      <img src={comment.profiles.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
+                        {(comment.profiles?.username || comment.profiles?.full_name || 'A').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className={`bg-surface-container-lowest border rounded-2xl rounded-tl-sm px-4 py-2 flex-grow ${isSamuel ? 'border-indigo-200 shadow-sm' : 'border-outline-variant/30'}`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[13px] font-bold ${isSamuel ? 'text-indigo-700' : 'text-on-surface'}`}>
+                          {isSamuel ? 'Samuel' : (comment.profiles?.full_name || comment.profiles?.username || 'Anonymous')}
+                        </span>
+                        {isSamuel && (
+                          <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-1 border border-indigo-200 uppercase tracking-wider">
+                            AI Tutor
+                          </span>
+                        )}
+                        <span className="text-[11px] text-outline ml-1">
+                          {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className={`text-sm whitespace-pre-wrap ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>{cleanContent}</p>
                     </div>
-                  )}
-                  <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl rounded-tl-sm px-4 py-2 flex-grow">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[13px] font-bold text-on-surface">
-                        {comment.profiles?.full_name || comment.profiles?.username || 'Anonymous'}
-                      </span>
-                      <span className="text-[11px] text-outline">
-                        {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                    <p className="text-sm text-on-surface-variant">{comment.content}</p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

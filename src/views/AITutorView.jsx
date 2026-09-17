@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Bot, Send, Sparkles, AlertCircle, Loader2, BookOpen } from 'lucide-react';
+import { askSamuel } from '../utils/gemini';
 
 export default function AITutorView() {
   const { currentUser, setCurrentUser } = useOutletContext();
@@ -16,7 +17,7 @@ export default function AITutorView() {
     {
       id: 1,
       role: 'ai',
-      text: "Hi there! I'm your Studial AI Tutor. I can help explain concepts, summarize your notes, or quiz you before an exam. What are we studying today?"
+      text: "Hi there! I'm Samuel, your Studial AI. I can help explain concepts, summarize your notes, or quiz you before an exam. What are we studying today?"
     }
   ]);
   const [inputText, setInputText] = useState('');
@@ -90,16 +91,20 @@ export default function AITutorView() {
     setInputText('');
     setIsTyping(true);
 
-    // Simulate AI Response
-    setTimeout(() => {
+    // Generate Real AI Response
+    try {
+      const responseText = await askSamuel(textToSubmit);
       setIsTyping(false);
       const aiMsg = { 
         id: Date.now() + 1, 
         role: 'ai', 
-        text: `Hey there! 🌟 I'd be happy to help explain that for you in a simple way.\n\nHere is a clear, step-by-step breakdown without any dense academic jargon:\n\n1. **First step**: This is the core idea explained in plain, everyday language.\n2. **Second step**: We build on that idea, connecting it to things you already know.\n3. **Finally**: We wrap it up with a quick summary so it's super easy to remember!\n\n*(Note: This is a simulated response following your friendly, step-by-step AI tutor guidelines!)*` 
+        text: responseText
       };
       setMessages(prev => [...prev, aiMsg]);
-    }, 1500);
+    } catch (error) {
+      setIsTyping(false);
+      setMessages(prev => [...prev, { id: Date.now() + 1, role: 'ai', text: "Sorry, I'm having trouble connecting right now. Please make sure your API key is configured!" }]);
+    }
   };
 
   return (
@@ -111,7 +116,7 @@ export default function AITutorView() {
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-indigo-900 leading-tight">AI Tutor</h3>
+            <h3 className="text-sm font-bold text-indigo-900 leading-tight">Samuel</h3>
             <p className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wider">Always Online</p>
           </div>
         </div>
@@ -139,7 +144,7 @@ export default function AITutorView() {
           <div className="flex justify-start">
             <div className="bg-surface-container-low border border-outline-variant/30 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm flex items-center gap-2">
               <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
-              <span className="text-sm text-outline font-medium">Tutor is thinking...</span>
+              <span className="text-sm text-outline font-medium">Samuel is thinking...</span>
             </div>
           </div>
         )}
@@ -174,7 +179,7 @@ export default function AITutorView() {
                 handleSend();
               }
             }}
-            placeholder="Ask your tutor anything..."
+            placeholder="Ask Samuel anything..."
             className="w-full bg-transparent resize-none outline-none text-[15px] px-2 py-1.5 max-h-32 min-h-[44px]"
             rows={1}
           />

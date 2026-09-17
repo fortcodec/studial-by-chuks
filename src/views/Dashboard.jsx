@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Bell, Loader2 } from "lucide-react";
 import CreatePost from "../components/CreatePost";
-import PomodoroCard from "../components/PomodoroCard";
+
 import { PostCard, LiveRoomCard } from "../components/PostCard";
 import QuizModal from "../components/QuizModal";
 import { supabase } from "../supabaseClient";
@@ -103,7 +103,7 @@ export default function Dashboard() {
         <CreatePost />
 
         {/* Filter Pills */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-6 pb-1 -mx-5 px-5">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-6 pb-1 -mx-5 px-5" style={{ maskImage: 'linear-gradient(to right, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}>
           {topics.map((topic, idx) => (
             <button
               key={topic}
@@ -118,14 +118,13 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Pomodoro Timer */}
-        <PomodoroCard currentUser={currentUser} />
+
 
         {/* Feed Posts */}
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white p-5 rounded-2xl shadow-surface-1 border border-outline-variant/30 animate-pulse">
+              <div key={i} className="bg-surface-container-lowest p-5 rounded-2xl shadow-surface-1 border border-outline-variant/30 animate-pulse">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
                   <div>

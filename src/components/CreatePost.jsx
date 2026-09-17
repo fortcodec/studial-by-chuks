@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Edit3, Users, HelpCircle, FileText, Link as LinkIcon, BarChart2, Send, Loader2, X, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { askSamuel } from '../utils/gemini';
 
 export default function CreatePost({ onPostCreated }) {
   const [content, setContent] = useState('');
@@ -159,14 +160,29 @@ export default function CreatePost({ onPostCreated }) {
         });
       }
 
-      const { error } = await supabase.from('posts').insert([
+      const { data: newPost, error } = await supabase.from('posts').insert([
         {
           user_id: currentUser.id,
           content: content.trim()
         }
-      ]);
+      ]).select().single();
 
       if (error) throw error;
+
+      // Handle @Samuel AI Tagging
+      if (content.toLowerCase().includes('@samuel')) {
+        // Trigger AI in background
+        askSamuel(content).then(async (aiResponse) => {
+          if (!aiResponse) return;
+          // Get the AI User ID or mock it
+          const aiComment = {
+            post_id: newPost.id,
+            user_id: currentUser.id, // Use current user to avoid FK error
+            content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
+          };
+          await supabase.from('post_comments').insert([aiComment]);
+        }).catch(err => console.error("Samuel failed to respond:", err));
+      }
 
       // Clear form
       setContent('');
@@ -193,7 +209,7 @@ export default function CreatePost({ onPostCreated }) {
   };
 
   return (
-    <div className="bg-white rounded-[24px] shadow-surface-1 p-4 mb-6 border border-outline-variant/30">
+    <div className="bg-surface-container-lowest rounded-[24px] shadow-surface-1 p-3 mb-4 border border-outline-variant/30">
       <div className="flex gap-3">
         {/* Avatar Placeholder */}
         <div className="flex-shrink-0 relative">
@@ -218,7 +234,7 @@ export default function CreatePost({ onPostCreated }) {
               ref={textareaRef}
               value={content}
               onChange={handleInput}
-              placeholder="Share notes, ask doubts, or start a study sprint..."
+              placeholder="Share notes, ask doubts, or tag @Samuel for an explanation..."
               className="w-full resize-none border-none focus:ring-0 p-1 text-on-surface placeholder-outline bg-transparent min-h-[24px] text-sm leading-relaxed overflow-hidden outline-none font-medium"
               rows={1}
               disabled={isSubmitting}
@@ -237,7 +253,7 @@ export default function CreatePost({ onPostCreated }) {
               <button 
                 onClick={clearImage}
                 disabled={isSubmitting}
-                className="absolute -top-2 -right-2 bg-white text-error rounded-full p-1 shadow-md border border-outline-variant/30 hover:bg-red-50 transition-colors"
+                className="absolute -top-2 -right-2 bg-surface-container-lowest text-error rounded-full p-1 shadow-md border border-outline-variant/30 hover:bg-error/10 transition-colors"
               >
                 <X size={14} />
               </button>

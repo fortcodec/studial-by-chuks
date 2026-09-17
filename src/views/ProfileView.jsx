@@ -308,7 +308,7 @@ export default function ProfileView() {
             <div className="overflow-y-auto pr-2 scrollbar-hide flex-1 space-y-3">
               {savedMaterials.length === 0 ? (
                 <div className="text-center py-10 text-outline text-sm bg-surface-container-lowest rounded-2xl border border-outline-variant/30">
-                  No materials saved yet. Browse the Vault to save some!
+                  No materials saved yet. Browse the Library to save some!
                 </div>
               ) : (
                 savedMaterials.map(resource => (
