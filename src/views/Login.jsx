@@ -51,7 +51,7 @@ export default function Login() {
         }, 1500);
       }
     } catch (error) {
-      setMessage({ type: 'error', text: error.message || 'Invalid email or password.' });
+      setMessage({ type: 'error', text: 'Account not found or incorrect credentials. Please register first.' });
     } finally {
       setLoading(false);
     }
