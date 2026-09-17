@@ -102,34 +102,33 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
   const handleSave = async () => {
     if (!currentUser) return;
     const newStatus = !isSaved;
-    setIsSaved(newStatus);
     
     try {
       if (newStatus) {
-        await supabase.from('saved_posts').insert({ post_id: postId, user_id: currentUser.id });
+        const { error } = await supabase.from('saved_posts').insert({ post_id: postId, user_id: currentUser.id });
+        if (error) throw error;
       } else {
-        await supabase.from('saved_posts').delete().eq('post_id', postId).eq('user_id', currentUser.id);
+        const { error } = await supabase.from('saved_posts').delete().eq('post_id', postId).eq('user_id', currentUser.id);
+        if (error) throw error;
       }
+      setIsSaved(newStatus);
     } catch (err) {
-      console.error("Error toggling save", err);
+      console.error("Error toggling save:", err);
+      alert(`Failed to toggle save: ${err.message}`);
     }
   };
 
   const handleShare = async () => {
-    const shareData = {
-      title: `Post by ${author?.name || 'Student'}`,
-      text: content,
-      url: window.location.href,
-    };
     if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        console.error('Share cancelled:', err);
-      }
+      navigator.share({
+        title: 'Studial Post',
+        text: content || 'Check out this post on Studial!',
+        url: window.location.href,
+      }).catch((error) => console.log('Sharing failed', error));
     } else {
+      // Fallback: Copy link to clipboard
       navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      alert('Post link copied to clipboard!');
     }
   };
 
