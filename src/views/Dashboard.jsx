@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Bell, Loader2 } from "lucide-react";
+import React, { useState, useEffect, Component } from "react";
+import { Bell, Loader2, AlertCircle } from "lucide-react";
 
 import { PostCard, LiveRoomCard } from "../components/PostCard";
 import QuizModal from "../components/QuizModal";
@@ -26,6 +26,34 @@ function formatTimeAgo(dateString) {
   if (diffInHours < 24) return `${diffInHours}h ago`;
   const diffInDays = Math.floor(diffInHours / 24);
   return `${diffInDays}d ago`;
+}
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-xl m-4 border border-error/20">
+          <AlertCircle className="w-8 h-8 text-error mb-2" />
+          <h2 className="text-on-surface font-bold">Something went wrong</h2>
+          <p className="text-on-surface-variant text-sm mt-1">This post could not be loaded.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 export default function Dashboard() {
@@ -140,44 +168,49 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-        ) : posts.length === 0 ? (
+        ) : (!Array.isArray(posts) || posts.length === 0) ? (
           <div className="text-center py-10 text-outline">
             <p className="font-semibold">No posts yet.</p>
             <p className="text-sm mt-1">Be the first to share something!</p>
           </div>
         ) : (
-          posts.map((post, index) => (
-            <React.Fragment key={post.id}>
-              {/* Insert Live Room card dynamically after the first post */}
-              {index === 1 && <LiveRoomCard />}
-              
-              <PostCard 
-                postId={post.id}
-                type={post.type || "normal"}
-                bountyAmount={post.bounty_amount}
-                bountyDesc="best answer"
-                author={{ 
-                  name: post.profiles?.full_name || post.profiles?.username || 'Anonymous', 
-                  school: post.profiles?.department || 'University', 
-                  avatar: post.profiles?.avatar_url || '' 
-                }}
-                course="General"
-                topic="Discussion"
-                timeAgo={formatTimeAgo(post.created_at)}
-                content={post.content}
-                attachmentImage={post.media_url}
-                stats={{ upvotes: post.likes || 0, answers: post.comments || 0 }}
-                currentUser={currentUser}
-                authorId={post.user_id}
-                onTipSuccess={() => setCurrentUser(prev => ({...prev, c_coins: prev.c_coins - 10}))}
-                onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))}
-                onOpenQuiz={() => {
-                  setActiveQuizContent(post.content);
-                  setQuizOpen(true);
-                }}
-              />
-            </React.Fragment>
-          ))
+          posts.map((post, index) => {
+            if (!post) return null;
+            return (
+              <ErrorBoundary key={post?.id || index}>
+                <React.Fragment>
+                  {/* Insert Live Room card dynamically after the first post */}
+                  {index === 1 && <LiveRoomCard />}
+                  
+                  <PostCard 
+                    postId={post?.id}
+                    type={post?.type || "normal"}
+                    bountyAmount={post?.bounty_amount}
+                    bountyDesc="best answer"
+                    author={{ 
+                      name: post?.profiles?.full_name || post?.profiles?.username || 'Anonymous', 
+                      school: post?.profiles?.department || 'University', 
+                      avatar: post?.profiles?.avatar_url || '' 
+                    }}
+                    course="General"
+                    topic="Discussion"
+                    timeAgo={formatTimeAgo(post?.created_at)}
+                    content={post?.content || ''}
+                    attachmentImage={post?.media_url}
+                    stats={{ upvotes: post?.likes || 0, answers: post?.comments || 0 }}
+                    currentUser={currentUser}
+                    authorId={post?.user_id}
+                    onTipSuccess={() => setCurrentUser(prev => ({...prev, c_coins: prev.c_coins - 10}))}
+                    onDelete={(id) => setPosts(prev => Array.isArray(prev) ? prev.filter(p => p?.id !== id) : prev)}
+                    onOpenQuiz={() => {
+                      setActiveQuizContent(post?.content || '');
+                      setQuizOpen(true);
+                    }}
+                  />
+                </React.Fragment>
+              </ErrorBoundary>
+            );
+          })
         )}
       </div>
 

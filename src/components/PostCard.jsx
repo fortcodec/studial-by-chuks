@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MoreHorizontal, ThumbsUp, ThumbsDown, MessageSquare, Bookmark, Share2, Download, Radio, Users, Trash2, Send, Bot, X } from 'lucide-react';
+import { ThumbsUp, MessageSquare, Bookmark, Share2, Radio, Send, Bot, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { askSamuel } from '../utils/gemini';
 
@@ -248,14 +248,14 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
           <div className={`p-3 rounded-full bg-black/40 backdrop-blur-md transition-transform active:scale-90 ${isLiked ? 'text-primary' : 'text-white'}`}>
             <ThumbsUp className={`w-6 h-6 ${isLiked ? 'fill-current text-primary' : ''}`} />
           </div>
-          <span className="text-white text-[12px] font-bold drop-shadow-md">{likeCount}</span>
+          <span className="text-white text-[12px] font-bold drop-shadow-md">{likeCount || 0}</span>
         </button>
 
         <button onClick={() => setIsCommentsOpen(true)} className="flex flex-col items-center gap-1 group">
           <div className="p-3 rounded-full bg-black/40 backdrop-blur-md text-white transition-transform active:scale-90">
             <MessageSquare className="w-6 h-6" />
           </div>
-          <span className="text-white text-[12px] font-bold drop-shadow-md">{stats?.answers || comments.length}</span>
+          <span className="text-white text-[12px] font-bold drop-shadow-md">{stats?.answers || comments?.length || 0}</span>
         </button>
 
         <button onClick={handleSave} className="flex flex-col items-center gap-1 group">
@@ -295,21 +295,21 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         )}
 
         <div className="flex items-center gap-3">
-          {author?.avatar && author.avatar.startsWith('http') ? (
-            <img src={author.avatar} alt={author.name} className="w-11 h-11 rounded-full object-cover border-2 border-white/20 shadow-md" />
+          {author?.avatar && author?.avatar?.startsWith('http') ? (
+            <img src={author?.avatar} alt={author?.name || 'User'} className="w-11 h-11 rounded-full object-cover border-2 border-white/20 shadow-md" />
           ) : (
             <div className="w-11 h-11 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0 border-2 border-white/20 shadow-md">
               {(author?.name || 'A').charAt(0).toUpperCase()}
             </div>
           )}
           <div>
-            <h3 className="text-[15px] font-bold text-white drop-shadow-md">{author?.name}</h3>
-            <p className="text-white/80 text-[12px] font-medium drop-shadow-sm">{course} &bull; {timeAgo}</p>
+            <h3 className="text-[15px] font-bold text-white drop-shadow-md">{author?.name || 'Anonymous'}</h3>
+            <p className="text-white/80 text-[12px] font-medium drop-shadow-sm">{course || 'General'} &bull; {timeAgo || 'Just now'}</p>
           </div>
         </div>
 
         <p className="text-[14px] text-white font-medium leading-relaxed drop-shadow-md line-clamp-4">
-          {content}
+          {content || ''}
         </p>
       </div>
 
@@ -327,29 +327,30 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
             <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-safe">
               {isLoadingComments ? (
                 <div className="text-center py-4 text-outline text-sm">Loading answers...</div>
-              ) : comments.length === 0 ? (
+              ) : !comments || comments.length === 0 ? (
                 <div className="text-center py-4 text-outline text-sm font-medium">No answers yet. Be the first to help!</div>
               ) : (
                 comments.map((comment) => {
+                  if (!comment || !comment.content) return null;
                   const isSamuel = comment.content.startsWith('[AI_SAMUEL_RESPONSE]');
                   const cleanContent = isSamuel ? comment.content.replace('[AI_SAMUEL_RESPONSE]', '').trim() : comment.content;
                   return (
-                    <div key={comment.id} className="flex gap-3">
+                    <div key={comment?.id || Math.random()} className="flex gap-3">
                       {isSamuel ? (
                         <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-600">
                           <Bot className="w-4 h-4" />
                         </div>
-                      ) : comment.profiles?.avatar_url ? (
-                        <img src={comment.profiles.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                      ) : comment?.profiles?.avatar_url ? (
+                        <img src={comment?.profiles?.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover shrink-0" />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
-                          {(comment.profiles?.username || comment.profiles?.full_name || 'A').charAt(0).toUpperCase()}
+                          {(comment?.profiles?.username || comment?.profiles?.full_name || 'A').charAt(0).toUpperCase()}
                         </div>
                       )}
                       <div className={`bg-surface-container-lowest border rounded-2xl rounded-tl-sm px-4 py-2 flex-grow ${isSamuel ? 'border-indigo-200 shadow-sm' : 'border-outline-variant/30'}`}>
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`text-[13px] font-bold ${isSamuel ? 'text-indigo-700' : 'text-on-surface'}`}>
-                            {isSamuel ? 'Samuel' : (comment.profiles?.full_name || comment.profiles?.username || 'Anonymous')}
+                            {isSamuel ? 'Samuel' : (comment?.profiles?.full_name || comment?.profiles?.username || 'Anonymous')}
                           </span>
                           {isSamuel && (
                             <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-1 border border-indigo-200 uppercase tracking-wider">
@@ -357,10 +358,10 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                             </span>
                           )}
                           <span className="text-[11px] text-outline ml-1">
-                            {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {comment?.created_at ? new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                           </span>
                         </div>
-                        <p className={`text-sm whitespace-pre-wrap ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>{cleanContent}</p>
+                        <p className={`text-sm whitespace-pre-wrap ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>{cleanContent || ''}</p>
                       </div>
                     </div>
                   );
