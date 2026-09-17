@@ -112,7 +112,7 @@ export default function ProfileView() {
           setIsMyPostsLoading(true);
           const { data: postsData } = await supabase
             .from('posts')
-            .select('*, profiles!user_id(username, full_name, avatar_url)')
+            .select('*, profiles!user_id(username, full_name, avatar_url), post_likes(count), post_comments(count)')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
@@ -305,7 +305,10 @@ export default function ProfileView() {
                     timeAgo={new Date(post.created_at).toLocaleDateString()}
                     content={post.content}
                     attachmentImage={post.media_url}
-                    stats={{ upvotes: post.likes, answers: post.comments }}
+                    stats={{ 
+                      upvotes: post?.post_likes?.[0]?.count || post?.likes || 0, 
+                      answers: post?.post_comments?.[0]?.count || post?.comments || 0 
+                    }}
                     currentUser={currentUser}
                     onDelete={(id) => setMyPosts(prev => prev.filter(p => p.id !== id))}
                   />

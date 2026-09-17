@@ -11,6 +11,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
   // Interactivity States
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(stats?.upvotes || 0);
+  const [commentCount, setCommentCount] = useState(stats?.answers || 0);
   const [isSaved, setIsSaved] = useState(false);
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,6 +23,11 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
   const [isAITyping, setIsAITyping] = useState(false);
 
   // Initialize Like/Save state from DB on mount
+  useEffect(() => {
+    setLikeCount(stats?.upvotes || 0);
+    setCommentCount(stats?.answers || 0);
+  }, [stats?.upvotes, stats?.answers]);
+
   useEffect(() => {
     let isMounted = true;
     const fetchInteractions = async () => {
@@ -198,8 +204,9 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
       setNewComment(text); // Restore text on failure
     } else if (insertedComment) {
       setComments(prev => [...prev, insertedComment]);
+      setCommentCount(prev => prev + 1);
       // Increment aggregate comments count on posts table
-      await supabase.from('posts').update({ comments: (stats?.answers || 0) + 1 }).eq('id', postId);
+      await supabase.from('posts').update({ comments: commentCount + 1 }).eq('id', postId);
 
       // Handle @Samuel AI Tagging in Comments
       if (text.toLowerCase().includes('@samuel')) {
@@ -216,7 +223,8 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
             const { data: insertedAiComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!author_id(*)').single();
             if (!aiError && insertedAiComment) {
               setComments(prev => [...prev, insertedAiComment]);
-              await supabase.from('posts').update({ comments: (stats?.answers || 0) + 2 }).eq('id', postId);
+              setCommentCount(prev => prev + 1);
+              await supabase.from('posts').update({ comments: commentCount + 2 }).eq('id', postId); // +2 because user comment + AI comment
             }
           }).catch(err => console.error("Samuel failed to respond:", err)).finally(() => setIsAITyping(false));
         });
@@ -252,10 +260,10 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         </button>
 
         <button onClick={() => setIsCommentsOpen(true)} className="flex flex-col items-center gap-1 group">
-          <div className="p-3 rounded-full bg-black/40 backdrop-blur-md text-white transition-transform active:scale-90">
-            <MessageSquare className="w-6 h-6" />
+          <div className="p-3 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 transition-colors">
+            <MessageSquare className="w-6 h-6 text-white" />
           </div>
-          <span className="text-white text-[12px] font-bold drop-shadow-md">{stats?.answers || comments?.length || 0}</span>
+          <span className="text-white text-[12px] font-bold drop-shadow-md">{commentCount || 0}</span>
         </button>
 
         <button onClick={handleSave} className="flex flex-col items-center gap-1 group">
@@ -293,7 +301,8 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                   alert(`Failed to post AI comment: ${aiError.message}`);
                 } else if (insertedAiComment) {
                   setComments(prev => [...prev, insertedAiComment]);
-                  await supabase.from('posts').update({ comments: (stats?.answers || comments?.length || 0) + 1 }).eq('id', postId);
+                  setCommentCount(prev => prev + 1);
+                  await supabase.from('posts').update({ comments: commentCount + 1 }).eq('id', postId);
                 }
               }
             } catch (err) {
@@ -340,7 +349,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-surface w-full h-[65%] rounded-t-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low rounded-t-3xl">
-              <h3 className="font-bold text-on-surface">{stats?.answers || comments.length} Answers</h3>
+              <h3 className="font-bold text-on-surface">{commentCount || 0} Answers</h3>
               <button onClick={() => setIsCommentsOpen(false)} className="text-outline hover:text-on-surface p-1.5 rounded-full hover:bg-surface-container transition-colors">
                 <X className="w-5 h-5" />
               </button>

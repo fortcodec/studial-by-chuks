@@ -129,7 +129,7 @@ export default function AdminGateway() {
     try {
       const { data, error } = await supabase
         .from('posts')
-        .select(`*, profiles!user_id (username, full_name, avatar_url)`)
+        .select(`*, profiles!user_id (username, full_name, avatar_url), post_likes(count), post_comments(count)`)
         .order('created_at', { ascending: false });
       if (error) {
         console.error("Error fetching posts:", error);

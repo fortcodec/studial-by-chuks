@@ -75,7 +75,7 @@ export default function Dashboard() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('posts')
-        .select('*, profiles!user_id(*)')
+        .select('*, profiles!user_id(*), post_likes(count), post_comments(count)')
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -195,7 +195,10 @@ export default function Dashboard() {
                     timeAgo={formatTimeAgo(post?.created_at)}
                     content={post?.content || ''}
                     attachmentImage={post?.media_url}
-                    stats={{ upvotes: post?.likes || 0, answers: post?.comments || 0 }}
+                    stats={{ 
+                      upvotes: post?.post_likes?.[0]?.count || post?.likes || 0, 
+                      answers: post?.post_comments?.[0]?.count || post?.comments || 0 
+                    }}
                     currentUser={currentUser}
                     authorId={post?.user_id}
                     onTipSuccess={() => setCurrentUser(prev => ({...prev, c_coins: prev.c_coins - 10}))}
