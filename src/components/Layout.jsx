@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { BottomNav } from "./BottomNav";
@@ -12,6 +12,50 @@ export default function Layout() {
   });
   const [hasNotifications, setHasNotifications] = useState(true);
   const [showLoginReward, setShowLoginReward] = useState(false);
+
+  // Notification Dropdown State
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+  const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
+  const notificationRef = useRef(null);
+
+  const fetchTransactions = async () => {
+    if (!currentUser?.id) return;
+    setIsTransactionsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('c_coin_transactions')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (!error && data) {
+        setTransactions(data);
+        setHasNotifications(false); // Clear red dot when viewed
+      }
+    } catch (err) {
+      console.error("Error fetching transactions:", err);
+    } finally {
+      setIsTransactionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isNotificationsOpen) {
+      fetchTransactions();
+    }
+  }, [isNotificationsOpen, currentUser?.id]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -104,12 +148,51 @@ export default function Layout() {
             <span className="text-[13px] font-bold text-on-surface">{currentUser.c_coins.toLocaleString()} C</span>
           </div>
           
-          <button className="relative text-outline hover:text-on-surface transition-colors active:scale-95">
-            <Bell className="w-6 h-6" />
-            {hasNotifications && (
-              <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+          <div className="relative" ref={notificationRef}>
+            <button 
+              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              className="relative text-outline hover:text-on-surface transition-colors active:scale-95"
+            >
+              <Bell className="w-6 h-6" />
+              {hasNotifications && (
+                <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+              )}
+            </button>
+
+            {isNotificationsOpen && (
+              <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-outline-variant/30 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="p-4 border-b border-outline-variant/30 bg-surface-container-low flex justify-between items-center">
+                  <h3 className="font-bold text-on-surface">C-Coin History</h3>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto">
+                  {isTransactionsLoading ? (
+                    <div className="p-6 text-center text-outline text-sm">Loading transactions...</div>
+                  ) : transactions.length === 0 ? (
+                    <div className="p-6 text-center text-outline text-sm font-medium">
+                      No recent transactions yet.<br/><span className="text-xs">Complete tasks to earn C-Coins!</span>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-outline-variant/30">
+                      {transactions.map(t => {
+                        const isPositive = t.amount?.startsWith('+');
+                        return (
+                          <div key={t.id || Math.random()} className="p-4 hover:bg-surface-container-lowest transition-colors flex justify-between items-center">
+                            <div>
+                              <p className="text-sm font-bold text-on-surface">{t.description || 'Transaction'}</p>
+                              <p className="text-xs text-outline font-medium">{new Date(t.created_at).toLocaleDateString()}</p>
+                            </div>
+                            <span className={`text-sm font-bold ${isPositive ? 'text-secondary-green' : 'text-error'}`}>
+                              {t.amount}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
-          </button>
+          </div>
           
           {currentUser?.avatar_url || currentUser?.avatar ? (
             <img 

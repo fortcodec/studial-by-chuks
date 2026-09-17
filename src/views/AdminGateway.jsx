@@ -87,7 +87,13 @@ export default function AdminGateway() {
     setIsUsersLoading(true);
     try {
       const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-      if (!error && data) setUsers(data);
+      if (error) {
+        console.error("Error fetching users:", error);
+      } else if (data) {
+        setUsers(data);
+      }
+    } catch (err) {
+      console.error("Unexpected error in fetchUsers:", err);
     } finally {
       setIsUsersLoading(false);
     }
@@ -459,32 +465,32 @@ export default function AdminGateway() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {users.map(user => (
-                        <tr key={user.id} className="hover:bg-gray-50">
+                      {users?.map(user => (
+                        <tr key={user?.id || Math.random()} className="hover:bg-gray-50">
                           <td className="p-4">
                             <div className="flex items-center gap-3">
-                              {user.avatar_url ? (
+                              {user?.avatar_url ? (
                                 <img src={user.avatar_url} className="w-8 h-8 rounded-full object-cover" />
                               ) : (
                                 <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">
-                                  {(user.full_name || user.username || 'U').charAt(0).toUpperCase()}
+                                  {String(user?.full_name || user?.username || 'U').charAt(0).toUpperCase()}
                                 </div>
                               )}
                               <div>
-                                <p className="font-bold text-gray-900">{user.full_name || user.username || 'Student'}</p>
-                                <p className="text-xs text-gray-500">{user.id.substring(0,8)}...</p>
+                                <p className="font-bold text-gray-900">{user?.full_name || user?.username || 'Student'}</p>
+                                <p className="text-xs text-gray-500">{user?.id ? String(user.id).substring(0,8) : 'Unknown'}...</p>
                               </div>
                             </div>
                           </td>
                           <td className="p-4">
-                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
-                              {user.role || 'student'}
+                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${user?.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
+                              {user?.role || 'student'}
                             </span>
                           </td>
-                          <td className="p-4 font-semibold text-gray-900">{user.c_coins || 0} C</td>
+                          <td className="p-4 font-semibold text-gray-900">{user?.c_coins || 0} C</td>
                           <td className="p-4 text-right flex justify-end gap-2">
                             <button 
-                              onClick={() => { setEditingUser(user); setEditForm({ role: user.role || 'student', c_coins: user.c_coins || 0 }); }}
+                              onClick={() => { setEditingUser(user); setEditForm({ role: user?.role || 'student', c_coins: user?.c_coins || 0 }); }}
                               className="text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50 transition-colors"
                               title="Edit User"
                             >
