@@ -15,6 +15,7 @@ export default function Layout() {
   });
   const [hasNotifications, setHasNotifications] = useState(true);
   const [showLoginReward, setShowLoginReward] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
 
   // Notification Dropdown State
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -78,17 +79,17 @@ export default function Layout() {
           
           // Enforce Once-Per-Day Login Reward
           const todayStr = new Date().toDateString();
-          const lastClaimed = localStorage.getItem('last_login_reward_date');
+          const lastClaimed = profile.last_reward_date;
           
           if (lastClaimed !== todayStr) {
             // New day! Award the coins
             currentCoins += 2;
             
-            // 1. Update localStorage
-            localStorage.setItem('last_login_reward_date', todayStr);
-            
             // 2. Update Database
-            await supabase.from('profiles').update({ c_coins: currentCoins }).eq('id', user.id);
+            await supabase.from('profiles').update({ 
+              c_coins: currentCoins,
+              last_reward_date: todayStr
+            }).eq('id', user.id);
             
             // Log Transaction
             await supabase.from('c_coin_transactions').insert({
@@ -151,11 +152,15 @@ export default function Layout() {
             onClick={() => {
               const isDark = document.documentElement.classList.toggle('dark');
               localStorage.setItem('theme', isDark ? 'dark' : 'light');
+              setIsDarkMode(isDark);
             }}
             className="p-1.5 rounded-full bg-surface-container-low border border-outline-variant/30 text-outline hover:text-on-surface shadow-sm active:scale-95 transition-all"
           >
-            <span className="dark:hidden flex items-center justify-center w-5 h-5">🌙</span>
-            <span className="hidden dark:flex items-center justify-center w-5 h-5">☀️</span>
+            {!isDarkMode ? (
+              <span className="flex items-center justify-center w-5 h-5">🌙</span>
+            ) : (
+              <span className="flex items-center justify-center w-5 h-5">☀️</span>
+            )}
           </button>
           
           <div className="flex items-center gap-1.5 bg-surface-container-low border border-outline-variant/30 px-3 py-1.5 rounded-full shadow-sm">

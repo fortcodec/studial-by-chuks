@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Download, FileText, ArrowLeft, Loader2, BookOpen, Bookmark, Bot, AlertCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { BottomNav } from '../components/BottomNav';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 
 export default function Library() {
@@ -94,7 +93,7 @@ export default function Library() {
   }) : [];
 
   return (
-    <div className="flex flex-col h-[100dvh] relative bg-background overflow-hidden max-w-md mx-auto shadow-2xl">
+    <div className="flex flex-col h-full relative bg-background overflow-hidden">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-surface/95 backdrop-blur-xl px-5 pt-4 pb-2 border-b border-outline-variant/30 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
@@ -140,7 +139,7 @@ export default function Library() {
       </div>
 
       {/* Resource List */}
-      <div className="flex-1 overflow-y-auto p-5 bg-background pb-[80px]">
+      <div className="flex-1 overflow-y-auto p-5 bg-background pb-24">
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3, 4].map(i => (
@@ -224,10 +223,6 @@ export default function Library() {
             ))}
           </div>
         )}
-      </div>
-
-      <div className="shrink-0 bg-surface z-40">
-        <BottomNav />
       </div>
     </div>
   );

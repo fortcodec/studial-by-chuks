@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Settings, Bookmark, Clock, LogOut, ChevronRight, FileText, Brain, GraduationCap, Loader2, X, Download } from 'lucide-react';
@@ -24,6 +24,42 @@ export default function ProfileView() {
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({ username: '', department: '', university: '' });
   const [savedMaterials, setSavedMaterials] = useState([]);
+  const fileInputRef = useRef(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentUser.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file);
+      
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      const publicUrl = data.publicUrl;
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', currentUser.id);
+
+      if (updateError) throw updateError;
+      
+      alert('Avatar updated successfully!');
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update avatar: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -123,25 +159,37 @@ export default function ProfileView() {
         {/* Decorative background glow */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
         
-        <div className="relative mb-3">
+        <div className="relative mb-3 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleAvatarChange} 
+            accept="image/*" 
+            className="hidden" 
+          />
           {currentUser?.avatar ? (
             <img 
               src={currentUser.avatar} 
               alt="Profile" 
-              className="w-20 h-20 rounded-full object-cover border-4 border-surface shadow-sm"
+              className={`w-20 h-20 rounded-full object-cover border-4 border-surface shadow-sm transition-opacity ${isUploadingAvatar ? 'opacity-50' : 'group-hover:opacity-80'}`}
             />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border-4 border-surface shadow-sm text-2xl">
-              {(currentUser?.name || 'S').charAt(0).toUpperCase()}
+            <div className={`w-20 h-20 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border-4 border-surface shadow-sm text-2xl transition-opacity ${isUploadingAvatar ? 'opacity-50' : 'group-hover:opacity-80'}`}>
+              {(fullName || currentUser?.name || 'S').charAt(0).toUpperCase()}
             </div>
           )}
-          <div className="absolute bottom-0 right-0 bg-surface rounded-full p-1.5 border border-outline-variant/30 shadow-sm cursor-pointer hover:bg-surface-container">
+          {isUploadingAvatar && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          )}
+          <div className="absolute bottom-0 right-0 bg-surface rounded-full p-1.5 border border-outline-variant/30 shadow-sm hover:bg-surface-container">
             <Settings className="w-4 h-4 text-outline" />
           </div>
         </div>
 
-        <h2 className="text-xl font-bold text-on-surface mb-1">{fullName || currentUser?.name || username || 'Student'}</h2>
-        <p className="text-[13px] text-outline mb-1">{email || 'Loading...'}</p>
+        <h2 className="text-xl font-bold text-on-surface mb-1">{fullName || currentUser?.name || 'Student'}</h2>
+        <p className="text-[13px] text-outline mb-1">{username ? `@${username}` : (email || 'Loading...')}</p>
         <p className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded mb-4">{department || 'University Student'}</p>
 
         <div className="flex items-center gap-2 bg-warning/10 border border-warning/20 px-4 py-1.5 rounded-full shadow-sm z-10">

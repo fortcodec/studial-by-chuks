@@ -1,15 +1,36 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FileText, Radio, Bot, User, BookOpen } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 
 import { Plus } from "lucide-react";
 
 export function BottomNav({ onNewPost }) {
   const location = useLocation();
   const currentView = location.pathname.substring(1);
+  const [liveCount, setLiveCount] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLiveCount = async () => {
+      const { count } = await supabase.from('posts').select('*', { count: 'exact', head: true });
+      if (isMounted) setLiveCount(count || 0);
+    };
+    fetchLiveCount();
+    
+    const channel = supabase.channel('bottom-nav-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, fetchLiveCount)
+      .subscribe();
+      
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const leftNavItems = [
     { name: "Feed", href: "", icon: FileText, badge: null },
-    { name: "Live", href: "live", icon: Radio, badge: 3 },
+    { name: "Live", href: "live", icon: Radio, badge: liveCount > 0 ? liveCount : null },
   ];
   const rightNavItems = [
     { name: "Library", href: "library", icon: BookOpen, badge: null },
