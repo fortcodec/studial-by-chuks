@@ -104,15 +104,15 @@ export default function Layout() {
             )}
           </button>
           
-          {currentUser.avatar ? (
+          {currentUser?.avatar_url || currentUser?.avatar ? (
             <img 
-              src={currentUser.avatar} 
+              src={currentUser.avatar_url || currentUser.avatar} 
               alt="Profile" 
               className="w-9 h-9 rounded-full object-cover border-2 border-surface-container-low shadow-sm"
             />
           ) : (
             <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border-2 border-surface-container-low shadow-sm text-sm">
-              {currentUser.name.charAt(0).toUpperCase()}
+              {String(currentUser?.username || currentUser?.name || 'Student').charAt(0).toUpperCase().replace(/[0-9]/, 'S')}
             </div>
           )}
         </div>
