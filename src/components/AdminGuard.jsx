@@ -13,12 +13,14 @@ export default function AdminGuard() {
 
     const checkAdminStatus = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || !session.user) {
           if (isMounted) setIsAdmin(false);
           window.location.href = '/login';
           return;
         }
+        
+        const user = session.user;
 
         const { data: profile } = await supabase
           .from('profiles')

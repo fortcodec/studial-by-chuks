@@ -10,21 +10,20 @@ export default function SessionTimeout({ children }) {
   const [showWarning, setShowWarning] = useState(false);
   const navigate = useNavigate();
   
-  // Use refs to track timeouts so they can be cleared inside event listeners
   const warningTimerRef = useRef(null);
   const logoutTimerRef = useRef(null);
+  const isWarningVisible = useRef(false);
 
   const resetTimers = () => {
-    // Clear existing timers
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
     if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
 
-    // Hide warning if it was showing
     setShowWarning(false);
+    isWarningVisible.current = false;
 
-    // Set new timers
     warningTimerRef.current = setTimeout(() => {
       setShowWarning(true);
+      isWarningVisible.current = true;
     }, WARNING_TIME);
 
     logoutTimerRef.current = setTimeout(async () => {
@@ -37,24 +36,22 @@ export default function SessionTimeout({ children }) {
     const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
     
     const handleActivity = () => {
-      if (!showWarning) {
+      if (!isWarningVisible.current) {
         resetTimers();
       }
     };
 
-    // Initialize timers on mount
     resetTimers();
 
-    // Attach listeners
     events.forEach(event => document.addEventListener(event, handleActivity));
 
-    // Cleanup
     return () => {
       events.forEach(event => document.removeEventListener(event, handleActivity));
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
       if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
     };
-  }, [showWarning, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   return (
     <>
