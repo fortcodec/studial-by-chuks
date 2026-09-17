@@ -36,8 +36,11 @@ export default function ProfileView() {
 
     setIsUploadingAvatar(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const fileExt = file.name.split('.').pop();
-      const fileName = `${currentUser.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file);
@@ -50,7 +53,7 @@ export default function ProfileView() {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
-        .eq('id', currentUser.id);
+        .eq('id', user.id);
 
       if (updateError) throw updateError;
       
