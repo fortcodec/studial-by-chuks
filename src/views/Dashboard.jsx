@@ -43,7 +43,7 @@ export default function Dashboard() {
         .from('posts')
         .select(`
           *,
-          profiles:user_id (username, full_name, avatar_url)
+          profiles:user_id (username, full_name, avatar_url, department)
         `)
         .order('created_at', { ascending: false });
         
@@ -65,7 +65,7 @@ export default function Dashboard() {
           // Fetch the profile for the new post
           const { data: profile } = await supabase
             .from('profiles')
-            .select('username, full_name, avatar_url')
+            .select('username, full_name, avatar_url, department')
             .eq('id', payload.new.user_id)
             .single();
 
@@ -134,7 +134,7 @@ export default function Dashboard() {
                 bountyDesc="best answer"
                 author={{ 
                   name: post.profiles?.full_name || post.profiles?.username || 'Anonymous', 
-                  school: post.department || 'University', 
+                  school: post.profiles?.department || 'University', 
                   avatar: post.profiles?.avatar_url || '' 
                 }}
                 course="General"

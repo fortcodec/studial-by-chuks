@@ -68,7 +68,7 @@ export default function Layout() {
   }, []);
 
   return (
-    <div className="flex flex-col h-[100dvh] relative bg-background overflow-hidden max-w-md mx-auto shadow-2xl">
+    <div className="flex flex-col h-[100dvh] relative bg-background overflow-hidden w-full max-w-md md:max-w-3xl lg:max-w-4xl mx-auto shadow-2xl md:border-x border-outline-variant/30">
       {/* Login Reward Banner */}
       {showLoginReward && (
         <div className="bg-green-500 text-white text-center py-2 px-4 text-sm font-bold shadow-md animate-slide-down flex justify-center items-center gap-2 relative z-50">

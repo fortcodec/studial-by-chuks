@@ -155,8 +155,6 @@ export default function CreatePost({ onPostCreated }) {
       const { error } = await supabase.from('posts').insert([
         {
           user_id: currentUser.id,
-          author: currentUser.full_name || currentUser.username || currentUser.email?.split('@')[0] || 'Anonymous',
-          department: currentUser.department || null,
           content: content.trim(),
           media_url: finalMediaUrl,
           poll_data: pollData,
