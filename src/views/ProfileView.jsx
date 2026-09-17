@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Settings, Bookmark, Clock, LogOut, ChevronRight, FileText, Brain, GraduationCap } from 'lucide-react';
+import { Settings, Bookmark, Clock, LogOut, ChevronRight, FileText, Brain, GraduationCap, Loader2 } from 'lucide-react';
 
 export default function ProfileView() {
   const { currentUser } = useOutletContext();
@@ -90,6 +90,14 @@ export default function ProfileView() {
       alert('Failed to log out.');
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background pb-24">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="px-5 py-6 flex flex-col gap-6 pb-24">

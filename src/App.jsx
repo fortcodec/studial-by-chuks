@@ -14,6 +14,7 @@ import AdminGateway from './views/AdminGateway';
 import Layout from './components/Layout';
 import ProfileView from './views/ProfileView';
 import AdminGuard from './components/AdminGuard';
+import StudentGuard from './components/StudentGuard';
 import AITutorView from './views/AITutorView';
 
 function App() {
@@ -57,16 +58,19 @@ function App() {
           {/* Protected Routes */}
           {session ? (
             <>
-              <Route element={<Layout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/live" element={<LiveStudyRoom />} />
-                <Route path="/ai-tutor" element={<AITutorView />} />
-                <Route path="/profile" element={<ProfileView />} />
+              <Route element={<StudentGuard />}>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/live" element={<LiveStudyRoom />} />
+                  <Route path="/ai-tutor" element={<AITutorView />} />
+                  <Route path="/profile" element={<ProfileView />} />
+                </Route>
+                
+                <Route path="/vault" element={<Vault />} />
+                <Route path="/studyRoom" element={<StudyRoom />} />
+                <Route path="/tasksHub" element={<TasksHub />} />
               </Route>
               
-              <Route path="/vault" element={<Vault />} />
-              <Route path="/studyRoom" element={<StudyRoom />} />
-              <Route path="/tasksHub" element={<TasksHub />} />
               <Route element={<AdminGuard />}>
                 <Route path="/admin" element={<AdminGateway />} />
               </Route>

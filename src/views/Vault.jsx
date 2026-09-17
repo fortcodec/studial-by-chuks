@@ -17,8 +17,8 @@ export default function Vault() {
     const fetchResources = async () => {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from('vault_resources')
-        .select('*, profiles(full_name, username)')
+        .from('study_materials')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (!error && data) {
@@ -33,8 +33,7 @@ export default function Vault() {
   const filteredResources = resources.filter(res => {
     const matchesSearch = res.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           res.course_code.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = activeFilter === 'All' || res.resource_type === activeFilter;
-    return matchesSearch && matchesFilter;
+    return matchesSearch;
   });
 
   return (
@@ -109,18 +108,14 @@ export default function Vault() {
                     <span className="bg-primary-container/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
                       {resource.course_code}
                     </span>
-                    <span className="text-[9px] font-bold text-outline uppercase tracking-wider bg-surface-container px-2 py-0.5 rounded-md">{resource.resource_type}</span>
                   </div>
                   <h3 className="font-bold text-on-surface text-[15px] leading-tight mb-2 truncate">{resource.title}</h3>
+                  <p className="text-[12px] text-outline mb-2 line-clamp-2">{resource.description}</p>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-[12px] text-outline font-medium truncate pr-2">
-                      By {resource.profiles?.full_name || resource.profiles?.username || 'Anonymous'}
+                      Studial Admin
                     </span>
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      <div className="flex items-center gap-1 text-outline">
-                        <ThumbsUp className="w-3.5 h-3.5" />
-                        <span className="text-[11px] font-bold">{resource.upvotes}</span>
-                      </div>
                       <a 
                         href={resource.file_url} 
                         target="_blank" 

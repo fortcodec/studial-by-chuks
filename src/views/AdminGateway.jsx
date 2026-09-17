@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, ShieldAlert, Coins, TrendingUp, LogOut, Loader2, Trash2, Edit2 } from 'lucide-react';
+import { LayoutDashboard, Users, ShieldAlert, Coins, LogOut, Loader2, Trash2, Edit2, CheckCircle, ListTodo, BookOpen, Upload, FileText } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
@@ -22,6 +22,16 @@ export default function AdminGateway() {
   // Posts State
   const [posts, setPosts] = useState([]);
   const [isPostsLoading, setIsPostsLoading] = useState(false);
+
+  // Tasks State
+  const [pendingSubmissions, setPendingSubmissions] = useState([]);
+  const [isTasksLoading, setIsTasksLoading] = useState(false);
+  const [taskForm, setTaskForm] = useState({ title: '', description: '', reward_coins: 0 });
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+
+  // Study Materials State
+  const [materialForm, setMaterialForm] = useState({ title: '', course_code: '', description: '', file: null });
+  const [isUploadingMaterial, setIsUploadingMaterial] = useState(false);
 
   // Editing User State
   const [editingUser, setEditingUser] = useState(null);
@@ -50,6 +60,8 @@ export default function AdminGateway() {
       fetchUsers();
     } else if (activeTab === 'Content Moderation') {
       fetchPosts();
+    } else if (activeTab === 'Tasks Manager') {
+      fetchPendingSubmissions();
     }
   }, [activeTab]);
 
@@ -63,7 +75,7 @@ export default function AdminGateway() {
 
       setStats({
         totalStudents: studentsCount || 0,
-        activeLiveRooms: postsCount || 0, // Mocking active live rooms count with total posts for now
+        activeLiveRooms: postsCount || 0,
         totalCoins: totalCoins
       });
     } catch (error) {
@@ -94,6 +106,20 @@ export default function AdminGateway() {
     }
   };
 
+  const fetchPendingSubmissions = async () => {
+    setIsTasksLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('task_submissions')
+        .select(`*, tasks(title, reward_coins), profiles!inner(full_name, username)`)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      if (!error && data) setPendingSubmissions(data);
+    } finally {
+      setIsTasksLoading(false);
+    }
+  };
+
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     if (!currentUser || !editingUser) return;
@@ -109,11 +135,23 @@ export default function AdminGateway() {
       
       alert('User updated successfully!');
       setEditingUser(null);
-      fetchUsers(); // Refresh
+      fetchUsers();
     } catch (err) {
-      alert(err.message || 'Error updating user. Did you execute the SQL RPC script?');
+      alert(err.message || 'Error updating user.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Are you sure you want to delete this user? This will remove their profile data.")) return;
+    try {
+      const { error } = await supabase.from('profiles').delete().eq('id', userId);
+      if (error) throw error;
+      alert("User deleted successfully.");
+      setUsers(prev => prev.filter(u => u.id !== userId));
+    } catch (err) {
+      alert("Failed to delete user: " + err.message);
     }
   };
 
@@ -128,8 +166,77 @@ export default function AdminGateway() {
     }
   };
 
+  const handleCreateTask = async (e) => {
+    e.preventDefault();
+    setIsCreatingTask(true);
+    try {
+      const { error } = await supabase.from('tasks').insert([{
+        title: taskForm.title,
+        description: taskForm.description,
+        reward_coins: parseInt(taskForm.reward_coins, 10)
+      }]);
+      if (error) throw error;
+      alert('Task created successfully!');
+      setTaskForm({ title: '', description: '', reward_coins: 0 });
+    } catch (err) {
+      alert("Failed to create task.");
+    } finally {
+      setIsCreatingTask(false);
+    }
+  };
+
+  const handleApproveSubmission = async (submissionId) => {
+    if (!currentUser) return;
+    try {
+      const { error } = await supabase.rpc('approve_task_submission', {
+        p_submission_id: submissionId,
+        p_admin_id: currentUser.id
+      });
+      if (error) throw error;
+      alert("Submission approved and C-Coins credited!");
+      setPendingSubmissions(prev => prev.filter(sub => sub.id !== submissionId));
+    } catch (err) {
+      alert("Failed to approve submission: " + err.message);
+    }
+  };
+
+  const handleUploadMaterial = async (e) => {
+    e.preventDefault();
+    if (!materialForm.file) return alert("Please select a file.");
+    setIsUploadingMaterial(true);
+    try {
+      const fileExt = materialForm.file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('study-materials')
+        .upload(fileName, materialForm.file);
+      
+      if (uploadError) throw uploadError;
+
+      const fileUrl = supabase.storage.from('study-materials').getPublicUrl(fileName).data.publicUrl;
+
+      const { error: dbError } = await supabase.from('study_materials').insert([{
+        title: materialForm.title,
+        course_code: materialForm.course_code,
+        description: materialForm.description,
+        file_url: fileUrl
+      }]);
+
+      if (dbError) throw dbError;
+
+      alert("Study material uploaded successfully!");
+      setMaterialForm({ title: '', course_code: '', description: '', file: null });
+    } catch (err) {
+      alert("Failed to upload material: " + err.message);
+    } finally {
+      setIsUploadingMaterial(false);
+    }
+  };
+
   const navigation = [
     { name: 'Dashboard', icon: LayoutDashboard },
+    { name: 'Tasks Manager', icon: ListTodo },
+    { name: 'Study Materials', icon: BookOpen },
     { name: 'Users', icon: Users },
     { name: 'Content Moderation', icon: ShieldAlert },
     { name: 'Economy', icon: Coins },
@@ -143,7 +250,7 @@ export default function AdminGateway() {
           <h1 className="text-2xl font-extrabold text-indigo-900 tracking-tight">Studial<span className="text-red-500">Admin</span></h1>
         </div>
         
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.name;
@@ -226,6 +333,116 @@ export default function AdminGateway() {
             </div>
           )}
 
+          {activeTab === 'Tasks Manager' && (
+            <div className="space-y-8">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><ListTodo className="text-indigo-600" /> Create New Task</h3>
+                <form onSubmit={handleCreateTask} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Task Title</label>
+                    <input type="text" required value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="e.g. Upload Lecture Notes" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Reward (C-Coins)</label>
+                    <input type="number" required value={taskForm.reward_coins} onChange={e => setTaskForm({...taskForm, reward_coins: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="e.g. 50" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                    <textarea rows="3" required value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="Task details..."></textarea>
+                  </div>
+                  <div className="md:col-span-2 flex justify-end">
+                    <button type="submit" disabled={isCreatingTask} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                      {isCreatingTask ? 'Creating...' : 'Create Task'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2"><CheckCircle className="text-green-500" /> Pending Submissions</h3>
+                </div>
+                {isTasksLoading ? (
+                  <div className="p-12 flex justify-center"><Loader2 className="w-8 h-8 text-indigo-600 animate-spin" /></div>
+                ) : pendingSubmissions.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500 font-medium">No pending submissions.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50 text-gray-500 text-sm border-b border-gray-200">
+                          <th className="p-4 font-semibold">Student</th>
+                          <th className="p-4 font-semibold">Task</th>
+                          <th className="p-4 font-semibold">Proof</th>
+                          <th className="p-4 font-semibold text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {pendingSubmissions.map(sub => (
+                          <tr key={sub.id} className="hover:bg-gray-50">
+                            <td className="p-4 font-bold text-gray-900">
+                              {sub.profiles?.full_name || sub.profiles?.username || 'Unknown'}
+                            </td>
+                            <td className="p-4">
+                              <p className="font-bold text-gray-900 text-sm">{sub.tasks?.title}</p>
+                              <p className="text-xs text-gray-500">Reward: {sub.tasks?.reward_coins} C-Coins</p>
+                              {sub.notes && <p className="text-xs text-gray-600 mt-1 italic">Note: "{sub.notes}"</p>}
+                            </td>
+                            <td className="p-4">
+                              <a href={sub.proof_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm font-semibold flex items-center gap-1">
+                                <FileText className="w-4 h-4" /> View Proof
+                              </a>
+                            </td>
+                            <td className="p-4 text-right">
+                              <button onClick={() => handleApproveSubmission(sub.id)} className="px-4 py-1.5 bg-green-100 text-green-700 font-bold rounded-lg hover:bg-green-200 text-sm">
+                                Approve & Pay
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'Study Materials' && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-2xl mx-auto">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><BookOpen className="text-indigo-600" /> Upload Study Material</h3>
+              <form onSubmit={handleUploadMaterial} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Title</label>
+                    <input type="text" required value={materialForm.title} onChange={e => setMaterialForm({...materialForm, title: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="Calculus Notes" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Course Code</label>
+                    <input type="text" required value={materialForm.course_code} onChange={e => setMaterialForm({...materialForm, course_code: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="MTH101" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Description (Optional)</label>
+                  <textarea rows="2" value={materialForm.description} onChange={e => setMaterialForm({...materialForm, description: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="Brief description..."></textarea>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">File</label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 relative cursor-pointer">
+                    <input type="file" required onChange={e => setMaterialForm({...materialForm, file: e.target.files[0]})} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <span className="text-sm font-semibold text-gray-600">{materialForm.file ? materialForm.file.name : 'Click to select a file'}</span>
+                  </div>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <button type="submit" disabled={isUploadingMaterial || !materialForm.file} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                    {isUploadingMaterial ? 'Uploading...' : 'Upload Resource'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
           {activeTab === 'Users' && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {isUsersLoading ? (
@@ -265,12 +482,20 @@ export default function AdminGateway() {
                             </span>
                           </td>
                           <td className="p-4 font-semibold text-gray-900">{user.c_coins || 0} C</td>
-                          <td className="p-4 text-right">
+                          <td className="p-4 text-right flex justify-end gap-2">
                             <button 
                               onClick={() => { setEditingUser(user); setEditForm({ role: user.role || 'student', c_coins: user.c_coins || 0 }); }}
                               className="text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50 transition-colors"
+                              title="Edit User"
                             >
                               <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                              title="Delete Profile"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </td>
                         </tr>
