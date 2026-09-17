@@ -7,13 +7,20 @@ import QuizModal from "../components/QuizModal";
 import { supabase } from "../supabaseClient";
 import { useOutletContext } from "react-router-dom";
 
-// Simple relative time formatter
 function formatTimeAgo(dateString) {
-  const date = new Date(dateString);
+  if (!dateString) return '';
+  let parsedDate = dateString;
+  // If it doesn't have a timezone indicator, treat it as UTC
+  if (!parsedDate.includes('Z') && !parsedDate.includes('+')) {
+    parsedDate += 'Z';
+  }
+  const date = new Date(parsedDate);
   const now = new Date();
-  const diffInSeconds = Math.floor((now - date) / 1000);
   
-  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+  let diffInSeconds = Math.floor((now - date) / 1000);
+  if (diffInSeconds < 0) diffInSeconds = 0; // fallback for clock skew
+  
+  if (diffInSeconds < 60) return `Just now`;
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
   const diffInHours = Math.floor(diffInMinutes / 60);
@@ -129,6 +136,7 @@ export default function Dashboard() {
               {index === 1 && <LiveRoomCard />}
               
               <PostCard 
+                postId={post.id}
                 type={post.type || "normal"}
                 bountyAmount={post.bounty_amount}
                 bountyDesc="best answer"
@@ -146,6 +154,7 @@ export default function Dashboard() {
                 currentUser={currentUser}
                 authorId={post.user_id}
                 onTipSuccess={() => setCurrentUser(prev => ({...prev, c_coins: prev.c_coins - 10}))}
+                onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))}
                 onOpenQuiz={() => {
                   setActiveQuizContent(post.content);
                   setQuizOpen(true);
