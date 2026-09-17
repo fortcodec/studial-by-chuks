@@ -39,7 +39,7 @@ export default function LiveStudyRoom() {
         .from('study_room_messages')
         .select(`
           *,
-          profiles:user_id (username, full_name, avatar_url)
+          profiles!user_id (username, full_name, avatar_url)
         `)
         .eq('room_id', 'global')
         .order('created_at', { ascending: true });

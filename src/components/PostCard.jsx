@@ -52,7 +52,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         setIsLoadingComments(true);
         const { data, error } = await supabase
           .from('post_comments')
-          .select('*, profiles(*)')
+          .select('*, profiles!user_id(*)')
           .eq('post_id', postId)
           .order('created_at', { ascending: true });
         
@@ -222,7 +222,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
               content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
             };
             
-            const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles(*)').single();
+            const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!user_id(*)').single();
             if (!aiError && insertedComment) {
               setComments(prev => [...prev, insertedComment]);
               await supabase.from('posts').update({ comments: (stats?.answers || 0) + 2 }).eq('id', postId);
@@ -295,7 +295,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                   content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
                 };
                 
-                const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles(*)').single();
+                const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!user_id(*)').single();
                 
                 if (!aiError && insertedComment) {
                   setComments(prev => [...prev, insertedComment]);

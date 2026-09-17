@@ -112,7 +112,7 @@ export default function ProfileView() {
           setIsMyPostsLoading(true);
           const { data: postsData } = await supabase
             .from('posts')
-            .select('*, profiles:user_id(username, full_name, avatar_url)')
+            .select('*, profiles!user_id(username, full_name, avatar_url)')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 

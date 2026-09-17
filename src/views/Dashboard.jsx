@@ -75,7 +75,7 @@ export default function Dashboard() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('posts')
-        .select('*, profiles(*)')
+        .select('*, profiles!user_id(*)')
         .order('created_at', { ascending: false });
         
       if (error) {
