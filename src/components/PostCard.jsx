@@ -52,11 +52,14 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         setIsLoadingComments(true);
         const { data, error } = await supabase
           .from('post_comments')
-          .select('*, profiles:user_id(username, full_name, avatar_url)')
+          .select('*, profiles(*)')
           .eq('post_id', postId)
           .order('created_at', { ascending: true });
         
-        if (data && !error) {
+        if (error) {
+          console.error("Error fetching comments:", error);
+          alert(`Failed to load comments: ${error.message}`);
+        } else if (data) {
           setComments(data);
         }
         setIsLoadingComments(false);
@@ -193,7 +196,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
     // Insert into DB
     const { error } = await supabase.from('post_comments').insert([{
       post_id: postId,
-      author_id: currentUser.id,
+      user_id: currentUser.id,
       content: text
     }]);
 
@@ -215,11 +218,11 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
             if (!aiResponse) return;
             const aiComment = {
               post_id: postId,
-              author_id: samuelId,
+              user_id: samuelId,
               content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
             };
             
-            const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles:user_id(username, full_name, avatar_url)').single();
+            const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles(*)').single();
             if (!aiError && insertedComment) {
               setComments(prev => [...prev, insertedComment]);
               await supabase.from('posts').update({ comments: (stats?.answers || 0) + 2 }).eq('id', postId);
@@ -288,11 +291,11 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
               if (aiResponse) {
                 const aiComment = {
                   post_id: postId,
-                  author_id: samuelId,
+                  user_id: samuelId,
                   content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
                 };
                 
-                const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles:user_id(username, full_name, avatar_url)').single();
+                const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles(*)').single();
                 
                 if (!aiError && insertedComment) {
                   setComments(prev => [...prev, insertedComment]);

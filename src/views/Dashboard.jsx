@@ -75,14 +75,12 @@ export default function Dashboard() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('posts')
-        .select(`
-          *,
-          profiles (username, full_name, avatar_url, department)
-        `)
+        .select('*, profiles(*)')
         .order('created_at', { ascending: false });
         
       if (error) {
         console.error("Error fetching posts:", error);
+        alert(`Failed to fetch feed: ${error.message}`);
       } else if (data && isMounted) {
         setPosts(data);
       }
