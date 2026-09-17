@@ -1,11 +1,16 @@
 import { GoogleGenAI } from '@google/genai';
 
-// Initialize the Google Gen AI SDK
-// The user must provide VITE_GEMINI_API_KEY in their .env file
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-
 export async function askSamuel(prompt) {
   try {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn("VITE_GEMINI_API_KEY is missing. AI Tutor will not function.");
+      return "AI Tutor is currently unavailable. Please configure the API key.";
+    }
+    
+    // Initialize the Google Gen AI SDK
+    const ai = new GoogleGenAI({ apiKey });
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
