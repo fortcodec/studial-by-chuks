@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ThumbsUp, MessageSquare, Bookmark, Share2, Radio, Send, Bot, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { askSamuel } from '../utils/gemini';
+import { askSamuel, getSamuelProfileId } from '../utils/gemini';
 import { Avatar } from './Avatar';
 
 export function PostCard({ postId, type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, onOpenQuiz, onDelete, ...props }) {
@@ -19,6 +19,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [isAITyping, setIsAITyping] = useState(false);
 
   // Initialize Like/Save state from DB on mount
   useEffect(() => {
@@ -208,20 +209,23 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
 
       // Handle @Samuel AI Tagging in Comments
       if (text.toLowerCase().includes('@samuel')) {
-        askSamuel(`You are Samuel. The user is asking about the following content: "${content}". Their question is: "${text}". Please provide a helpful response.`).then(async (aiResponse) => {
-          if (!aiResponse) return;
-          const aiComment = {
-            post_id: postId,
-            author_id: currentUser.id,
-            content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
-          };
-          
-          const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles:user_id(username, full_name, avatar_url)').single();
-          if (!aiError && insertedComment) {
-            setComments(prev => [...prev, insertedComment]);
-            await supabase.from('posts').update({ comments: (stats?.answers || 0) + 2 }).eq('id', postId);
-          }
-        }).catch(err => console.error("Samuel failed to respond:", err));
+        setIsAITyping(true);
+        getSamuelProfileId().then(samuelId => {
+          askSamuel(`You are Samuel. The user is asking about the following content: "${content}". Their question is: "${text}". Please provide a helpful response.`).then(async (aiResponse) => {
+            if (!aiResponse) return;
+            const aiComment = {
+              post_id: postId,
+              author_id: samuelId,
+              content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
+            };
+            
+            const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles:user_id(username, full_name, avatar_url)').single();
+            if (!aiError && insertedComment) {
+              setComments(prev => [...prev, insertedComment]);
+              await supabase.from('posts').update({ comments: (stats?.answers || 0) + 2 }).eq('id', postId);
+            }
+          }).catch(err => console.error("Samuel failed to respond:", err)).finally(() => setIsAITyping(false));
+        });
       }
     }
   };
@@ -276,45 +280,29 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
 
         <button onClick={async () => {
             setIsCommentsOpen(true);
-            
-            // Generate a temporary ID for the optimistic loading comment
-            const tempAiId = Date.now();
-            const loadingComment = {
-              id: tempAiId,
-              content: '[AI_SAMUEL_RESPONSE] Typing...',
-              created_at: new Date().toISOString(),
-              isTyping: true,
-              profiles: {
-                username: 'Samuel',
-                full_name: 'AI Tutor',
-              }
-            };
-            
-            setComments(prev => [...prev, loadingComment]);
+            setIsAITyping(true);
             
             try {
+              const samuelId = await getSamuelProfileId();
               const aiResponse = await askSamuel(`You are Samuel. Please provide a helpful explanation of the following post content: "${content}".`);
               if (aiResponse) {
                 const aiComment = {
                   post_id: postId,
-                  author_id: currentUser?.id,
+                  author_id: samuelId,
                   content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
                 };
                 
                 const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles:user_id(username, full_name, avatar_url)').single();
                 
                 if (!aiError && insertedComment) {
-                  setComments(prev => prev.map(c => c.id === tempAiId ? insertedComment : c));
+                  setComments(prev => [...prev, insertedComment]);
                   await supabase.from('posts').update({ comments: (stats?.answers || comments?.length || 0) + 1 }).eq('id', postId);
-                } else {
-                  setComments(prev => prev.filter(c => c.id !== tempAiId));
                 }
-              } else {
-                setComments(prev => prev.filter(c => c.id !== tempAiId));
               }
             } catch (err) {
               console.error("AI Error:", err);
-              setComments(prev => prev.filter(c => c.id !== tempAiId));
+            } finally {
+              setIsAITyping(false);
             }
           }} 
           className="flex flex-col items-center gap-1 group mt-2"
@@ -394,11 +382,28 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                             {comment?.created_at ? new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                           </span>
                         </div>
-                        <p className={`text-sm whitespace-pre-wrap ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'} ${comment?.isTyping ? 'animate-pulse' : ''}`}>{cleanContent || ''}</p>
+                        <p className={`text-sm whitespace-pre-wrap ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>{cleanContent || ''}</p>
                       </div>
                     </div>
                   );
                 })
+              )}
+              {isAITyping && (
+                <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-600">
+                    <Bot className="w-4 h-4 animate-pulse" />
+                  </div>
+                  <div className="bg-surface-container-lowest border border-indigo-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center">
+                    <p className="text-sm text-indigo-900 font-medium flex items-center gap-1">
+                      Samuel is typing
+                      <span className="flex space-x-1 ml-1">
+                        <span className="animate-bounce delay-75">.</span>
+                        <span className="animate-bounce delay-150">.</span>
+                        <span className="animate-bounce delay-300">.</span>
+                      </span>
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
 

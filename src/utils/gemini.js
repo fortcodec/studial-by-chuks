@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { supabase } from '../supabaseClient';
 
 export async function askSamuel(prompt) {
   try {
@@ -23,4 +24,54 @@ export async function askSamuel(prompt) {
     console.error("Error communicating with Samuel (Gemini API):", error);
     throw error;
   }
+}
+
+let cachedSamuelId = null;
+
+export async function getSamuelProfileId() {
+  if (cachedSamuelId) return cachedSamuelId;
+  
+  const SAMUEL_UUID = '00000000-0000-0000-0000-000000samuel'; // Deterministic fallback
+  
+  try {
+    // Check if Samuel exists
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', 'Samuel')
+      .single();
+
+    if (data && data.id) {
+      cachedSamuelId = data.id;
+      return cachedSamuelId;
+    }
+
+    // Generate deterministic UUID for Samuel
+    // In PostgreSQL UUID v4 format.
+    const deterministicId = '00000000-0000-4000-a000-000000000000';
+    
+    // Try to insert Samuel
+    const { data: insertData, error: insertError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: deterministicId,
+        username: 'Samuel',
+        full_name: 'Samuel (AI)',
+        role: 'ai',
+      }, { onConflict: 'username' })
+      .select('id')
+      .single();
+
+    if (insertData && insertData.id) {
+      cachedSamuelId = insertData.id;
+      return cachedSamuelId;
+    } else if (insertError) {
+      console.warn("Failed to create Samuel's profile in DB. RLS or foreign key might block it.", insertError);
+      return deterministicId;
+    }
+  } catch (err) {
+    console.warn("Error getting Samuel profile ID:", err);
+  }
+  
+  return '00000000-0000-4000-a000-000000000000'; // Fallback
 }
