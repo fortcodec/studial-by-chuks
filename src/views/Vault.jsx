@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, FileText, ArrowLeft, Loader2, ThumbsUp, BookOpen, Bookmark, Bot } from 'lucide-react';
+import { Search, Download, FileText, ArrowLeft, Loader2, BookOpen, Bookmark, Bot, AlertCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { BottomNav } from '../components/BottomNav';
 import { useOutletContext, useNavigate } from 'react-router-dom';
@@ -12,6 +12,7 @@ export default function Vault() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
+  const [pageError, setPageError] = useState(null);
 
   const filters = ['All', 'Past Questions', 'Lecture Notes', 'Syllabus'];
 
@@ -26,14 +27,18 @@ export default function Vault() {
 
         if (error) {
           console.error("Error fetching study materials:", error);
+          setPageError(error.message || "Failed to load study materials");
           setResources([]);
         } else if (data) {
           setResources(data);
+          setPageError(null);
         } else {
           setResources([]);
+          setPageError(null);
         }
       } catch (err) {
         console.error("Unexpected error fetching study materials:", err);
+        setPageError(err.message || "An unexpected error occurred");
         setResources([]);
       } finally {
         setIsLoading(false);
@@ -82,8 +87,9 @@ export default function Vault() {
   };
 
   const filteredResources = Array.isArray(resources) ? resources.filter(res => {
-    const matchesSearch = res?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          res?.course_code?.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchVal = searchQuery?.toLowerCase() || '';
+    const matchesSearch = res?.title?.toLowerCase()?.includes(searchVal) || 
+                          res?.course_code?.toLowerCase()?.includes(searchVal);
     return matchesSearch;
   }) : [];
 
@@ -139,6 +145,13 @@ export default function Vault() {
           <div className="flex justify-center items-center py-10">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
+        ) : pageError ? (
+          <div className="text-center py-12 px-4">
+            <AlertCircle className="w-12 h-12 text-error mx-auto mb-3" />
+            <h3 className="text-on-surface font-bold text-error">Error Loading Vault</h3>
+            <p className="text-error/80 text-[14px] mt-1">{pageError}</p>
+            <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-error/10 text-error rounded-full font-bold text-sm">Try Again</button>
+          </div>
         ) : filteredResources.length === 0 ? (
           <div className="text-center py-12">
             <FileText className="w-12 h-12 text-outline-variant mx-auto mb-3" />
@@ -148,7 +161,7 @@ export default function Vault() {
         ) : (
           <div className="flex flex-col gap-4">
             {filteredResources.map(resource => (
-              <div key={resource.id} className="bg-white rounded-2xl p-4 shadow-surface-1 border border-outline-variant/30 flex items-start gap-4 transition-transform active:scale-[0.98]">
+              <div key={resource?.id} className="bg-white rounded-2xl p-4 shadow-surface-1 border border-outline-variant/30 flex items-start gap-4 transition-transform active:scale-[0.98]">
                 <div className="w-12 h-14 rounded-xl bg-error/10 border border-error/20 flex flex-col items-center justify-center flex-shrink-0">
                   <FileText className="w-6 h-6 text-error mb-0.5" />
                   <span className="text-[9px] font-bold text-error uppercase">DOC</span>
@@ -157,11 +170,11 @@ export default function Vault() {
                 <div className="flex-grow min-w-0">
                   <div className="flex justify-between items-start mb-1">
                     <span className="bg-primary-container/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      {resource.course_code}
+                      {resource?.course_code || 'UNK'}
                     </span>
                   </div>
-                  <h3 className="font-bold text-on-surface text-[15px] leading-tight mb-2 truncate">{resource.title}</h3>
-                  <p className="text-[12px] text-outline mb-2 line-clamp-2">{resource.description}</p>
+                  <h3 className="font-bold text-on-surface text-[15px] leading-tight mb-2 truncate">{resource?.title || 'Untitled Document'}</h3>
+                  <p className="text-[12px] text-outline mb-2 line-clamp-2">{resource?.description || 'No description available.'}</p>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-[12px] text-outline font-medium truncate pr-2">
                         Studial Admin
@@ -174,13 +187,13 @@ export default function Vault() {
                           <Bot className="w-3.5 h-3.5" /> AI Explain
                         </button>
                         <button
-                        onClick={() => handleToggleSave(resource.id)}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${savedMaterials.has(resource.id) ? 'bg-indigo-500/10 text-indigo-600' : 'bg-surface-container-low text-outline hover:bg-surface-container hover:text-on-surface'}`}
+                        onClick={() => handleToggleSave(resource?.id)}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${savedMaterials?.has(resource?.id) ? 'bg-indigo-500/10 text-indigo-600' : 'bg-surface-container-low text-outline hover:bg-surface-container hover:text-on-surface'}`}
                       >
-                        <Bookmark className={`w-4 h-4 ${savedMaterials.has(resource.id) ? 'fill-current' : ''}`} />
+                        <Bookmark className={`w-4 h-4 ${savedMaterials?.has(resource?.id) ? 'fill-current' : ''}`} />
                       </button>
                       <a 
-                        href={resource.file_url} 
+                        href={resource?.file_url || '#'} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="w-8 h-8 bg-surface-container-low rounded-full flex items-center justify-center text-primary hover:bg-surface-container hover:text-primary-container transition-colors shadow-sm"
