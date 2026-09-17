@@ -1,10 +1,11 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Layout from './components/Layout';
 import AdminGuard from './components/AdminGuard';
 import StudentGuard from './components/StudentGuard';
+import SessionTimeout from './components/SessionTimeout';
 
 // Lazy load route components for code splitting
 const LandingPage = lazy(() => import('./views/LandingPage'));
@@ -74,7 +75,7 @@ function App() {
 
             {/* Protected Routes */}
             {session ? (
-              <>
+              <Route element={<SessionTimeout><Outlet /></SessionTimeout>}>
                 <Route element={<StudentGuard />}>
                   <Route element={<Layout />}>
                     <Route path="/" element={<Dashboard />} />
@@ -92,7 +93,7 @@ function App() {
                   <Route path="/admin" element={<AdminGateway />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
-              </>
+              </Route>
             ) : (
               <Route path="*" element={<Navigate to="/landing" replace />} />
             )}
