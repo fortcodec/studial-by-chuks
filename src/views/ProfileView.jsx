@@ -9,6 +9,8 @@ export default function ProfileView() {
   
   const [email, setEmail] = useState('');
   const [department, setDepartment] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [stats, setStats] = useState({
     posts: 0,
     quizzes: 0,
@@ -36,12 +38,14 @@ export default function ProfileView() {
           // Fetch additional profile data
           const { data: profile } = await supabase
             .from('profiles')
-            .select('department, username, university')
+            .select('department, username, university, full_name')
             .eq('id', user.id)
             .single();
             
           if (profile && isMounted) {
             setDepartment(profile.department || 'Computer Science');
+            setFullName(profile.full_name || '');
+            setUsername(profile.username || '');
             setEditForm({
               username: profile.username || '',
               department: profile.department || '',
@@ -136,7 +140,7 @@ export default function ProfileView() {
           </div>
         </div>
 
-        <h2 className="text-xl font-bold text-on-surface mb-1">{currentUser?.name || 'Student'}</h2>
+        <h2 className="text-xl font-bold text-on-surface mb-1">{fullName || currentUser?.name || username || 'Student'}</h2>
         <p className="text-[13px] text-outline mb-1">{email || 'Loading...'}</p>
         <p className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded mb-4">{department || 'University Student'}</p>
 

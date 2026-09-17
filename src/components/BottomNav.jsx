@@ -1,5 +1,5 @@
 import React from "react";
-import { FileText, Radio, Bot, User } from "lucide-react";
+import { FileText, Radio, Bot, User, BookOpen } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 export function BottomNav() {
@@ -8,6 +8,7 @@ export function BottomNav() {
   const navItems = [
     { name: "Feed", href: "", icon: FileText, badge: null },
     { name: "Live", href: "live", icon: Radio, badge: 3 },
+    { name: "Vault", href: "vault", icon: BookOpen, badge: null },
     { name: "AI Tutor", href: "ai-tutor", icon: Bot, badge: null },
     { name: "Profile", href: "profile", icon: User, badge: null },
   ];

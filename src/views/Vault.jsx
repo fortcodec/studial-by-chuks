@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, FileText, ArrowLeft, Loader2, ThumbsUp, BookOpen, Bookmark } from 'lucide-react';
+import { Search, Download, FileText, ArrowLeft, Loader2, ThumbsUp, BookOpen, Bookmark, Bot } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { BottomNav } from '../components/BottomNav';
 import { useOutletContext, useNavigate } from 'react-router-dom';
@@ -151,12 +151,18 @@ export default function Vault() {
                   </div>
                   <h3 className="font-bold text-on-surface text-[15px] leading-tight mb-2 truncate">{resource.title}</h3>
                   <p className="text-[12px] text-outline mb-2 line-clamp-2">{resource.description}</p>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-[12px] text-outline font-medium truncate pr-2">
-                      Studial Admin
-                    </span>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <button
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-[12px] text-outline font-medium truncate pr-2">
+                        Studial Admin
+                      </span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => navigate('/ai-tutor', { state: { studyContext: resource } })}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition-colors shadow-sm active:scale-95 text-[11px] font-bold"
+                        >
+                          <Bot className="w-3.5 h-3.5" /> AI Explain
+                        </button>
+                        <button
                         onClick={() => handleToggleSave(resource.id)}
                         className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${savedMaterials.has(resource.id) ? 'bg-indigo-500/10 text-indigo-600' : 'bg-surface-container-low text-outline hover:bg-surface-container hover:text-on-surface'}`}
                       >

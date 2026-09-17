@@ -74,6 +74,17 @@ export default function Onboarding() {
         return;
       }
       
+      // Explicitly insert/upsert into profiles table to ensure name sync
+      if (data?.user) {
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          full_name: formData.fullName,
+          username: cleanUsername,
+          university: formData.university,
+          department: formData.department
+        });
+      }
+      
       // Kill auto-created session on signup
       await supabase.auth.signOut();
 

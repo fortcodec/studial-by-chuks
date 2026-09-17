@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Bot, Send, Sparkles, AlertCircle, Loader2, BookOpen } from 'lucide-react';
 
 export default function AITutorView() {
   const { currentUser, setCurrentUser } = useOutletContext();
+  const location = useLocation();
   const messagesEndRef = useRef(null);
+  const hasTriggeredContext = useRef(false);
+  const initialContext = location.state?.studyContext;
 
   const QUERY_COST = 5;
 
@@ -33,6 +36,14 @@ export default function AITutorView() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    if (initialContext && !hasTriggeredContext.current) {
+      hasTriggeredContext.current = true;
+      const autoPrompt = `Please explain this study material to me:\n\nTitle: ${initialContext.title}\nCourse: ${initialContext.course_code}\nDescription: ${initialContext.description}`;
+      handleSend(autoPrompt);
+    }
+  }, [initialContext]);
 
   const handleSend = async (textOverride = null) => {
     const textToSubmit = textOverride || inputText;
@@ -85,7 +96,7 @@ export default function AITutorView() {
       const aiMsg = { 
         id: Date.now() + 1, 
         role: 'ai', 
-        text: `Here is a detailed response to "${textToSubmit}".\n\nThis is a **simulated** response. In a production environment, you would stream this directly from the OpenAI or Anthropic API. Keep up the great studying!` 
+        text: `Hey there! 🌟 I'd be happy to help explain that for you in a simple way.\n\nHere is a clear, step-by-step breakdown without any dense academic jargon:\n\n1. **First step**: This is the core idea explained in plain, everyday language.\n2. **Second step**: We build on that idea, connecting it to things you already know.\n3. **Finally**: We wrap it up with a quick summary so it's super easy to remember!\n\n*(Note: This is a simulated response following your friendly, step-by-step AI tutor guidelines!)*` 
       };
       setMessages(prev => [...prev, aiMsg]);
     }, 1500);
