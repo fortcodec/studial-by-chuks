@@ -12,6 +12,24 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+
+  const handleRecoverySubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.identifier, {
+        redirectTo: window.location.origin + '/update-password'
+      });
+      if (error) throw error;
+      setMessage({ type: 'success', text: 'Password reset link sent! Please check your email.' });
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message || 'Failed to send reset link.' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -75,8 +93,12 @@ export default function Login() {
               <BookOpen size={32} />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-primary-navy tracking-tight">Welcome Back</h1>
-          <p className="text-gray-500">Sign in to your campus study vault</p>
+          <h1 className="text-3xl font-bold text-primary-navy tracking-tight">
+            {isRecoveryMode ? 'Reset Password' : 'Welcome Back'}
+          </h1>
+          <p className="text-gray-500">
+            {isRecoveryMode ? 'Enter your email to receive a reset link' : 'Sign in to your campus study vault'}
+          </p>
         </div>
 
         {/* UI Notification Alert */}
@@ -90,65 +112,112 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1 text-left">
-            <label className="block text-sm font-medium text-gray-700">Email or Phone Number</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
-              <input 
-                type="text"
-                name="identifier"
-                value={formData.identifier}
-                onChange={handleChange}
-                placeholder="e.g., student@university.edu or +2348012345678"
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50"
-                required
-              />
+        {isRecoveryMode ? (
+          <form onSubmit={handleRecoverySubmit} className="space-y-4">
+            <div className="space-y-1 text-left">
+              <label className="block text-sm font-medium text-gray-700">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
+                <input 
+                  type="email"
+                  name="identifier"
+                  value={formData.identifier}
+                  onChange={handleChange}
+                  placeholder="e.g., student@university.edu"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50"
+                  required
+                />
+              </div>
             </div>
-          </div>
+            
+            <button 
+              type="submit"
+              disabled={loading}
+              className={`w-full bg-primary-navy hover:bg-[#112440] text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-6 shadow-lg shadow-primary-navy/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {loading ? 'Sending...' : 'Send Reset Link'}
+            </button>
 
-          <div className="space-y-1 text-left">
-            <div className="flex justify-between items-center">
-              <label className="block text-sm font-medium text-gray-700">Password</label>
-              <a href="#" className="text-xs text-primary-navy hover:underline">Forgot password?</a>
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input 
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50"
-                required
-              />
+            <p className="text-sm text-gray-500 text-center mt-6">
+              Remember your password?{' '}
               <button 
                 type="button" 
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                onClick={() => { setIsRecoveryMode(false); setMessage({ type: '', text: '' }); }}
+                className="text-primary-navy hover:underline font-semibold"
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                Log In
               </button>
-            </div>
-          </div>
+            </p>
+          </form>
+        ) : (
+          <>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1 text-left">
+                <label className="block text-sm font-medium text-gray-700">Email or Phone Number</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
+                  <input 
+                    type="text"
+                    name="identifier"
+                    value={formData.identifier}
+                    onChange={handleChange}
+                    placeholder="e.g., student@university.edu or +2348012345678"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50"
+                    required
+                  />
+                </div>
+              </div>
 
-          <button 
-            type="submit"
-            disabled={loading}
-            className={`w-full bg-primary-navy hover:bg-[#112440] text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-6 shadow-lg shadow-primary-navy/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-          >
-            <LogIn size={20} />
-            {loading ? 'Signing In...' : 'Sign In'}
-          </button>
-        </form>
-        
-        <p className="text-sm text-gray-500 text-center mt-6">
-          Don't have an account?{' '}
-          <Link to="/onboarding" className="text-primary-navy hover:underline font-semibold">
-            Get Started
-          </Link>
-        </p>
+              <div className="space-y-1 text-left">
+                <div className="flex justify-between items-center">
+                  <label className="block text-sm font-medium text-gray-700">Password</label>
+                  <button 
+                    type="button"
+                    onClick={() => { setIsRecoveryMode(true); setMessage({ type: '', text: '' }); }} 
+                    className="text-xs text-primary-navy hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <input 
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50"
+                    required
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              <button 
+                type="submit"
+                disabled={loading}
+                className={`w-full bg-primary-navy hover:bg-[#112440] text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-6 shadow-lg shadow-primary-navy/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              >
+                <LogIn size={20} />
+                {loading ? 'Signing In...' : 'Sign In'}
+              </button>
+            </form>
+            
+            <p className="text-sm text-gray-500 text-center mt-6">
+              Don't have an account?{' '}
+              <Link to="/onboarding" className="text-primary-navy hover:underline font-semibold">
+                Get Started
+              </Link>
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

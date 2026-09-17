@@ -5,6 +5,7 @@ import { supabase } from './supabaseClient';
 import LandingPage from './views/LandingPage';
 import Onboarding from './views/Onboarding';
 import Login from './views/Login';
+import UpdatePassword from './views/UpdatePassword';
 import Dashboard from './views/Dashboard';
 import LiveStudyRoom from './views/LiveStudyRoom';
 import Vault from './views/Vault';
@@ -54,6 +55,7 @@ function App() {
           <Route path="/landing" element={session ? <Navigate to="/" replace /> : <LandingPage />} />
           <Route path="/onboarding" element={session ? <Navigate to="/" replace /> : <Onboarding />} />
           <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
+          <Route path="/update-password" element={<UpdatePassword />} />
 
           {/* Protected Routes */}
           {session ? (
