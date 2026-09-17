@@ -77,11 +77,13 @@ export default function Dashboard() {
         .from('posts')
         .select(`
           *,
-          profiles!inner (username, full_name, avatar_url, department)
+          profiles (username, full_name, avatar_url, department)
         `)
         .order('created_at', { ascending: false });
         
-      if (!error && data && isMounted) {
+      if (error) {
+        console.error("Error fetching posts:", error);
+      } else if (data && isMounted) {
         setPosts(data);
       }
       if (isMounted) setIsLoading(false);
