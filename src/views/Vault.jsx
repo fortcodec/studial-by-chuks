@@ -18,15 +18,26 @@ export default function Vault() {
   useEffect(() => {
     const fetchResources = async () => {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('study_materials')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('study_materials')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        setResources(data);
+        if (error) {
+          console.error("Error fetching study materials:", error);
+          setResources([]);
+        } else if (data) {
+          setResources(data);
+        } else {
+          setResources([]);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching study materials:", err);
+        setResources([]);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchResources();
@@ -70,11 +81,11 @@ export default function Vault() {
     }
   };
 
-  const filteredResources = resources.filter(res => {
-    const matchesSearch = res.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          res.course_code.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredResources = Array.isArray(resources) ? resources.filter(res => {
+    const matchesSearch = res?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          res?.course_code?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
-  });
+  }) : [];
 
   return (
     <div className="flex flex-col h-[100dvh] relative bg-background overflow-hidden max-w-md mx-auto shadow-2xl">
@@ -132,7 +143,7 @@ export default function Vault() {
           <div className="text-center py-12">
             <FileText className="w-12 h-12 text-outline-variant mx-auto mb-3" />
             <h3 className="text-on-surface font-bold">No resources found</h3>
-            <p className="text-outline text-[14px] mt-1">Try adjusting your search or filters.</p>
+            <p className="text-outline text-[14px] mt-1">{searchQuery ? "Try adjusting your search or filters." : "No study materials uploaded by the admin yet. Check back soon!"}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
