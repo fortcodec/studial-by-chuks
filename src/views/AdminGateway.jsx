@@ -87,7 +87,7 @@ export default function AdminGateway() {
 
   const fetchDashboardStats = async () => {
     try {
-      const { count: studentsCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+      const { count: studentsCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student');
       const { count: postsCount } = await supabase.from('posts').select('*', { count: 'exact', head: true });
       
       const { data: coinsData } = await supabase.from('profiles').select('c_coins');
@@ -107,7 +107,7 @@ export default function AdminGateway() {
   const fetchUsers = async () => {
     setIsUsersLoading(true);
     try {
-      const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('profiles').select('*').eq('role', 'student').order('created_at', { ascending: false });
       if (error) {
         console.error("Error fetching users:", error);
         alert("Failed to fetch user profiles.");
