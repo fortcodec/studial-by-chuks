@@ -192,16 +192,16 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
     // Insert into DB
     const { error } = await supabase.from('post_comments').insert([{
       post_id: postId,
-      user_id: currentUser.id,
+      author_id: currentUser.id,
       content: text
     }]);
 
     if (error) {
-      console.error("Failed to add comment:", error);
+      console.error(error);
       // Revert optimistic update
       setComments(prev => prev.filter(c => c.id !== tempComment.id));
       setNewComment(text);
-      alert("Failed to post comment. Ensure the post_comments table exists.");
+      alert(`Failed to post comment: ${error.message}`);
     } else {
       // Increment aggregate comments count on posts table
       await supabase.from('posts').update({ comments: (stats?.answers || 0) + 1 }).eq('id', postId);
@@ -212,7 +212,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
           if (!aiResponse) return;
           const aiComment = {
             post_id: postId,
-            user_id: currentUser.id,
+            author_id: currentUser.id,
             content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
           };
           
@@ -237,9 +237,10 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         </div>
       ) : (
-        <div className="absolute inset-0 z-0 bg-surface-container-highest">
-          {/* Gradient for dark background */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900/40 via-purple-900/20 to-transparent" />
+        <div className="absolute inset-0 z-0 flex items-center justify-center p-8 pb-32 bg-gradient-to-br from-indigo-900 to-slate-800">
+          <h2 className="text-white text-2xl md:text-3xl font-bold text-center drop-shadow-md pr-12 overflow-y-auto max-h-[60vh] scrollbar-hide leading-relaxed">
+            {content || ''}
+          </h2>
         </div>
       )}
 
@@ -296,7 +297,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
               if (aiResponse) {
                 const aiComment = {
                   post_id: postId,
-                  user_id: currentUser?.id,
+                  author_id: currentUser?.id,
                   content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
                 };
                 
@@ -325,50 +326,29 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         </button>
       </div>
 
-      {/* Content Overlay (Bottom Left or Centered) */}
-      {props.attachmentImage ? (
-        <div className="absolute bottom-20 left-4 right-20 z-20 flex flex-col gap-3 pb-safe">
-          {type === 'bounty' && props.bountyAmount && (
-            <div className="bg-warning/90 backdrop-blur-sm rounded-lg px-2.5 py-1 w-fit flex items-center gap-1.5 shadow-sm">
-              <span className="text-[12px]">🪙</span>
-              <span className="text-[12px] font-bold text-on-warning">{props.bountyAmount} C-Coins</span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-3">
-            <Avatar url={author?.avatar} name={author?.name} size="lg" className="border-2 border-white/20" />
-            <div>
-              <h3 className="text-[15px] font-bold text-white drop-shadow-md">{author?.name || 'Anonymous'}</h3>
-              <p className="text-white/80 text-[12px] font-medium drop-shadow-sm">{course || 'General'} &bull; {timeAgo || 'Just now'}</p>
-            </div>
+      {/* Content Overlay (Bottom Left) */}
+      <div className="absolute bottom-20 left-4 right-20 z-20 flex flex-col gap-3 pb-safe">
+        {type === 'bounty' && props.bountyAmount && (
+          <div className="bg-warning/90 backdrop-blur-sm rounded-lg px-2.5 py-1 w-fit flex items-center gap-1.5 shadow-sm">
+            <span className="text-[12px]">🪙</span>
+            <span className="text-[12px] font-bold text-on-warning">{props.bountyAmount} C-Coins</span>
           </div>
+        )}
 
+        <div className="flex items-center gap-3">
+          <Avatar url={author?.avatar} name={author?.name} size="lg" className="border-2 border-white/20" />
+          <div>
+            <h3 className="text-[15px] font-bold text-white drop-shadow-md">{author?.name || 'Anonymous'}</h3>
+            <p className="text-white/80 text-[12px] font-medium drop-shadow-sm">{course || 'General'} &bull; {timeAgo || 'Just now'}</p>
+          </div>
+        </div>
+
+        {props.attachmentImage && (
           <p className="text-[14px] text-white font-medium leading-relaxed drop-shadow-md line-clamp-4">
             {content || ''}
           </p>
-        </div>
-      ) : (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-8 pb-24 text-center pr-20">
-          {type === 'bounty' && props.bountyAmount && (
-            <div className="bg-warning/90 backdrop-blur-sm rounded-lg px-3 py-1.5 mb-4 flex items-center gap-2 shadow-sm">
-              <span className="text-[14px]">🪙</span>
-              <span className="text-[14px] font-bold text-on-warning">{props.bountyAmount} C-Coins</span>
-            </div>
-          )}
-          
-          <h2 className="text-xl md:text-2xl font-bold text-on-surface leading-snug mb-6 max-h-[40vh] overflow-y-auto scrollbar-hide">
-            {content || ''}
-          </h2>
-
-          <div className="flex flex-col items-center gap-2 mt-auto">
-            <Avatar url={author?.avatar} name={author?.name} size="lg" className="border-2 border-surface shadow-sm" />
-            <div>
-              <h3 className="text-[14px] font-bold text-on-surface">{author?.name || 'Anonymous'}</h3>
-              <p className="text-outline text-[12px] font-medium">{course || 'General'} &bull; {timeAgo || 'Just now'}</p>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Comments Drawer / Modal */}
       {isCommentsOpen && (
