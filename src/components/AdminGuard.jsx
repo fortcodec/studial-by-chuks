@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminGuard() {
   const [authStatus, setAuthStatus] = useState('checking'); // 'checking' | 'unauthenticated' | 'student' | 'admin'
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     let isMounted = true;
@@ -41,6 +42,12 @@ export default function AdminGuard() {
     return () => { isMounted = false; };
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (authStatus === 'unauthenticated' || authStatus === 'student') {
+      navigate('/', { replace: true });
+    }
+  }, [authStatus, navigate]);
+
   if (authStatus === 'checking') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-gray-50">
@@ -49,12 +56,8 @@ export default function AdminGuard() {
     );
   }
 
-  if (authStatus === 'unauthenticated') {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (authStatus === 'student') {
-    return <Navigate to="/" replace />;
+  if (authStatus !== 'admin') {
+    return null;
   }
 
   return <Outlet />;
