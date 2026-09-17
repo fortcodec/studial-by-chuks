@@ -203,9 +203,14 @@ export default function AdminGateway() {
     try {
       const { error } = await supabase.from('posts').delete().eq('id', postId);
       if (error) throw error;
-      setPosts(prev => prev.filter(p => p.id !== postId));
+      
+      // Update local React state instantly
+      setPosts(prev => prev.filter(post => post.id !== postId));
+      
+      // Trigger a re-fetch to ensure sync with the server
+      fetchPosts();
     } catch (err) {
-      alert("Failed to delete post.");
+      alert("Failed to delete post: " + (err.message || "Unknown error"));
     }
   };
 
