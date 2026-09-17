@@ -52,6 +52,14 @@ const QuizModal = ({ isOpen, onClose, postContent, currentUser }) => {
     // Secure Database Update for Perfect Score
     if (finalScore === totalQs && currentUser?.id) {
       supabase.rpc('reward_quiz_coin', { target_user_id: currentUser.id })
+        .then(() => {
+          // Log Transaction
+          supabase.from('c_coin_transactions').insert({
+            user_id: currentUser.id,
+            amount: '+1 C',
+            description: 'Quiz Reward'
+          }).catch(err => console.error(err));
+        })
         .catch(err => console.error("Silent Error: RPC Exception", err));
     }
   };

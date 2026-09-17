@@ -58,8 +58,8 @@ export default function AITutorView() {
       try {
         await supabase.from('c_coin_transactions').insert({
           user_id: currentUser.id,
-          amount: -QUERY_COST,
-          type: 'AI Tutor Query'
+          amount: `-${QUERY_COST} C`,
+          description: 'AI Tutor Query'
         });
       } catch (e) {
         // Ignore transaction log failure if table doesn't exist

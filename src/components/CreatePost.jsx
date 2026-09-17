@@ -150,6 +150,13 @@ export default function CreatePost({ onPostCreated }) {
           setIsSubmitting(false);
           return;
         }
+
+        // Log Transaction
+        await supabase.from('c_coin_transactions').insert({
+          user_id: currentUser.id,
+          amount: `-${parsedBounty} C`,
+          description: 'Post Bounty'
+        });
       }
 
       const { error } = await supabase.from('posts').insert([

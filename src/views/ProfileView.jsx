@@ -42,12 +42,12 @@ export default function ProfileView() {
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id);
             
-          // Mock transactions for ledger
-          const mockTransactions = [
-            { id: 1, type: 'Daily Login Bonus', amount: '+2 C', date: 'Today' },
-            { id: 2, type: 'Post Bounty', amount: '+50 C', date: 'Yesterday' },
-            { id: 3, type: 'AI Tutor Query', amount: '-5 C', date: '3 days ago' },
-          ];
+          // Fetch live transactions
+          const { data: transactionData } = await supabase
+            .from('c_coin_transactions')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
 
           if (isMounted) {
             setStats({
@@ -55,7 +55,18 @@ export default function ProfileView() {
               quizzes: 0, // Default to 0
               studyHours: 0 // Default to 0
             });
-            setTransactions(mockTransactions);
+            
+            // Map the DB format to the UI format
+            if (transactionData) {
+              setTransactions(transactionData.map(tx => ({
+                id: tx.id,
+                type: tx.description,
+                amount: tx.amount,
+                date: new Date(tx.created_at).toLocaleDateString()
+              })));
+            } else {
+              setTransactions([]);
+            }
           }
         }
       } catch (error) {
@@ -154,17 +165,23 @@ export default function ProfileView() {
           Recent Transactions
         </h3>
         <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
-          {transactions.map((tx, idx) => (
-            <div key={tx.id} className={`flex items-center justify-between p-4 ${idx !== transactions.length - 1 ? 'border-b border-outline-variant/20' : ''}`}>
-              <div>
-                <p className="font-semibold text-sm text-on-surface">{tx.type}</p>
-                <p className="text-xs text-outline">{tx.date}</p>
-              </div>
-              <span className={`font-bold text-sm ${tx.amount.startsWith('+') ? 'text-secondary-green' : 'text-error'}`}>
-                {tx.amount}
-              </span>
+          {transactions.length === 0 ? (
+            <div className="p-6 text-center text-outline text-sm">
+              No transactions yet. Complete quizzes or post answers to earn C-Coins!
             </div>
-          ))}
+          ) : (
+            transactions.map((tx, idx) => (
+              <div key={tx.id} className={`flex items-center justify-between p-4 ${idx !== transactions.length - 1 ? 'border-b border-outline-variant/20' : ''}`}>
+                <div>
+                  <p className="font-semibold text-sm text-on-surface">{tx.type}</p>
+                  <p className="text-xs text-outline">{tx.date}</p>
+                </div>
+                <span className={`font-bold text-sm ${tx.amount.startsWith('+') ? 'text-secondary-green' : 'text-error'}`}>
+                  {tx.amount}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

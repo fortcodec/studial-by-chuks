@@ -120,6 +120,13 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
       
       if (error) throw error;
       
+      // Log Transaction
+      await supabase.from('c_coin_transactions').insert({
+        user_id: currentUser.id,
+        amount: '-10 C',
+        description: 'C-Coin Tip Sent'
+      });
+      
       setTipStatus('success');
       if (onTipSuccess) onTipSuccess();
       setTimeout(() => setTipStatus(null), 3000);

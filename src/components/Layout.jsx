@@ -42,6 +42,13 @@ export default function Layout() {
             // 2. Update Database
             await supabase.from('profiles').update({ c_coins: currentCoins }).eq('id', user.id);
             
+            // Log Transaction
+            await supabase.from('c_coin_transactions').insert({
+              user_id: user.id,
+              amount: '+2 C',
+              description: 'Daily Login Bonus'
+            });
+            
             // 3. Show UI Banner
             if (isMounted) {
               setShowLoginReward(true);
