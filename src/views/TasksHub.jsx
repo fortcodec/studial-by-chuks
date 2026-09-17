@@ -36,33 +36,23 @@ export default function TasksHub() {
       const currentUserId = user.id;
       setUserId(currentUserId);
 
-      // 1. Fetch user C Coins
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('c_coins')
-        .eq('id', currentUserId)
-        .single();
-      
-      if (profile) setCCoins(profile.c_coins || 0);
-
-      // 2. Fetch active tasks ordered by creation date
-      const { data: activeTasks, error: tasksError } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+      // 1. Fetch data in parallel
+      const [
+        { data: profile },
+        { data: activeTasks, error: tasksError },
+        { data: userSubmissions }
+      ] = await Promise.all([
+        supabase.from('profiles').select('c_coins').eq('id', currentUserId).single(),
+        supabase.from('tasks').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+        supabase.from('task_submissions').select('*, tasks(title, reward_coins)').eq('user_id', currentUserId).order('created_at', { ascending: false })
+      ]);
       
       if (tasksError) throw tasksError;
+
+      if (profile) setCCoins(profile.c_coins || 0);
       if (activeTasks) setTasks(activeTasks);
-
-      // 3. Fetch user submissions
-      const { data: userSubmissions } = await supabase
-        .from('task_submissions')
-        .select('*, tasks(title, reward_coins)')
-        .eq('user_id', currentUserId)
-        .order('created_at', { ascending: false });
-
       if (userSubmissions) setSubmissions(userSubmissions);
+
 
     } catch (err) {
       console.error('Error fetching TasksHub data:', err);

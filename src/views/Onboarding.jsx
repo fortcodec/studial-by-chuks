@@ -74,15 +74,31 @@ export default function Onboarding() {
         return;
       }
       
-      // Explicitly insert/upsert into profiles table to ensure name sync
+      // Explicitly insert into profiles table to ensure name sync and admin visibility
       if (data?.user) {
-        await supabase.from('profiles').upsert({
+        const { error: profileError } = await supabase.from('profiles').insert([{
           id: data.user.id,
           full_name: formData.fullName,
           username: cleanUsername,
           university: formData.university,
-          department: formData.department
-        });
+          department: formData.department,
+          role: 'student',
+          c_coins: 0
+        }]);
+
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          // If insert fails (e.g. due to an existing trigger), fallback to upsert
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            full_name: formData.fullName,
+            username: cleanUsername,
+            university: formData.university,
+            department: formData.department,
+            role: 'student',
+            c_coins: 0
+          });
+        }
       }
       
       // Kill auto-created session on signup

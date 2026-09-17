@@ -1,22 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from './supabaseClient';
-import LandingPage from './views/LandingPage';
-import Onboarding from './views/Onboarding';
-import Login from './views/Login';
-import UpdatePassword from './views/UpdatePassword';
-import Dashboard from './views/Dashboard';
-import LiveStudyRoom from './views/LiveStudyRoom';
-import Vault from './views/Vault';
-import StudyRoom from './views/StudyRoom';
-import TasksHub from './views/TasksHub';
-import AdminGateway from './views/AdminGateway';
 import Layout from './components/Layout';
-import ProfileView from './views/ProfileView';
 import AdminGuard from './components/AdminGuard';
 import StudentGuard from './components/StudentGuard';
-import AITutorView from './views/AITutorView';
+
+// Lazy load route components for code splitting
+const LandingPage = lazy(() => import('./views/LandingPage'));
+const Onboarding = lazy(() => import('./views/Onboarding'));
+const Login = lazy(() => import('./views/Login'));
+const UpdatePassword = lazy(() => import('./views/UpdatePassword'));
+const Dashboard = lazy(() => import('./views/Dashboard'));
+const LiveStudyRoom = lazy(() => import('./views/LiveStudyRoom'));
+const Vault = lazy(() => import('./views/Vault'));
+const StudyRoom = lazy(() => import('./views/StudyRoom'));
+const TasksHub = lazy(() => import('./views/TasksHub'));
+const AdminGateway = lazy(() => import('./views/AdminGateway'));
+const ProfileView = lazy(() => import('./views/ProfileView'));
+const AITutorView = lazy(() => import('./views/AITutorView'));
+
+// Unified loading fallback
+const PageLoader = () => (
+  <div className="flex h-screen w-full items-center justify-center bg-background">
+    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+  </div>
+);
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -40,48 +49,46 @@ function App() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
       <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/landing" element={session ? <Navigate to="/" replace /> : <LandingPage />} />
-          <Route path="/onboarding" element={session ? <Navigate to="/" replace /> : <Onboarding />} />
-          <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
-          <Route path="/update-password" element={<UpdatePassword />} />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/landing" element={session ? <Navigate to="/" replace /> : <LandingPage />} />
+            <Route path="/onboarding" element={session ? <Navigate to="/" replace /> : <Onboarding />} />
+            <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
 
-          {/* Protected Routes */}
-          {session ? (
-            <>
-              <Route element={<StudentGuard />}>
-                <Route element={<Layout />}>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/live" element={<LiveStudyRoom />} />
-                  <Route path="/ai-tutor" element={<AITutorView />} />
-                  <Route path="/profile" element={<ProfileView />} />
+            {/* Protected Routes */}
+            {session ? (
+              <>
+                <Route element={<StudentGuard />}>
+                  <Route element={<Layout />}>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/live" element={<LiveStudyRoom />} />
+                    <Route path="/ai-tutor" element={<AITutorView />} />
+                    <Route path="/profile" element={<ProfileView />} />
+                  </Route>
+                  
+                  <Route path="/vault" element={<Vault />} />
+                  <Route path="/studyRoom" element={<StudyRoom />} />
+                  <Route path="/tasksHub" element={<TasksHub />} />
                 </Route>
                 
-                <Route path="/vault" element={<Vault />} />
-                <Route path="/studyRoom" element={<StudyRoom />} />
-                <Route path="/tasksHub" element={<TasksHub />} />
-              </Route>
-              
-              <Route element={<AdminGuard />}>
-                <Route path="/admin" element={<AdminGateway />} />
-              </Route>
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </>
-          ) : (
-            <Route path="*" element={<Navigate to="/landing" replace />} />
-          )}
-        </Routes>
+                <Route element={<AdminGuard />}>
+                  <Route path="/admin" element={<AdminGateway />} />
+                </Route>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </>
+            ) : (
+              <Route path="*" element={<Navigate to="/landing" replace />} />
+            )}
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </div>
   );

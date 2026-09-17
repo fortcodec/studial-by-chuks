@@ -123,8 +123,25 @@ export default function Dashboard() {
 
         {/* Feed Posts */}
         {isLoading ? (
-          <div className="flex justify-center items-center py-10">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <div className="flex flex-col gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white p-5 rounded-2xl shadow-surface-1 border border-outline-variant/30 animate-pulse">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                  <div>
+                    <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-20"></div>
+                  </div>
+                </div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
+                <div className="h-40 bg-gray-100 rounded-xl w-full mb-4"></div>
+                <div className="flex gap-4">
+                  <div className="h-8 bg-gray-200 rounded-full w-20"></div>
+                  <div className="h-8 bg-gray-200 rounded-full w-20"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-10 text-outline">
