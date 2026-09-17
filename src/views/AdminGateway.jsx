@@ -22,6 +22,8 @@ export default function AdminGateway() {
   // Posts State
   const [posts, setPosts] = useState([]);
   const [isPostsLoading, setIsPostsLoading] = useState(false);
+  const [isDeletingId, setIsDeletingId] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
   // Tasks State
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
@@ -200,6 +202,8 @@ export default function AdminGateway() {
 
   const handleDeletePost = async (postId) => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
+    
+    setIsDeletingId(postId);
     try {
       const { error } = await supabase.from('posts').delete().eq('id', postId);
       if (error) throw error;
@@ -207,10 +211,18 @@ export default function AdminGateway() {
       // Update local React state instantly
       setPosts(prev => prev.filter(post => post.id !== postId));
       
+      // Show success toast
+      setToastMessage({ type: 'success', text: 'Post deleted successfully!' });
+      setTimeout(() => setToastMessage(null), 3000);
+      
       // Trigger a re-fetch to ensure sync with the server
       fetchPosts();
     } catch (err) {
-      alert("Failed to delete post: " + (err.message || "Unknown error"));
+      console.error(err);
+      setToastMessage({ type: 'error', text: `Failed to delete post: ${err.message || "Unknown error"}` });
+      setTimeout(() => setToastMessage(null), 5000);
+    } finally {
+      setIsDeletingId(null);
     }
   };
 
@@ -582,9 +594,14 @@ export default function AdminGateway() {
                           <td className="p-4 text-right">
                             <button 
                               onClick={() => handleDeletePost(post.id)}
-                              className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                              disabled={isDeletingId === post.id}
+                              className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              {isDeletingId === post.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
                             </button>
                           </td>
                         </tr>
@@ -646,6 +663,17 @@ export default function AdminGateway() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5">
+          <div className={`px-4 py-3 rounded-lg shadow-lg border flex items-center gap-2 ${
+            toastMessage.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <span className="font-semibold text-sm">{toastMessage.text}</span>
           </div>
         </div>
       )}

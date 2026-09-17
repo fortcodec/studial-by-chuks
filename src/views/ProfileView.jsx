@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Settings, Bookmark, Clock, LogOut, ChevronRight, FileText, Brain, GraduationCap, Loader2, X, Download } from 'lucide-react';
+import { PostCard } from '../components/PostCard';
 
 export default function ProfileView() {
   const { currentUser } = useOutletContext();
@@ -17,6 +18,8 @@ export default function ProfileView() {
     studyHours: 0
   });
   const [transactions, setTransactions] = useState([]);
+  const [myPosts, setMyPosts] = useState([]);
+  const [isMyPostsLoading, setIsMyPostsLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Modals state
@@ -102,12 +105,23 @@ export default function ProfileView() {
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
+          // Fetch My Posts
+          setIsMyPostsLoading(true);
+          const { data: postsData } = await supabase
+            .from('posts')
+            .select('*, profiles:user_id(username, full_name, avatar_url)')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
           if (isMounted) {
             setStats({
               posts: postsCount || 0,
               quizzes: 0, // Default to 0
               studyHours: 0 // Default to 0
             });
+            
+            setMyPosts(postsData || []);
+            setIsMyPostsLoading(false);
             
             // Map the DB format to the UI format
             if (transactionData) {
@@ -256,6 +270,47 @@ export default function ProfileView() {
             ))
           )}
         </div>
+      </div>
+
+      {/* My Posts Section */}
+      <div>
+        <h3 className="font-bold text-on-surface mb-3 flex items-center gap-2">
+          <FileText className="w-4 h-4 text-primary" />
+          My Posts
+        </h3>
+        {isMyPostsLoading ? (
+          <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+        ) : myPosts.length === 0 ? (
+          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 text-center text-outline text-sm shadow-sm">
+            You haven't made any posts yet.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6">
+            {myPosts.map(post => (
+              <div key={post.id} className="rounded-[2.5rem] overflow-hidden shadow-lg border border-outline-variant/30 relative" style={{ height: '70vh' }}>
+                {/* Override the h-[85vh] in PostCard with a wrapper */}
+                <div className="absolute inset-0 [&>div]:h-full">
+                  <PostCard 
+                    postId={post.id}
+                    type={post.type}
+                    author={{
+                      name: post.profiles?.full_name || post.profiles?.username,
+                      avatar: post.profiles?.avatar_url
+                    }}
+                    authorId={post.user_id}
+                    course={post.course_code || 'General'}
+                    timeAgo={new Date(post.created_at).toLocaleDateString()}
+                    content={post.content}
+                    attachmentImage={post.media_url}
+                    stats={{ upvotes: post.likes, answers: post.comments }}
+                    currentUser={currentUser}
+                    onDelete={(id) => setMyPosts(prev => prev.filter(p => p.id !== id))}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Action Links */}
