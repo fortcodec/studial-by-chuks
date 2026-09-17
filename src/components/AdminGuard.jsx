@@ -4,8 +4,7 @@ import { supabase } from '../supabaseClient';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminGuard() {
-  const [isAdmin, setIsAdmin] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [authStatus, setAuthStatus] = useState('checking'); // 'checking' | 'unauthenticated' | 'student' | 'admin'
   const location = useLocation();
 
   useEffect(() => {
@@ -15,8 +14,7 @@ export default function AdminGuard() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session || !session.user) {
-          if (isMounted) setIsAdmin(false);
-          window.location.href = '/login';
+          if (isMounted) setAuthStatus('unauthenticated');
           return;
         }
         
@@ -30,14 +28,11 @@ export default function AdminGuard() {
 
         if (isMounted) {
           console.log("Admin Access Check - User Role:", profile?.role);
-          setIsAdmin(profile?.role === 'admin');
+          setAuthStatus(profile?.role === 'admin' ? 'admin' : 'student');
         }
       } catch (error) {
         console.error('Error checking admin status:', error);
-        if (isMounted) setIsAdmin(false);
-        window.location.href = '/login';
-      } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) setAuthStatus('unauthenticated');
       }
     };
 
@@ -46,7 +41,7 @@ export default function AdminGuard() {
     return () => { isMounted = false; };
   }, [location.pathname]);
 
-  if (isLoading) {
+  if (authStatus === 'checking') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-gray-50">
         <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
@@ -54,7 +49,11 @@ export default function AdminGuard() {
     );
   }
 
-  if (!isAdmin) {
+  if (authStatus === 'unauthenticated') {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (authStatus === 'student') {
     return <Navigate to="/" replace />;
   }
 

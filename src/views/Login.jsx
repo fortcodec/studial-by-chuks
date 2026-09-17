@@ -64,8 +64,20 @@ export default function Login() {
       if (data?.user) {
         const studentName = data.user.email ? data.user.email.split('@')[0] : data.user.phone;
         setMessage({ type: 'success', text: `Welcome ${studentName}` });
+        
+        // Intelligent Redirection based on Role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
         setTimeout(() => {
-          navigate('/');
+          if (profile?.role === 'admin') {
+            navigate('/admin');
+          } else {
+            navigate('/');
+          }
         }, 1500);
       }
     } catch (error) {
