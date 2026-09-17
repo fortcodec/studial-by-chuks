@@ -71,20 +71,25 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
   const handleLike = async () => {
     if (!currentUser) return;
     const newStatus = !isLiked;
-    setIsLiked(newStatus);
-    const newCount = newStatus ? likeCount + 1 : likeCount - 1;
-    setLikeCount(newCount);
     
     try {
       if (newStatus) {
-        await supabase.from('post_likes').insert({ post_id: postId, user_id: currentUser.id });
+        const { error } = await supabase.from('post_likes').insert({ post_id: postId, user_id: currentUser.id });
+        if (error) throw error;
       } else {
-        await supabase.from('post_likes').delete().eq('post_id', postId).eq('user_id', currentUser.id);
+        const { error } = await supabase.from('post_likes').delete().eq('post_id', postId).eq('user_id', currentUser.id);
+        if (error) throw error;
       }
-      // Update aggregate count
-      await supabase.from('posts').update({ likes: newCount }).eq('id', postId);
+      
+      const newCount = newStatus ? likeCount + 1 : likeCount - 1;
+      const { error: updateError } = await supabase.from('posts').update({ likes: newCount }).eq('id', postId);
+      if (updateError) throw updateError;
+      
+      setIsLiked(newStatus);
+      setLikeCount(newCount);
     } catch (err) {
-      console.error("Error toggling like", err);
+      console.error("Error toggling like:", err);
+      alert(`Failed to toggle like: ${err.message}`);
     }
   };
 
