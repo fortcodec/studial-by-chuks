@@ -63,6 +63,26 @@ export default function AdminGateway() {
     } else if (activeTab === 'Tasks Manager') {
       fetchPendingSubmissions();
     }
+    
+    // Set up Realtime subscriptions for Admin Live Data
+    const channel = supabase
+      .channel('admin-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        if (activeTab === 'Dashboard') fetchDashboardStats();
+        if (activeTab === 'Users') fetchUsers();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
+        if (activeTab === 'Dashboard') fetchDashboardStats();
+        if (activeTab === 'Content Moderation') fetchPosts();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_submissions' }, () => {
+        if (activeTab === 'Tasks Manager') fetchPendingSubmissions();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [activeTab]);
 
   const fetchDashboardStats = async () => {
@@ -80,6 +100,7 @@ export default function AdminGateway() {
       });
     } catch (error) {
       console.error('Error fetching stats', error);
+      alert("Failed to load dashboard statistics.");
     }
   };
 
@@ -89,11 +110,13 @@ export default function AdminGateway() {
       const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
       if (error) {
         console.error("Error fetching users:", error);
+        alert("Failed to fetch user profiles.");
       } else if (data) {
         setUsers(data);
       }
     } catch (err) {
       console.error("Unexpected error in fetchUsers:", err);
+      alert("An unexpected error occurred while fetching users.");
     } finally {
       setIsUsersLoading(false);
     }
@@ -106,7 +129,14 @@ export default function AdminGateway() {
         .from('posts')
         .select(`*, profiles:user_id (username, full_name, avatar_url)`)
         .order('created_at', { ascending: false });
-      if (!error && data) setPosts(data);
+      if (error) {
+        console.error("Error fetching posts:", error);
+        alert("Failed to fetch posts for moderation.");
+      } else if (data) {
+        setPosts(data);
+      }
+    } catch (err) {
+      console.error("Unexpected error in fetchPosts:", err);
     } finally {
       setIsPostsLoading(false);
     }
@@ -120,7 +150,14 @@ export default function AdminGateway() {
         .select(`*, tasks(title, reward_coins), profiles!inner(full_name, username)`)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
-      if (!error && data) setPendingSubmissions(data);
+      if (error) {
+        console.error("Error fetching tasks:", error);
+        alert("Failed to fetch pending submissions.");
+      } else if (data) {
+        setPendingSubmissions(data);
+      }
+    } catch (err) {
+      console.error("Unexpected error in fetchPendingSubmissions:", err);
     } finally {
       setIsTasksLoading(false);
     }
