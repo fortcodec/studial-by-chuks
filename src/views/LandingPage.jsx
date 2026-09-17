@@ -8,7 +8,7 @@ export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-neutral-background flex flex-col font-inter relative">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col font-inter relative">
       
       {/* Navbar */}
       <nav className="p-6 flex justify-between items-center max-w-6xl mx-auto w-full z-20">
@@ -71,31 +71,31 @@ export default function LandingPage() {
       )}
 
       {/* Hero Section */}
-      <main className="flex-col items-center justify-center text-center px-4 pt-16 pb-24 md:py-32">
-        <div className="bg-primary-navy/10 p-4 rounded-full mb-8 text-primary-navy mx-auto w-max">
+      <main className="flex flex-col items-center justify-center text-center px-4 py-24 md:py-40">
+        <div className="bg-indigo-100 p-5 rounded-full mb-8 text-indigo-600 mx-auto w-max shadow-sm border border-indigo-200/50">
           <BookOpen size={48} />
         </div>
         
-        <h1 className="text-4xl md:text-6xl font-extrabold text-primary-navy mb-6 tracking-tight max-w-4xl mx-auto leading-tight">
+        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-6 tracking-tight max-w-4xl mx-auto leading-tight">
           Your free campus study library <br className="hidden md:block" />
-          <span className="text-secondary-green">and social hub.</span>
+          <span className="text-emerald-500">and social hub.</span>
         </h1>
         
-        <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg md:text-xl text-slate-600 mb-12 max-w-2xl mx-auto leading-relaxed">
           Access past questions, lecture notes, and collaborate with course mates across your university in one centralized platform.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">
+        <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto justify-center">
           <button 
             onClick={() => navigate('/onboarding')}
-            className="bg-primary-navy hover:bg-[#112440] text-white px-8 py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-navy/20 hover:shadow-primary-navy/40 active:scale-95"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-600/30 hover:shadow-lg hover:shadow-indigo-600/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
           >
             Get Started <ArrowRight size={20} />
           </button>
           
           <button 
             onClick={() => navigate('/login')}
-            className="bg-white hover:bg-gray-50 text-primary-navy border border-gray-200 px-8 py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
+            className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 px-10 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
           >
             <LogIn size={20} /> Log In
           </button>
