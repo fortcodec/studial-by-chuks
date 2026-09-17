@@ -90,7 +90,7 @@ export default function AdminGateway() {
       const { count: studentsCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student');
       const { count: postsCount } = await supabase.from('posts').select('*', { count: 'exact', head: true });
       
-      const { data: coinsData } = await supabase.from('profiles').select('c_coins');
+      const { data: coinsData } = await supabase.from('profiles').select('c_coins').eq('role', 'student');
       const totalCoins = coinsData ? coinsData.reduce((sum, p) => sum + (p.c_coins || 0), 0) : 0;
 
       setStats({
