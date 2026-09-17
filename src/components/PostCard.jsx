@@ -18,13 +18,29 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
   const [newComment, setNewComment] = useState('');
   const [isLoadingComments, setIsLoadingComments] = useState(false);
 
-  // Initialize Like/Save state from local storage on mount
+  // Initialize Like/Save state from DB on mount
   useEffect(() => {
-    if (postId) {
-      setIsLiked(localStorage.getItem(`studial_like_${postId}`) === 'true');
-      setIsSaved(localStorage.getItem(`studial_save_${postId}`) === 'true');
-    }
-  }, [postId]);
+    let isMounted = true;
+    const fetchInteractions = async () => {
+      if (!currentUser?.id || !postId) return;
+
+      try {
+        const [likeRes, saveRes] = await Promise.all([
+          supabase.from('post_likes').select('id').eq('post_id', postId).eq('user_id', currentUser.id).maybeSingle(),
+          supabase.from('saved_posts').select('id').eq('post_id', postId).eq('user_id', currentUser.id).maybeSingle()
+        ]);
+
+        if (isMounted) {
+          setIsLiked(!!likeRes.data);
+          setIsSaved(!!saveRes.data);
+        }
+      } catch (err) {
+        console.error("Error fetching interactions", err);
+      }
+    };
+    fetchInteractions();
+    return () => { isMounted = false; };
+  }, [postId, currentUser]);
 
   // Fetch comments when opened
   useEffect(() => {
@@ -47,25 +63,38 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
   }, [isCommentsOpen, postId]);
 
   const handleLike = async () => {
+    if (!currentUser) return;
     const newStatus = !isLiked;
     setIsLiked(newStatus);
-    setLikeCount(prev => newStatus ? prev + 1 : prev - 1);
+    const newCount = newStatus ? likeCount + 1 : likeCount - 1;
+    setLikeCount(newCount);
     
-    if (postId) {
-      localStorage.setItem(`studial_like_${postId}`, newStatus);
-      // Optimistic update to Supabase posts table
-      await supabase
-        .from('posts')
-        .update({ likes: newStatus ? likeCount + 1 : likeCount - 1 })
-        .eq('id', postId);
+    try {
+      if (newStatus) {
+        await supabase.from('post_likes').insert({ post_id: postId, user_id: currentUser.id });
+      } else {
+        await supabase.from('post_likes').delete().eq('post_id', postId).eq('user_id', currentUser.id);
+      }
+      // Update aggregate count
+      await supabase.from('posts').update({ likes: newCount }).eq('id', postId);
+    } catch (err) {
+      console.error("Error toggling like", err);
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!currentUser) return;
     const newStatus = !isSaved;
     setIsSaved(newStatus);
-    if (postId) {
-      localStorage.setItem(`studial_save_${postId}`, newStatus);
+    
+    try {
+      if (newStatus) {
+        await supabase.from('saved_posts').insert({ post_id: postId, user_id: currentUser.id });
+      } else {
+        await supabase.from('saved_posts').delete().eq('post_id', postId).eq('user_id', currentUser.id);
+      }
+    } catch (err) {
+      console.error("Error toggling save", err);
     }
   };
 

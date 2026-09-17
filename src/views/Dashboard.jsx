@@ -50,7 +50,7 @@ export default function Dashboard() {
         .from('posts')
         .select(`
           *,
-          profiles:user_id (username, full_name, avatar_url, department)
+          profiles!inner (username, full_name, avatar_url, department)
         `)
         .order('created_at', { ascending: false });
         
@@ -76,13 +76,15 @@ export default function Dashboard() {
             .eq('id', payload.new.user_id)
             .single();
 
-          const newPost = {
-            ...payload.new,
-            profiles: profile
-          };
+          if (profile) {
+            const newPost = {
+              ...payload.new,
+              profiles: profile
+            };
 
-          if (isMounted) {
-            setPosts(prev => [newPost, ...prev]);
+            if (isMounted) {
+              setPosts(prev => [newPost, ...prev]);
+            }
           }
         }
       )

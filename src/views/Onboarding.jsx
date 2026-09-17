@@ -73,12 +73,15 @@ export default function Onboarding() {
         setLoading(false);
         return;
       }
+      
+      // Kill auto-created session on signup
+      await supabase.auth.signOut();
 
-      setMessage({ type: 'success', text: 'Congratulations! Registration successful' });
+      setMessage({ type: 'success', text: 'Account created successfully! Please sign in.' });
       
       // Proceed to login page after registration
       setTimeout(() => {
-        navigate('/');
+        navigate('/login');
       }, 1500);
     } catch (error) {
       setMessage({ type: 'error', text: error.message || 'An error occurred during registration.' });

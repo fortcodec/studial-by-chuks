@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Settings, Bookmark, Clock, LogOut, ChevronRight, FileText, Brain, GraduationCap, Loader2 } from 'lucide-react';
+import { Settings, Bookmark, Clock, LogOut, ChevronRight, FileText, Brain, GraduationCap, Loader2, X, Download } from 'lucide-react';
 
 export default function ProfileView() {
   const { currentUser } = useOutletContext();
@@ -17,6 +17,12 @@ export default function ProfileView() {
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Modals state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ username: '', department: '', university: '' });
+  const [savedMaterials, setSavedMaterials] = useState([]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -30,11 +36,18 @@ export default function ProfileView() {
           // Fetch additional profile data
           const { data: profile } = await supabase
             .from('profiles')
-            .select('department')
+            .select('department, username, university')
             .eq('id', user.id)
             .single();
             
-          if (profile && isMounted) setDepartment(profile.department || 'Computer Science');
+          if (profile && isMounted) {
+            setDepartment(profile.department || 'Computer Science');
+            setEditForm({
+              username: profile.username || '',
+              department: profile.department || '',
+              university: profile.university || ''
+            });
+          }
 
           // Fetch Posts Count
           const { count: postsCount } = await supabase
@@ -195,7 +208,10 @@ export default function ProfileView() {
 
       {/* Action Links */}
       <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm flex flex-col">
-        <button className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full">
+        <button 
+          onClick={() => setIsEditModalOpen(true)}
+          className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full"
+        >
           <div className="flex items-center gap-3">
             <div className="bg-primary/10 p-2 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors">
               <Settings className="w-5 h-5" />
@@ -205,7 +221,20 @@ export default function ProfileView() {
           <ChevronRight className="w-5 h-5 text-outline group-hover:text-primary transition-colors" />
         </button>
 
-        <button className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors group w-full">
+        <button 
+          onClick={async () => {
+            setIsSavedModalOpen(true);
+            if (currentUser?.id) {
+              const { data } = await supabase
+                .from('saved_materials')
+                .select(`id, study_materials (*)`)
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+              if (data) setSavedMaterials(data.map(item => item.study_materials));
+            }
+          }}
+          className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors group w-full"
+        >
           <div className="flex items-center gap-3">
             <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-600 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
               <Bookmark className="w-5 h-5" />
@@ -224,6 +253,81 @@ export default function ProfileView() {
         <LogOut className="w-5 h-5" />
         Log Out
       </button>
+
+      {/* Edit Profile Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
+            <button onClick={() => setIsEditModalOpen(false)} className="absolute top-4 right-4 text-outline hover:text-on-surface bg-surface-container p-1 rounded-full">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-on-surface mb-4">Edit Profile</h2>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                await supabase.from('profiles').update(editForm).eq('id', user.id);
+                setDepartment(editForm.department);
+                setIsEditModalOpen(false);
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">Username</label>
+                <input type="text" value={editForm.username} onChange={e => setEditForm({...editForm, username: e.target.value})} className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">Department</label>
+                <input type="text" value={editForm.department} onChange={e => setEditForm({...editForm, department: e.target.value})} className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">University</label>
+                <input type="text" value={editForm.university} onChange={e => setEditForm({...editForm, university: e.target.value})} className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium" />
+              </div>
+              <button type="submit" className="w-full bg-primary hover:bg-primary-container hover:text-white text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 mt-2">
+                Save Changes
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Saved Materials Modal */}
+      {isSavedModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative flex flex-col max-h-[80vh]">
+            <button onClick={() => setIsSavedModalOpen(false)} className="absolute top-4 right-4 text-outline hover:text-on-surface bg-surface-container p-1 rounded-full z-10">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-on-surface mb-4 flex items-center gap-2">
+              <Bookmark className="w-5 h-5 text-indigo-600" /> Saved Materials
+            </h2>
+            <div className="overflow-y-auto pr-2 scrollbar-hide flex-1 space-y-3">
+              {savedMaterials.length === 0 ? (
+                <div className="text-center py-10 text-outline text-sm bg-surface-container-lowest rounded-2xl border border-outline-variant/30">
+                  No materials saved yet. Browse the Vault to save some!
+                </div>
+              ) : (
+                savedMaterials.map(resource => (
+                  <div key={resource.id} className="bg-surface-container-lowest rounded-2xl p-3 border border-outline-variant/30 flex items-start gap-3 relative">
+                    <div className="w-10 h-10 rounded-lg bg-error/10 border border-error/20 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 text-error" />
+                    </div>
+                    <div className="flex-grow min-w-0 pr-8">
+                      <h4 className="font-bold text-on-surface text-[14px] leading-tight mb-1 truncate">{resource.title}</h4>
+                      <span className="bg-primary-container/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {resource.course_code}
+                      </span>
+                    </div>
+                    <a href={resource.file_url} target="_blank" rel="noopener noreferrer" className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-surface-container flex items-center justify-center rounded-full text-primary hover:bg-primary-container hover:text-white transition-colors">
+                      <Download className="w-4 h-4" />
+                    </a>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, FileText, ArrowLeft, Loader2, ThumbsUp, BookOpen } from 'lucide-react';
+import { Search, Download, FileText, ArrowLeft, Loader2, ThumbsUp, BookOpen, Bookmark } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { BottomNav } from '../components/BottomNav';
-import { useNavigate } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 
 export default function Vault() {
+  const { currentUser } = useOutletContext();
   const navigate = useNavigate();
   const [resources, setResources] = useState([]);
+  const [savedMaterials, setSavedMaterials] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
@@ -29,6 +31,44 @@ export default function Vault() {
 
     fetchResources();
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSaved = async () => {
+      if (!currentUser?.id) return;
+      const { data } = await supabase
+        .from('saved_materials')
+        .select('material_id')
+        .eq('user_id', currentUser.id);
+      
+      if (data && isMounted) {
+        setSavedMaterials(new Set(data.map(item => item.material_id)));
+      }
+    };
+    fetchSaved();
+    return () => { isMounted = false; };
+  }, [currentUser]);
+
+  const handleToggleSave = async (materialId) => {
+    if (!currentUser) return;
+    const isSaved = savedMaterials.has(materialId);
+    
+    // Optimistic UI
+    const newSaved = new Set(savedMaterials);
+    if (isSaved) newSaved.delete(materialId);
+    else newSaved.add(materialId);
+    setSavedMaterials(newSaved);
+
+    try {
+      if (isSaved) {
+        await supabase.from('saved_materials').delete().eq('user_id', currentUser.id).eq('material_id', materialId);
+      } else {
+        await supabase.from('saved_materials').insert({ user_id: currentUser.id, material_id: materialId });
+      }
+    } catch (err) {
+      console.error("Error toggling save", err);
+    }
+  };
 
   const filteredResources = resources.filter(res => {
     const matchesSearch = res.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -116,6 +156,12 @@ export default function Vault() {
                       Studial Admin
                     </span>
                     <div className="flex items-center gap-3 flex-shrink-0">
+                      <button
+                        onClick={() => handleToggleSave(resource.id)}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${savedMaterials.has(resource.id) ? 'bg-indigo-500/10 text-indigo-600' : 'bg-surface-container-low text-outline hover:bg-surface-container hover:text-on-surface'}`}
+                      >
+                        <Bookmark className={`w-4 h-4 ${savedMaterials.has(resource.id) ? 'fill-current' : ''}`} />
+                      </button>
                       <a 
                         href={resource.file_url} 
                         target="_blank" 
