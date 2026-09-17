@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Bell, Loader2 } from "lucide-react";
-import CreatePost from "../components/CreatePost";
 
 import { PostCard, LiveRoomCard } from "../components/PostCard";
 import QuizModal from "../components/QuizModal";
@@ -97,26 +96,25 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full relative">
-      {/* Main Feed */}
-      <div className="flex-1 px-5 py-6 overflow-y-auto pb-24 scrollbar-hide">
-        <CreatePost />
+    <div className="flex flex-col h-full relative overflow-hidden bg-surface-container-lowest">
+      {/* Sticky Filter Pills */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3 px-5 z-30 shrink-0 border-b border-outline-variant/30" style={{ maskImage: 'linear-gradient(to right, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}>
+        {topics.map((topic, idx) => (
+          <button
+            key={topic}
+            className={`px-4 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors active:scale-95 ${
+              idx === 0 
+                ? "bg-primary text-white shadow-md shadow-primary/20" 
+                : "bg-surface-container border border-outline-variant/30 text-on-surface hover:bg-surface-container-high"
+            }`}
+          >
+            {topic}
+          </button>
+        ))}
+      </div>
 
-        {/* Filter Pills */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-6 pb-1 -mx-5 px-5" style={{ maskImage: 'linear-gradient(to right, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}>
-          {topics.map((topic, idx) => (
-            <button
-              key={topic}
-              className={`px-4 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors active:scale-95 ${
-                idx === 0 
-                  ? "bg-primary text-white shadow-md shadow-primary/20" 
-                  : "bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:bg-surface-container-low"
-              }`}
-            >
-              {topic}
-            </button>
-          ))}
-        </div>
+      {/* Main Feed (Snap Scrolling) */}
+      <div className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-surface-container-highest">
 
 
 

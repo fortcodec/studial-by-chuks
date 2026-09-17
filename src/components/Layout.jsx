@@ -3,6 +3,8 @@ import { Outlet } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { supabase } from "../supabaseClient";
+import CreatePost from "./CreatePost";
+import { X } from "lucide-react";
 
 export default function Layout() {
   const [currentUser, setCurrentUser] = useState({
@@ -15,6 +17,7 @@ export default function Layout() {
 
   // Notification Dropdown State
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
   const notificationRef = useRef(null);
@@ -216,13 +219,30 @@ export default function Layout() {
         </div>
       </div>
 
+      {/* Create Post Modal */}
+      {isCreatePostOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-in fade-in duration-200">
+          <div className="bg-surface w-full max-w-md md:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full duration-300 relative">
+            <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low">
+              <h2 className="font-bold text-on-surface">Create Post</h2>
+              <button onClick={() => setIsCreatePostOpen(false)} className="p-1.5 rounded-full bg-surface-container hover:bg-outline-variant/30 transition-colors text-outline hover:text-on-surface">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[80vh] overflow-y-auto p-4 scrollbar-hide">
+              <CreatePost onPostCreated={() => setIsCreatePostOpen(false)} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content Area (Scrollable) */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
+      <div className="flex-1 overflow-y-auto scrollbar-hide bg-surface-container-highest">
         <Outlet context={{ currentUser, setCurrentUser }} />
       </div>
 
-      <div className="shrink-0 bg-surface z-40">
-        <BottomNav />
+      <div className="shrink-0 bg-surface z-40 fixed bottom-0 w-full max-w-md md:max-w-3xl lg:max-w-4xl border-x border-outline-variant/30 pb-safe">
+        <BottomNav onNewPost={() => setIsCreatePostOpen(true)} />
       </div>
     </div>
   );

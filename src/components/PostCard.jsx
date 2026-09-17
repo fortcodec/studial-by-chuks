@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MoreHorizontal, ThumbsUp, ThumbsDown, MessageSquare, Bookmark, Share2, Download, Radio, Users, Trash2, Send } from 'lucide-react';
-import { MoreHorizontal, ThumbsUp, ThumbsDown, MessageSquare, Bookmark, Share2, Download, Radio, Users, Trash2, Send, Bot } from 'lucide-react';
+import { MoreHorizontal, ThumbsUp, ThumbsDown, MessageSquare, Bookmark, Share2, Download, Radio, Users, Trash2, Send, Bot, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { askSamuel } from '../utils/gemini';
 
@@ -227,282 +226,205 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
   };
 
   return (
-    <div className="bg-surface-container-lowest rounded-[24px] shadow-surface-1 p-4 mb-4 border border-outline-variant/30 transition-all hover:shadow-surface-2 relative">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex gap-3">
+    <div className="h-[85vh] w-full snap-center relative bg-surface-container-lowest overflow-hidden flex flex-col justify-end border-b border-outline-variant/30">
+      
+      {/* Background Media */}
+      {props.attachmentImage ? (
+        <div className="absolute inset-0 z-0">
+          <img src={props.attachmentImage} alt="Attachment" className="w-full h-full object-cover" />
+          {/* Gradient Overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        </div>
+      ) : (
+        <div className="absolute inset-0 z-0 bg-surface-container-highest">
+          {/* Gradient for dark background */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        </div>
+      )}
+
+      {/* Right-Side Interaction Stack */}
+      <div className="absolute right-4 bottom-24 flex flex-col items-center gap-5 z-20">
+        <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
+          <div className={`p-3 rounded-full bg-black/40 backdrop-blur-md transition-transform active:scale-90 ${isLiked ? 'text-primary' : 'text-white'}`}>
+            <ThumbsUp className={`w-6 h-6 ${isLiked ? 'fill-current text-primary' : ''}`} />
+          </div>
+          <span className="text-white text-[12px] font-bold drop-shadow-md">{likeCount}</span>
+        </button>
+
+        <button onClick={() => setIsCommentsOpen(true)} className="flex flex-col items-center gap-1 group">
+          <div className="p-3 rounded-full bg-black/40 backdrop-blur-md text-white transition-transform active:scale-90">
+            <MessageSquare className="w-6 h-6" />
+          </div>
+          <span className="text-white text-[12px] font-bold drop-shadow-md">{stats?.answers || comments.length}</span>
+        </button>
+
+        <button onClick={handleSave} className="flex flex-col items-center gap-1 group">
+          <div className={`p-3 rounded-full bg-black/40 backdrop-blur-md transition-transform active:scale-90 ${isSaved ? 'text-primary' : 'text-white'}`}>
+            <Bookmark className={`w-6 h-6 ${isSaved ? 'fill-current' : ''}`} />
+          </div>
+          <span className="text-white text-[12px] font-bold drop-shadow-md">{isSaved ? 'Saved' : 'Save'}</span>
+        </button>
+
+        <button onClick={handleShare} className="flex flex-col items-center gap-1 group">
+          <div className="p-3 rounded-full bg-black/40 backdrop-blur-md text-white transition-transform active:scale-90">
+            <Share2 className="w-6 h-6" />
+          </div>
+          <span className="text-white text-[12px] font-bold drop-shadow-md">Share</span>
+        </button>
+
+        <button onClick={() => {
+            setIsCommentsOpen(true);
+            setNewComment('@Samuel ');
+          }} 
+          className="flex flex-col items-center gap-1 group mt-2"
+        >
+          <div className="p-3 rounded-full bg-indigo-500 text-white shadow-lg shadow-indigo-500/40 transition-transform active:scale-90 animate-pulse">
+            <Bot className="w-6 h-6" />
+          </div>
+          <span className="text-white text-[12px] font-bold drop-shadow-md">Ask AI</span>
+        </button>
+      </div>
+
+      {/* Content Overlay (Bottom Left) */}
+      <div className="absolute bottom-20 left-4 right-20 z-20 flex flex-col gap-3 pb-safe">
+        {type === 'bounty' && props.bountyAmount && (
+          <div className="bg-warning/90 backdrop-blur-sm rounded-lg px-2.5 py-1 w-fit flex items-center gap-1.5 shadow-sm">
+            <span className="text-[12px]">🪙</span>
+            <span className="text-[12px] font-bold text-on-warning">{props.bountyAmount} C-Coins</span>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
           {author?.avatar && author.avatar.startsWith('http') ? (
-            <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full object-cover border border-outline-variant/30 shadow-sm" />
+            <img src={author.avatar} alt={author.name} className="w-11 h-11 rounded-full object-cover border-2 border-white/20 shadow-md" />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0 border border-outline-variant/30 shadow-sm">
+            <div className="w-11 h-11 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0 border-2 border-white/20 shadow-md">
               {(author?.name || 'A').charAt(0).toUpperCase()}
             </div>
           )}
           <div>
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-[15px] font-bold text-on-surface leading-tight">{author?.name}</h3>
-              <span className="text-outline text-xs">&bull; {author?.school}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="bg-primary-container/10 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full">
-                {course} &bull; {topic}
-              </span>
-              <span className="text-outline text-xs font-medium">{timeAgo}</span>
-            </div>
+            <h3 className="text-[15px] font-bold text-white drop-shadow-md">{author?.name}</h3>
+            <p className="text-white/80 text-[12px] font-medium drop-shadow-sm">{course} &bull; {timeAgo}</p>
           </div>
         </div>
-        
-        {/* Three Dots Menu */}
-        <div className="relative">
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="text-outline hover:text-on-surface p-1 rounded-full hover:bg-surface-container-low transition-colors"
-          >
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
-          
-          {isMenuOpen && (
-            <div className="absolute right-0 mt-1 w-40 bg-surface-container-lowest rounded-xl shadow-surface-2 border border-outline-variant/30 py-1.5 z-20 animate-slide-up">
-              <button 
-                onClick={handleShare}
-                className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2"
-              >
-                <Share2 className="w-4 h-4" /> Share Post
+
+        <p className="text-[14px] text-white font-medium leading-relaxed drop-shadow-md line-clamp-4">
+          {content}
+        </p>
+      </div>
+
+      {/* Comments Drawer / Modal */}
+      {isCommentsOpen && (
+        <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-surface w-full h-[65%] rounded-t-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300">
+            <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low rounded-t-3xl">
+              <h3 className="font-bold text-on-surface">{stats?.answers || comments.length} Answers</h3>
+              <button onClick={() => setIsCommentsOpen(false)} className="text-outline hover:text-on-surface p-1.5 rounded-full hover:bg-surface-container transition-colors">
+                <X className="w-5 h-5" />
               </button>
-              {currentUser?.id === authorId && (
-                <button 
-                  onClick={handleDelete}
-                  className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 flex items-center gap-2 font-medium"
-                >
-                  <Trash2 className="w-4 h-4" /> Delete Post
-                </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-safe">
+              {isLoadingComments ? (
+                <div className="text-center py-4 text-outline text-sm">Loading answers...</div>
+              ) : comments.length === 0 ? (
+                <div className="text-center py-4 text-outline text-sm font-medium">No answers yet. Be the first to help!</div>
+              ) : (
+                comments.map((comment) => {
+                  const isSamuel = comment.content.startsWith('[AI_SAMUEL_RESPONSE]');
+                  const cleanContent = isSamuel ? comment.content.replace('[AI_SAMUEL_RESPONSE]', '').trim() : comment.content;
+                  return (
+                    <div key={comment.id} className="flex gap-3">
+                      {isSamuel ? (
+                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-600">
+                          <Bot className="w-4 h-4" />
+                        </div>
+                      ) : comment.profiles?.avatar_url ? (
+                        <img src={comment.profiles.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
+                          {(comment.profiles?.username || comment.profiles?.full_name || 'A').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className={`bg-surface-container-lowest border rounded-2xl rounded-tl-sm px-4 py-2 flex-grow ${isSamuel ? 'border-indigo-200 shadow-sm' : 'border-outline-variant/30'}`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[13px] font-bold ${isSamuel ? 'text-indigo-700' : 'text-on-surface'}`}>
+                            {isSamuel ? 'Samuel' : (comment.profiles?.full_name || comment.profiles?.username || 'Anonymous')}
+                          </span>
+                          {isSamuel && (
+                            <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-1 border border-indigo-200 uppercase tracking-wider">
+                              AI Tutor
+                            </span>
+                          )}
+                          <span className="text-[11px] text-outline ml-1">
+                            {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className={`text-sm whitespace-pre-wrap ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>{cleanContent}</p>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Bounty Banner */}
-      {type === 'bounty' && props.bountyAmount && (
-        <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl px-3 py-2 mb-3 flex items-center gap-2 w-fit">
-          <span className="bg-warning/20 text-[10px] w-5 h-5 rounded-full flex items-center justify-center border border-warning/50 shadow-sm shadow-warning/20">🪙</span>
-          <span className="text-[13px] font-bold text-on-surface">{props.bountyAmount} C-Coins Bounty</span>
-          <span className="text-[13px] text-outline">for {props.bountyDesc}</span>
-        </div>
-      )}
-
-      {/* Content */}
-      <p className="text-[15px] text-on-surface-variant leading-relaxed mb-4 whitespace-pre-wrap">
-        {content}
-      </p>
-
-      {/* Attachments */}
-      {props.attachmentImage && (
-        <div className="rounded-2xl border border-outline-variant/30 overflow-hidden mb-4 bg-surface-container-lowest">
-          <img src={props.attachmentImage} alt="Attachment" className="w-full h-auto object-cover max-h-96" />
-        </div>
-      )}
-
-      {type === 'document' && props.docTitle && (
-        <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-3 flex gap-4 items-center mb-4">
-          <div className="w-14 h-16 bg-error/10 border border-error/20 rounded-lg flex flex-col items-center justify-center flex-shrink-0">
-            <FilePdfIcon className="w-6 h-6 text-error mb-1" />
-            <span className="text-[9px] font-bold text-error uppercase">{props.docPages} Pages</span>
-          </div>
-          <div className="flex-grow">
-            <h4 className="text-[15px] font-bold text-on-surface leading-tight mb-1">{props.docTitle}</h4>
-            <div className="flex items-center gap-2 text-xs text-outline mb-2">
-              <span className="flex items-center text-warning font-bold">
-                ⭐ {props.docRating} <span className="text-outline font-normal ml-0.5">({props.docReviews})</span>
-              </span>
-              <span>&bull;</span>
-              <span className="flex items-center gap-1"><Download className="w-3 h-3" /> {props.docSaves} saves</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="bg-primary/10 text-primary text-[11px] font-bold px-3 py-1 rounded-full hover:bg-primary/20 transition-colors">
-                Preview Deck
-              </button>
-              <button className="text-outline text-[11px] font-medium hover:text-on-surface">
-                Report typo
-              </button>
+            <div className="p-4 border-t border-outline-variant/30 bg-surface">
+              <form onSubmit={handleSubmitComment} className="flex gap-3">
+                <div className="flex-grow flex items-center bg-surface-container-low border border-outline-variant/40 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write an answer, or tag @Samuel for help..."
+                    className="w-full bg-transparent border-none outline-none text-sm text-on-surface placeholder-outline"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={!newComment.trim()}
+                    className="ml-2 text-primary hover:text-primary-container disabled:opacity-40 transition-colors"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
       )}
-
-      {/* Action Bar */}
-      <div className="flex items-center justify-between pt-2 border-t border-outline-variant/20">
-        <div className="flex items-center gap-4">
-          {/* Upvote Toggle */}
-          <div className="flex items-center bg-primary/5 rounded-full border border-primary/10 overflow-hidden">
-            <button 
-              onClick={handleLike}
-              className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${isLiked ? 'bg-primary/20 text-primary' : 'hover:bg-primary/10 text-outline hover:text-primary'}`}
-            >
-              <ThumbsUp className={`w-4 h-4 ${isLiked ? 'fill-current text-primary' : ''}`} />
-              <span className={`text-[13px] font-bold ${isLiked ? 'text-primary' : ''}`}>{likeCount}</span>
-            </button>
-          </div>
-          
-          <button 
-            onClick={() => setIsCommentsOpen(!isCommentsOpen)}
-            className={`flex items-center gap-1.5 transition-colors px-2 py-1 rounded-full hover:bg-surface-container-low ${isCommentsOpen ? 'text-primary bg-primary/10' : 'text-outline hover:text-on-surface'}`}
-          >
-            <MessageSquare className={`w-4 h-4 ${isCommentsOpen ? 'fill-current text-primary/20' : ''}`} />
-            <span className="text-[13px] font-semibold">{stats?.answers || comments.length} {stats?.answers === 1 ? 'Answer' : 'Answers'}</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button 
-            onClick={handleTip}
-            disabled={isTipping || tipStatus === 'success'}
-            className={`flex items-center gap-1 border text-[12px] font-bold px-3 py-1.5 rounded-full transition-all active:scale-95 ${
-              tipStatus === 'success' 
-                ? 'bg-secondary-green/20 border-secondary-green/30 text-secondary-green' 
-                : 'bg-warning/10 border-warning/20 text-on-surface hover:bg-warning/20'
-            }`}
-          >
-            {tipStatus === 'success' ? 'Tipped! 🎉' : '🪙 Tip 10'}
-          </button>
-
-          <button 
-            onClick={onOpenQuiz}
-            className="hidden sm:flex items-center gap-1 border border-indigo-200 bg-indigo-50 text-indigo-700 text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-indigo-100 transition-all active:scale-95"
-          >
-            🧠 Quiz
-          </button>
-
-          <button 
-            onClick={handleSave}
-            className={`p-2 rounded-full transition-colors ${isSaved ? 'text-primary bg-primary/10' : 'text-outline hover:bg-surface-container-low hover:text-on-surface'}`}
-          >
-            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
-          </button>
-          
-          <button onClick={handleShare} className="p-2 rounded-full text-outline hover:bg-surface-container-low hover:text-on-surface transition-colors hidden sm:block">
-            <Share2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Expandable Comments Section */}
-      {isCommentsOpen && (
-        <div className="mt-4 pt-4 border-t border-outline-variant/20 animate-slide-up">
-          {/* New Comment Input */}
-          <form onSubmit={handleSubmitComment} className="flex gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
-              {(currentUser?.name || 'S').charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-grow flex items-center bg-surface-container-lowest border border-outline-variant/40 rounded-full px-4 py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
-              <input
-                type="text"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Write an answer, or tag @Samuel for help..."
-                className="w-full bg-transparent border-none outline-none text-sm text-on-surface placeholder-outline"
-              />
-              <button 
-                type="submit"
-                disabled={!newComment.trim()}
-                className="ml-2 text-primary hover:text-primary-container disabled:opacity-40 transition-colors"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-          </form>
-
-          {/* Comment Feed */}
-          {isLoadingComments ? (
-            <div className="text-center py-4 text-outline text-sm">Loading answers...</div>
-          ) : comments.length === 0 ? (
-            <div className="text-center py-4 text-outline text-sm font-medium bg-surface-container-low rounded-xl">No answers yet. Be the first to help!</div>
-          ) : (
-            <div className="space-y-4 max-h-60 overflow-y-auto scrollbar-hide pr-2">
-              {comments.map((comment) => {
-                const isSamuel = comment.content.startsWith('[AI_SAMUEL_RESPONSE]');
-                const cleanContent = isSamuel ? comment.content.replace('[AI_SAMUEL_RESPONSE]', '').trim() : comment.content;
-                
-                return (
-                  <div key={comment.id} className="flex gap-3">
-                    {isSamuel ? (
-                      <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-600">
-                        <Bot className="w-4 h-4" />
-                      </div>
-                    ) : comment.profiles?.avatar_url ? (
-                      <img src={comment.profiles.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
-                        {(comment.profiles?.username || comment.profiles?.full_name || 'A').charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className={`bg-surface-container-lowest border rounded-2xl rounded-tl-sm px-4 py-2 flex-grow ${isSamuel ? 'border-indigo-200 shadow-sm' : 'border-outline-variant/30'}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[13px] font-bold ${isSamuel ? 'text-indigo-700' : 'text-on-surface'}`}>
-                          {isSamuel ? 'Samuel' : (comment.profiles?.full_name || comment.profiles?.username || 'Anonymous')}
-                        </span>
-                        {isSamuel && (
-                          <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-1 border border-indigo-200 uppercase tracking-wider">
-                            AI Tutor
-                          </span>
-                        )}
-                        <span className="text-[11px] text-outline ml-1">
-                          {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <p className={`text-sm whitespace-pre-wrap ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>{cleanContent}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
     </div>
   );
 }
 
 export function LiveRoomCard() {
   return (
-    <div className="bg-surface-container-low rounded-[24px] shadow-surface-1 p-5 mb-5 border border-primary/20 relative overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
+    <div className="h-[85vh] w-full snap-center relative bg-gradient-to-b from-indigo-900 to-black overflow-hidden flex flex-col justify-center items-center px-6 border-b border-white/10">
+      <div className="absolute top-0 inset-x-0 h-1/2 bg-primary/20 blur-3xl rounded-full translate-y-[-50%]"></div>
       
-      <div className="flex justify-between items-center mb-3 relative z-10">
-        <div className="flex items-center gap-2 text-error text-[11px] font-bold tracking-wider uppercase">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-error"></span>
-          </span>
-          Live Room Happening Now
+      <div className="bg-black/40 backdrop-blur-md border border-white/20 p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl relative z-10">
+        <div className="flex justify-center mb-4">
+          <div className="bg-error/20 text-error px-3 py-1 rounded-full flex items-center gap-2 border border-error/30">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-error"></span>
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wider">Live Now</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 bg-surface-container-highest px-2.5 py-1 rounded-full border border-outline-variant/40">
-          <Users className="w-3.5 h-3.5 text-on-surface" />
-          <span className="text-[11px] font-bold text-on-surface">24 Active</span>
-        </div>
-      </div>
-
-      <div className="relative z-10">
-        <h3 className="text-xl font-extrabold text-on-surface tracking-tight mb-1">Quiet Pomodoro Sprint (50/10)</h3>
-        <p className="text-[14px] text-on-surface-variant leading-relaxed mb-4">
-          Lofi soundscape, camera-on silent accountability, study stats tracking.
-        </p>
-      </div>
-
-      <div className="flex justify-between items-center relative z-10 mt-2">
-        <div className="flex -space-x-3">
-          <div className="w-9 h-9 rounded-full border-2 border-surface-container-low bg-blue-500 flex items-center justify-center text-[12px] text-white font-bold">J</div>
-          <div className="w-9 h-9 rounded-full border-2 border-surface-container-low bg-emerald-500 flex items-center justify-center text-[12px] text-white font-bold">S</div>
-          <div className="w-9 h-9 rounded-full border-2 border-surface-container-low bg-amber-500 flex items-center justify-center text-[12px] text-white font-bold">M</div>
-          <div className="w-9 h-9 rounded-full border-2 border-surface-container-low bg-surface-variant flex items-center justify-center text-[10px] font-bold text-primary">
+        
+        <h3 className="text-2xl font-extrabold text-white mb-2">Quiet Pomodoro Sprint</h3>
+        <p className="text-white/70 text-sm mb-6">Lofi soundscape, silent accountability (50/10).</p>
+        
+        <div className="flex justify-center -space-x-3 mb-6">
+          <div className="w-10 h-10 rounded-full border-2 border-indigo-900 bg-blue-500 flex items-center justify-center text-[12px] text-white font-bold">J</div>
+          <div className="w-10 h-10 rounded-full border-2 border-indigo-900 bg-emerald-500 flex items-center justify-center text-[12px] text-white font-bold">S</div>
+          <div className="w-10 h-10 rounded-full border-2 border-indigo-900 bg-amber-500 flex items-center justify-center text-[12px] text-white font-bold">M</div>
+          <div className="w-10 h-10 rounded-full border-2 border-indigo-900 bg-white/20 backdrop-blur flex items-center justify-center text-[11px] font-bold text-white">
             +21
           </div>
         </div>
         
-        <button className="bg-primary text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-md hover:bg-primary-container transition-all active:scale-95 flex items-center gap-2">
-          <Radio className="w-4 h-4" />
+        <button className="w-full bg-primary text-white font-bold text-base py-3.5 rounded-full shadow-lg hover:bg-primary-container transition-all active:scale-95 flex items-center justify-center gap-2">
+          <Radio className="w-5 h-5" />
           Join Sprint
         </button>
       </div>
