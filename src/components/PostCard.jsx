@@ -52,7 +52,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         setIsLoadingComments(true);
         const { data, error } = await supabase
           .from('post_comments')
-          .select('*, profiles!user_id(*)')
+          .select('*, profiles!author_id(*)')
           .eq('post_id', postId)
           .order('created_at', { ascending: true });
         
@@ -180,33 +180,19 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
     const text = newComment.trim();
     setNewComment('');
 
-    // Optimistically add to UI
-    const tempComment = {
-      id: Date.now(),
-      content: text,
-      created_at: new Date().toISOString(),
-      profiles: {
-        username: currentUser.username,
-        full_name: currentUser.name,
-        avatar_url: currentUser.avatar
-      }
-    };
-    setComments(prev => [...prev, tempComment]);
-
-    // Insert into DB
-    const { error } = await supabase.from('post_comments').insert([{
+    // Insert into DB without optimistic UI
+    const { data: insertedComment, error } = await supabase.from('post_comments').insert([{
       post_id: postId,
-      user_id: currentUser.id,
+      author_id: currentUser.id,
       content: text
-    }]);
+    }]).select('*, profiles!author_id(*)').single();
 
     if (error) {
-      console.error(error);
-      // Revert optimistic update
-      setComments(prev => prev.filter(c => c.id !== tempComment.id));
-      setNewComment(text);
+      console.error("Error posting comment:", error);
       alert(`Failed to post comment: ${error.message}`);
-    } else {
+      setNewComment(text); // Restore text on failure
+    } else if (insertedComment) {
+      setComments(prev => [...prev, insertedComment]);
       // Increment aggregate comments count on posts table
       await supabase.from('posts').update({ comments: (stats?.answers || 0) + 1 }).eq('id', postId);
 
@@ -218,13 +204,13 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
             if (!aiResponse) return;
             const aiComment = {
               post_id: postId,
-              user_id: samuelId,
+              author_id: samuelId,
               content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
             };
             
-            const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!user_id(*)').single();
-            if (!aiError && insertedComment) {
-              setComments(prev => [...prev, insertedComment]);
+            const { data: insertedAiComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!author_id(*)').single();
+            if (!aiError && insertedAiComment) {
+              setComments(prev => [...prev, insertedAiComment]);
               await supabase.from('posts').update({ comments: (stats?.answers || 0) + 2 }).eq('id', postId);
             }
           }).catch(err => console.error("Samuel failed to respond:", err)).finally(() => setIsAITyping(false));
@@ -291,14 +277,17 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
               if (aiResponse) {
                 const aiComment = {
                   post_id: postId,
-                  user_id: samuelId,
+                  author_id: samuelId,
                   content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
                 };
                 
-                const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!user_id(*)').single();
+                const { data: insertedAiComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!author_id(*)').single();
                 
-                if (!aiError && insertedComment) {
-                  setComments(prev => [...prev, insertedComment]);
+                if (aiError) {
+                  console.error("Error posting AI comment:", aiError);
+                  alert(`Failed to post AI comment: ${aiError.message}`);
+                } else if (insertedAiComment) {
+                  setComments(prev => [...prev, insertedAiComment]);
                   await supabase.from('posts').update({ comments: (stats?.answers || comments?.length || 0) + 1 }).eq('id', postId);
                 }
               }
