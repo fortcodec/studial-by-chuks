@@ -186,8 +186,8 @@ export default function CreatePost({ onPostCreated }) {
         onPostCreated();
       }
     } catch (error) {
-      console.error('Error creating post:', error);
-      alert('Failed to post. Please try again.');
+      console.error("Post error details:", error.message, error.details, error.hint, error);
+      alert(`Failed to post: ${error.message || 'Check console for details.'}`);
     } finally {
       setIsSubmitting(false);
     }
