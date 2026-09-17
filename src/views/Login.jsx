@@ -96,8 +96,8 @@ export default function Login() {
           <h1 className="text-3xl font-bold text-primary-navy tracking-tight">
             {isRecoveryMode ? 'Reset Password' : 'Welcome Back'}
           </h1>
-          <p className="text-gray-500">
-            {isRecoveryMode ? 'Enter your email to receive a reset link' : 'Sign in to your campus study vault'}
+          <p className="text-gray-500 mt-2">
+            {isRecoveryMode ? 'Enter your email to receive a reset link' : 'Sign in to your campus study library'}
           </p>
         </div>
 

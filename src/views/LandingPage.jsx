@@ -77,7 +77,7 @@ export default function LandingPage() {
         </div>
         
         <h1 className="text-4xl md:text-6xl font-extrabold text-primary-navy mb-6 tracking-tight max-w-4xl mx-auto leading-tight">
-          Your free campus study vault <br className="hidden md:block" />
+          Your free campus study library <br className="hidden md:block" />
           <span className="text-secondary-green">and social hub.</span>
         </h1>
         
@@ -128,7 +128,7 @@ export default function LandingPage() {
             </div>
             
             <p className="text-gray-600 leading-relaxed text-lg">
-              Studial isn't just a website; it's an answer to a challenge faced by every student in Nigerian tertiary institutions. We understand the frustration of hunts for past questions and study materials. That's why we built this unified platform. Our vision is to empower students by providing a filtered, free, and accessible vault of academic materials tailored exactly to your department.
+              Studial isn't just a website; it's an answer to a challenge faced by every student in Nigerian tertiary institutions. We understand the frustration of hunts for past questions and study materials. That's why we built this unified platform. Our vision is to empower students by providing a filtered, free, and accessible library of academic materials tailored exactly to your department.
             </p>
 
             <div className="pt-4">

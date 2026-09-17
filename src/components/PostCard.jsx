@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ThumbsUp, MessageSquare, Bookmark, Share2, Radio, Send, Bot, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { askSamuel } from '../utils/gemini';
+import { Avatar } from './Avatar';
 
 export function PostCard({ postId, type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, onOpenQuiz, onDelete, ...props }) {
   const [isTipping, setIsTipping] = useState(false);
@@ -272,9 +273,48 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
           <span className="text-white text-[12px] font-bold drop-shadow-md">Share</span>
         </button>
 
-        <button onClick={() => {
+        <button onClick={async () => {
             setIsCommentsOpen(true);
-            setNewComment('@Samuel ');
+            
+            // Generate a temporary ID for the optimistic loading comment
+            const tempAiId = Date.now();
+            const loadingComment = {
+              id: tempAiId,
+              content: '[AI_SAMUEL_RESPONSE] Typing...',
+              created_at: new Date().toISOString(),
+              isTyping: true,
+              profiles: {
+                username: 'Samuel',
+                full_name: 'AI Tutor',
+              }
+            };
+            
+            setComments(prev => [...prev, loadingComment]);
+            
+            try {
+              const aiResponse = await askSamuel(`You are Samuel. Please provide a helpful explanation of the following post content: "${content}".`);
+              if (aiResponse) {
+                const aiComment = {
+                  post_id: postId,
+                  user_id: currentUser?.id,
+                  content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
+                };
+                
+                const { data: insertedComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles:user_id(username, full_name, avatar_url)').single();
+                
+                if (!aiError && insertedComment) {
+                  setComments(prev => prev.map(c => c.id === tempAiId ? insertedComment : c));
+                  await supabase.from('posts').update({ comments: (stats?.answers || comments?.length || 0) + 1 }).eq('id', postId);
+                } else {
+                  setComments(prev => prev.filter(c => c.id !== tempAiId));
+                }
+              } else {
+                setComments(prev => prev.filter(c => c.id !== tempAiId));
+              }
+            } catch (err) {
+              console.error("AI Error:", err);
+              setComments(prev => prev.filter(c => c.id !== tempAiId));
+            }
           }} 
           className="flex flex-col items-center gap-1 group mt-2"
         >
@@ -295,13 +335,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         )}
 
         <div className="flex items-center gap-3">
-          {author?.avatar && author?.avatar?.startsWith('http') ? (
-            <img src={author?.avatar} alt={author?.name || 'User'} className="w-11 h-11 rounded-full object-cover border-2 border-white/20 shadow-md" />
-          ) : (
-            <div className="w-11 h-11 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0 border-2 border-white/20 shadow-md">
-              {(author?.name || 'A').charAt(0).toUpperCase()}
-            </div>
-          )}
+          <Avatar url={author?.avatar} name={author?.name} size="lg" className="border-2 border-white/20" />
           <div>
             <h3 className="text-[15px] font-bold text-white drop-shadow-md">{author?.name || 'Anonymous'}</h3>
             <p className="text-white/80 text-[12px] font-medium drop-shadow-sm">{course || 'General'} &bull; {timeAgo || 'Just now'}</p>
@@ -340,12 +374,8 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                         <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-600">
                           <Bot className="w-4 h-4" />
                         </div>
-                      ) : comment?.profiles?.avatar_url ? (
-                        <img src={comment?.profiles?.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover shrink-0" />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
-                          {(comment?.profiles?.username || comment?.profiles?.full_name || 'A').charAt(0).toUpperCase()}
-                        </div>
+                        <Avatar url={comment?.profiles?.avatar_url} name={comment?.profiles?.username || comment?.profiles?.full_name} size="sm" />
                       )}
                       <div className={`bg-surface-container-lowest border rounded-2xl rounded-tl-sm px-4 py-2 flex-grow ${isSamuel ? 'border-indigo-200 shadow-sm' : 'border-outline-variant/30'}`}>
                         <div className="flex items-center gap-2 mb-1">
@@ -361,7 +391,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                             {comment?.created_at ? new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                           </span>
                         </div>
-                        <p className={`text-sm whitespace-pre-wrap ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>{cleanContent || ''}</p>
+                        <p className={`text-sm whitespace-pre-wrap ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'} ${comment?.isTyping ? 'animate-pulse' : ''}`}>{cleanContent || ''}</p>
                       </div>
                     </div>
                   );

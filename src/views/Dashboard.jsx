@@ -179,8 +179,6 @@ export default function Dashboard() {
             return (
               <ErrorBoundary key={post?.id || index}>
                 <React.Fragment>
-                  {/* Insert Live Room card dynamically after the first post */}
-                  {index === 1 && <LiveRoomCard />}
                   
                   <PostCard 
                     postId={post?.id}

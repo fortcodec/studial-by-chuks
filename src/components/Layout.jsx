@@ -5,6 +5,7 @@ import { BottomNav } from "./BottomNav";
 import { supabase } from "../supabaseClient";
 import CreatePost from "./CreatePost";
 import { X } from "lucide-react";
+import { Avatar } from "./Avatar";
 
 export default function Layout() {
   const [currentUser, setCurrentUser] = useState({
@@ -147,7 +148,10 @@ export default function Layout() {
 
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => document.documentElement.classList.toggle('dark')}
+            onClick={() => {
+              const isDark = document.documentElement.classList.toggle('dark');
+              localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            }}
             className="p-1.5 rounded-full bg-surface-container-low border border-outline-variant/30 text-outline hover:text-on-surface shadow-sm active:scale-95 transition-all"
           >
             <span className="dark:hidden flex items-center justify-center w-5 h-5">🌙</span>
@@ -205,17 +209,12 @@ export default function Layout() {
             )}
           </div>
           
-          {currentUser?.avatar_url || currentUser?.avatar ? (
-            <img 
-              src={currentUser.avatar_url || currentUser.avatar} 
-              alt="Profile" 
-              className="w-9 h-9 rounded-full object-cover border-2 border-surface-container-low shadow-sm"
-            />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border-2 border-surface-container-low shadow-sm text-sm">
-              {String(currentUser?.username || currentUser?.name || 'Student').charAt(0).toUpperCase().replace(/[0-9]/, 'S')}
-            </div>
-          )}
+          <Avatar 
+            url={currentUser?.avatar_url || currentUser?.avatar} 
+            name={currentUser?.username || currentUser?.name || 'Student'} 
+            size="md" 
+            className="border-2 border-surface-container-low" 
+          />
         </div>
       </div>
 
