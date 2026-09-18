@@ -9,6 +9,7 @@ export default function Onboarding() {
     fullName: '',
     username: '',
     university: '',
+    otherUniversity: '',
     department: '',
     identifier: '',
     password: ''
@@ -36,6 +37,8 @@ export default function Onboarding() {
 
       const isPhone = formData.identifier.startsWith('+') && /\d/.test(formData.identifier);
       const cleanUsername = formData.username.replace(/\s+/g, '').toLowerCase();
+      const finalUniversity = formData.university === 'Other' ? formData.otherUniversity : formData.university;
+      
       let authResponse;
       if (isPhone) {
         const phoneValue = formData.identifier.replace(/[\s-]/g, '');
@@ -46,7 +49,7 @@ export default function Onboarding() {
             data: {
               full_name: formData.fullName,
               username: cleanUsername,
-              university: formData.university,
+              university: finalUniversity,
               department: formData.department
             }
           }
@@ -59,7 +62,7 @@ export default function Onboarding() {
             data: {
               full_name: formData.fullName,
               username: cleanUsername,
-              university: formData.university,
+              university: finalUniversity,
               department: formData.department
             }
           }
@@ -80,7 +83,7 @@ export default function Onboarding() {
           id: data.user.id,
           full_name: formData.fullName,
           username: cleanUsername,
-          university: formData.university,
+          university: finalUniversity,
           department: formData.department,
           role: 'student',
           c_coins: 0
@@ -191,24 +194,69 @@ export default function Onboarding() {
               <option value="Ahmadu Bello University (ABU)">Ahmadu Bello University (ABU)</option>
               <option value="Other">Other</option>
             </select>
+            {formData.university === 'Other' && (
+              <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                <input 
+                  type="text"
+                  name="otherUniversity"
+                  value={formData.otherUniversity}
+                  onChange={handleChange}
+                  placeholder="Enter your university name"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50 text-gray-900"
+                  required
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-1 text-left">
-            <label className="block text-sm font-medium text-gray-700">Select Department</label>
-            <select 
+            <label className="block text-sm font-medium text-gray-700">Search Department</label>
+            <input 
+              type="text"
               name="department"
               value={formData.department}
               onChange={handleChange}
+              list="departments-list"
+              placeholder="e.g. Computer Science"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50 text-gray-900"
               required
-            >
-              <option value="" disabled>Choose your department...</option>
-              <option value="Microbiology">Microbiology</option>
-              <option value="Computer Science">Computer Science</option>
-              <option value="Biochemistry">Biochemistry</option>
-              <option value="Estate Management">Estate Management</option>
-              <option value="Mass Communication">Mass Communication</option>
-            </select>
+            />
+            <datalist id="departments-list">
+              <option value="Computer Science" />
+              <option value="Software Engineering" />
+              <option value="Cybersecurity" />
+              <option value="Information Technology" />
+              <option value="Physics" />
+              <option value="Chemistry" />
+              <option value="Mathematics" />
+              <option value="Microbiology" />
+              <option value="Biochemistry" />
+              <option value="Mechanical Engineering" />
+              <option value="Electrical Engineering" />
+              <option value="Civil Engineering" />
+              <option value="Chemical Engineering" />
+              <option value="Petroleum Engineering" />
+              <option value="Mechatronics Engineering" />
+              <option value="Computer Engineering" />
+              <option value="Medicine and Surgery" />
+              <option value="Nursing" />
+              <option value="Pharmacy" />
+              <option value="Anatomy" />
+              <option value="Physiology" />
+              <option value="Medical Laboratory Science" />
+              <option value="Law" />
+              <option value="Mass Communication" />
+              <option value="English" />
+              <option value="History" />
+              <option value="International Relations" />
+              <option value="Theatre Arts" />
+              <option value="Accounting" />
+              <option value="Business Administration" />
+              <option value="Economics" />
+              <option value="Political Science" />
+              <option value="Sociology" />
+              <option value="Banking and Finance" />
+            </datalist>
           </div>
 
 
