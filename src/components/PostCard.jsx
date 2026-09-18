@@ -3,7 +3,10 @@ import { ThumbsUp, MessageSquare, Bookmark, Share2, Radio, Send, Bot, X } from '
 import { supabase } from '../supabaseClient';
 import { askSamuel, getSamuelProfileId } from '../utils/gemini';
 import { Avatar } from './Avatar';
-
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 export function PostCard({ postId, type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, onOpenQuiz, onDelete, ...props }) {
   const [isTipping, setIsTipping] = useState(false);
   const [tipStatus, setTipStatus] = useState(null);
@@ -261,9 +264,11 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         </div>
       ) : (
         <div className="absolute inset-0 z-0 flex items-center justify-center p-8 pb-32 bg-gradient-to-br from-indigo-900 to-slate-800">
-          <h2 className="text-white text-2xl md:text-3xl font-bold text-center drop-shadow-md pr-12 overflow-y-auto max-h-[60vh] scrollbar-hide leading-relaxed">
-            {content || ''}
-          </h2>
+          <div className="text-white text-2xl md:text-3xl font-bold text-center drop-shadow-md pr-12 overflow-y-auto max-h-[60vh] scrollbar-hide leading-relaxed markdown-body">
+            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+              {content || ''}
+            </ReactMarkdown>
+          </div>
         </div>
       )}
 
@@ -405,7 +410,11 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                             {comment?.created_at ? new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                           </span>
                         </div>
-                        <p className={`text-sm whitespace-pre-wrap ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>{cleanContent || ''}</p>
+                        <div className={`text-sm markdown-body ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>
+                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                            {cleanContent || ''}
+                          </ReactMarkdown>
+                        </div>
                       </div>
                     </div>
                   );
