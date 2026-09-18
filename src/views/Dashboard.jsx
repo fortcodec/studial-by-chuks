@@ -66,6 +66,7 @@ export default function Dashboard() {
   const [activeQuizContent, setActiveQuizContent] = useState("");
 
   const [topics, setTopics] = useState(["All Topics"]);
+  const [activeFilter, setActiveFilter] = useState("All Topics");
 
   useEffect(() => {
     let isMounted = true;
@@ -149,8 +150,9 @@ export default function Dashboard() {
         {topics.map((topic, idx) => (
           <button
             key={topic}
+            onClick={() => setActiveFilter(topic)}
             className={`px-4 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors active:scale-95 ${
-              idx === 0 
+              activeFilter === topic 
                 ? "bg-primary text-white shadow-md shadow-primary/20" 
                 : "bg-surface-container border border-outline-variant/30 text-on-surface hover:bg-surface-container-high"
             }`}
@@ -192,8 +194,20 @@ export default function Dashboard() {
             <p className="font-semibold">No posts yet.</p>
             <p className="text-sm mt-1">Be the first to share something!</p>
           </div>
-        ) : (
-          posts.map((post, index) => {
+        ) : (() => {
+          const filteredPosts = activeFilter === "All Topics" 
+            ? posts 
+            : posts.filter(post => post.content?.toLowerCase().includes(`#${activeFilter.replace('🔥 ', '').toLowerCase()}`));
+          
+          if (filteredPosts.length === 0) {
+            return (
+              <div className="text-center py-10 text-outline">
+                <p className="font-semibold">No posts found for {activeFilter}.</p>
+              </div>
+            );
+          }
+
+          return filteredPosts.map((post, index) => {
             if (!post) return null;
             return (
               <ErrorBoundary key={post?.id || index}>
@@ -231,8 +245,8 @@ export default function Dashboard() {
                 </React.Fragment>
               </ErrorBoundary>
             );
-          })
-        )}
+          });
+        })()}
       </div>
 
       <QuizModal 

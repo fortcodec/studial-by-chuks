@@ -20,6 +20,7 @@ export default function Layout() {
   // Notification Dropdown State
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
   const notificationRef = useRef(null);
@@ -60,6 +61,18 @@ export default function Layout() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('hasSeenOnboarding');
+    if (!hasSeen) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleCloseOnboarding = () => {
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    setShowOnboarding(false);
+  };
 
   const fetchTransactions = async () => {
     if (!currentUser?.id) return;
@@ -314,6 +327,36 @@ export default function Layout() {
             <div className="max-h-[80vh] overflow-y-auto p-4 scrollbar-hide">
               <CreatePost currentUser={currentUser} onPostCreated={() => setIsCreatePostOpen(false)} />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-surface w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative p-6 flex flex-col gap-4 text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2 text-primary">
+              <span className="text-2xl">🎓</span>
+            </div>
+            <h2 className="font-extrabold text-2xl text-on-surface">Welcome to Studial!</h2>
+            <p className="text-on-surface-variant text-[15px] leading-relaxed">
+              Studial is your campus network. Here you can ask questions, take quizzes, and connect with peers!
+            </p>
+            <div className="bg-surface-container rounded-2xl p-4 my-2 text-left space-y-3 border border-outline-variant/30">
+              <div className="flex gap-3">
+                <span className="text-xl">🪙</span>
+                <div>
+                  <h3 className="font-bold text-on-surface text-sm">C-Coin Economy</h3>
+                  <p className="text-outline text-xs mt-0.5">Earn +2 C-Coins for daily logins! You can also earn more by completing admin tasks and answering questions.</p>
+                </div>
+              </div>
+            </div>
+            <button 
+              onClick={handleCloseOnboarding}
+              className="w-full bg-primary text-white font-bold py-3.5 rounded-full hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 mt-2"
+            >
+              Get Started
+            </button>
           </div>
         </div>
       )}

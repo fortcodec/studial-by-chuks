@@ -183,6 +183,13 @@ export default function Onboarding() {
               <option value="" disabled>Choose your institution...</option>
               <option value="Federal University, Lokoja">Federal University, Lokoja</option>
               <option value="Nnamdi Azikiwe University, Awka">Nnamdi Azikiwe University, Awka</option>
+              <option value="University of Lagos (UNILAG)">University of Lagos (UNILAG)</option>
+              <option value="Obafemi Awolowo University (OAU)">Obafemi Awolowo University (OAU)</option>
+              <option value="University of Benin (UNIBEN)">University of Benin (UNIBEN)</option>
+              <option value="University of Ibadan (UI)">University of Ibadan (UI)</option>
+              <option value="University of Nigeria, Nsukka (UNN)">University of Nigeria, Nsukka (UNN)</option>
+              <option value="Ahmadu Bello University (ABU)">Ahmadu Bello University (ABU)</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 
