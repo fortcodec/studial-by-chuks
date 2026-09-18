@@ -234,7 +234,7 @@ export default function Layout() {
               </button>
             </div>
             <div className="max-h-[80vh] overflow-y-auto p-4 scrollbar-hide">
-              <CreatePost onPostCreated={() => setIsCreatePostOpen(false)} />
+              <CreatePost currentUser={currentUser} onPostCreated={() => setIsCreatePostOpen(false)} />
             </div>
           </div>
         </div>

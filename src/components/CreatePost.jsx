@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Edit3, Users, HelpCircle, FileText, Link as LinkIcon, BarChart2, Send, Loader2, X, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { askSamuel } from '../utils/gemini';
+import { Avatar } from './Avatar';
 
-export default function CreatePost({ onPostCreated }) {
+export default function CreatePost({ onPostCreated, currentUser: propCurrentUser }) {
   const [content, setContent] = useState('');
   const [mediaUrl, setMediaUrl] = useState('');
   const [showMediaInput, setShowMediaInput] = useState(false);
@@ -19,11 +20,15 @@ export default function CreatePost({ onPostCreated }) {
   const fileInputRef = useRef(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(propCurrentUser || null);
   
   const textareaRef = useRef(null);
 
   useEffect(() => {
+    if (propCurrentUser) {
+      setCurrentUser(propCurrentUser);
+      return;
+    }
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -37,7 +42,7 @@ export default function CreatePost({ onPostCreated }) {
       }
     };
     fetchUser();
-  }, []);
+  }, [propCurrentUser]);
 
   // Auto-expand textarea
   const handleInput = (e) => {
@@ -213,17 +218,12 @@ export default function CreatePost({ onPostCreated }) {
       <div className="flex gap-3">
         {/* Avatar Placeholder */}
         <div className="flex-shrink-0 relative">
-          {currentUser?.avatar_url ? (
-            <img 
-              src={currentUser.avatar_url} 
-              alt="User Avatar" 
-              className="w-10 h-10 rounded-full object-cover border border-outline-variant/30"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border border-outline-variant/30 text-sm shadow-sm">
-              {(currentUser?.username || currentUser?.full_name || currentUser?.email || 'S').charAt(0).toUpperCase()}
-            </div>
-          )}
+          <Avatar 
+            url={currentUser?.avatar_url || currentUser?.avatar} 
+            name={currentUser?.full_name || currentUser?.name || currentUser?.username || currentUser?.email || 'Student'} 
+            size="md" 
+            className="border border-outline-variant/30"
+          />
           <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-container border-2 border-white rounded-full"></div>
         </div>
 
