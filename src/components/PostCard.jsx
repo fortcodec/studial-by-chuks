@@ -490,14 +490,14 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                       ) : (
                         <Avatar url={comment?.profiles?.avatar_url} name={comment?.profiles?.username || comment?.profiles?.full_name} size="sm" />
                       )}
-                      <div className={`bg-surface-container-lowest border rounded-2xl rounded-tl-sm px-4 py-2 flex-grow ${isSamuel ? 'border-indigo-200 shadow-sm' : 'border-outline-variant/30'}`}>
+                      <div className={`border rounded-2xl rounded-tl-sm px-4 py-2 flex-grow ${isSamuel ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 border-indigo-200 shadow-md' : 'bg-surface-container-lowest border-outline-variant/30'}`}>
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`text-[13px] font-bold ${isSamuel ? 'text-indigo-700' : 'text-on-surface'}`}>
                             {isSamuel ? 'Samuel' : (comment?.profiles?.full_name || comment?.profiles?.username || 'Anonymous')}
                           </span>
                           {isSamuel && (
-                            <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-1 border border-indigo-200 uppercase tracking-wider">
-                              AI Tutor
+                            <span className="bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-1 border border-indigo-200 dark:border-indigo-700 uppercase tracking-wider">
+                              ✨ AI Assistant
                             </span>
                           )}
                           <span className="text-[11px] text-outline ml-1">
@@ -516,11 +516,11 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
               )}
               {isAITyping && (
                 <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2">
-                  <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-600">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-400">
                     <Bot className="w-4 h-4 animate-pulse" />
                   </div>
-                  <div className="bg-surface-container-lowest border border-indigo-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center">
-                    <p className="text-sm text-indigo-900 font-medium flex items-center gap-1">
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 border border-indigo-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-md flex items-center">
+                    <p className="text-sm text-indigo-900 dark:text-indigo-200 font-medium flex items-center gap-1">
                       Samuel is typing
                       <span className="flex space-x-1 ml-1">
                         <span className="animate-bounce delay-75">.</span>

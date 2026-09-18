@@ -13,6 +13,8 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
   
   const [bountyAmount, setBountyAmount] = useState('');
   const [showBountyInput, setShowBountyInput] = useState(false);
+  
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   // Image Upload state
   const [selectedImage, setSelectedImage] = useState(null);
@@ -179,7 +181,8 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
           ...(isBounty && {
             bounty_amount: parsedBounty,
             type: 'bounty'
-          })
+          }),
+          is_anonymous: isAnonymous
         }
       ]).select().single();
 
@@ -208,6 +211,7 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
       setShowPollInput(false);
       setBountyAmount('');
       setShowBountyInput(false);
+      setIsAnonymous(false);
       clearImage();
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -245,7 +249,7 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
               ref={textareaRef}
               value={content}
               onChange={handleInput}
-              placeholder="Share notes, ask doubts, or tag @Samuel for an explanation..."
+              placeholder={selectedImage || mediaUrl ? "Add a caption..." : "Share notes, ask doubts, or tag @Samuel for an explanation..."}
               className="w-full resize-none border-none focus:ring-0 p-1 text-on-surface placeholder-outline bg-transparent min-h-[24px] text-sm leading-relaxed overflow-hidden outline-none font-medium"
               rows={1}
               disabled={isSubmitting}
@@ -405,6 +409,20 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
             disabled={isSubmitting || !!selectedImage}
           >
             <span className="text-[12px] font-bold text-warning leading-none px-1">🪙 Bounty</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsAnonymous(!isAnonymous)}
+            className={`flex items-center gap-1 p-2 rounded-full transition-colors active:scale-95 disabled:opacity-50 ${
+              isAnonymous 
+                ? 'bg-primary border border-primary text-white' 
+                : 'bg-surface-container-low border border-outline-variant/30 hover:bg-surface-container'
+            }`}
+            disabled={isSubmitting}
+          >
+            <Users className={`w-4 h-4 ${isAnonymous ? 'text-white' : 'text-primary'}`} />
+            <span className={`text-[12px] font-bold leading-none px-1 ${isAnonymous ? 'text-white' : 'text-primary'}`}>Anon</span>
           </button>
         </div>
         

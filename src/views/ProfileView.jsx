@@ -298,8 +298,8 @@ export default function ProfileView() {
                     type={post.type}
                     options={post.options}
                     author={{
-                      name: post.profiles?.full_name || post.profiles?.username,
-                      avatar: post.profiles?.avatar_url
+                      name: post.is_anonymous ? 'Anonymous Student' : (post.profiles?.full_name || post.profiles?.username),
+                      avatar: post.is_anonymous ? 'https://api.dicebear.com/9.x/glass/svg?seed=Anonymous' : post.profiles?.avatar_url
                     }}
                     authorId={post.user_id}
                     course={post.course_code || 'General'}

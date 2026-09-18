@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet } from "react-router-dom";
-import { Bell } from "lucide-react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { Bell, Search } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { supabase } from "../supabaseClient";
 import CreatePost from "./CreatePost";
@@ -23,6 +23,43 @@ export default function Layout() {
   const [transactions, setTransactions] = useState([]);
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
   const notificationRef = useRef(null);
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url')
+        .ilike('username', `%${searchQuery}%`)
+        .limit(5);
+      
+      if (!error && data) {
+        setSearchResults(data);
+      }
+    };
+    
+    const timeoutId = setTimeout(fetchSearchResults, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const fetchTransactions = async () => {
     if (!currentUser?.id) return;
@@ -77,18 +114,19 @@ export default function Layout() {
         if (profile) {
           let currentCoins = profile.c_coins || 0;
           
-          // Enforce Once-Per-Day Login Reward
-          const todayStr = new Date().toDateString();
-          const lastClaimed = profile.last_reward_date;
+          // Enforce 24-Hour Login Reward
+          const now = new Date();
+          const lastClaimed = profile.last_login_reward ? new Date(profile.last_login_reward) : null;
+          const hoursSinceLastReward = lastClaimed ? (now - lastClaimed) / (1000 * 60 * 60) : 24;
           
-          if (lastClaimed !== todayStr) {
-            // New day! Award the coins
+          if (hoursSinceLastReward >= 24) {
+            // More than 24 hours passed! Award the coins
             currentCoins += 2;
             
             // 2. Update Database
             await supabase.from('profiles').update({ 
               c_coins: currentCoins,
-              last_reward_date: todayStr
+              last_login_reward: now.toISOString()
             }).eq('id', user.id);
             
             // Log Transaction
@@ -124,7 +162,7 @@ export default function Layout() {
   }, []);
 
   return (
-    <div className="flex flex-col h-[100dvh] relative bg-background overflow-hidden w-full max-w-md md:max-w-3xl lg:max-w-4xl mx-auto shadow-2xl md:border-x border-outline-variant/30">
+    <div className="flex flex-col min-h-[100dvh] h-[100dvh] pt-safe pb-safe relative bg-background overflow-hidden w-full max-w-md md:max-w-3xl lg:max-w-4xl mx-auto shadow-2xl md:border-x border-outline-variant/30">
       {/* Login Reward Banner */}
       {showLoginReward && (
         <div className="bg-green-500 text-white text-center py-2 px-4 text-sm font-bold shadow-md animate-slide-down flex justify-center items-center gap-2 relative z-50">
@@ -144,10 +182,50 @@ export default function Layout() {
               <path d="M2 13l10 5 10-5M2 18l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h1 className="text-xl font-extrabold text-on-surface tracking-tight">Studial.</h1>
+          <h1 className="text-xl font-extrabold text-on-surface tracking-tight hidden md:block">Studial.</h1>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex-1 max-w-sm mx-4 relative" ref={searchRef}>
+          <div className={`flex items-center bg-surface-container-low border border-outline-variant/30 rounded-full px-3 py-1.5 transition-all focus-within:ring-2 focus-within:ring-primary/20 ${isSearchOpen ? 'ring-2 ring-primary/20 bg-surface-container' : ''}`}>
+            <Search className="w-4 h-4 text-outline" />
+            <input 
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchOpen(true)}
+              placeholder="Search users..."
+              className="w-full bg-transparent border-none outline-none text-[13px] px-2 text-on-surface placeholder-outline"
+            />
+          </div>
+          
+          {isSearchOpen && searchQuery.trim() && (
+            <div className="absolute top-full mt-2 w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-xl overflow-hidden z-50">
+              {searchResults.length > 0 ? (
+                searchResults.map(user => (
+                  <button
+                    key={user.id}
+                    onClick={() => {
+                      setIsSearchOpen(false);
+                      setSearchQuery("");
+                      navigate(`/profile/${user.id}`);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-surface-container-low transition-colors flex items-center gap-3 border-b border-outline-variant/10 last:border-b-0"
+                  >
+                    <Avatar url={user.avatar_url} name={user.username || user.full_name} size="sm" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-bold text-[13px] text-on-surface truncate">{user.username || user.full_name}</span>
+                      {user.full_name && user.username && <span className="text-[11px] text-outline truncate">@{user.username}</span>}
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-3 text-[13px] text-outline text-center">No users found</div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 md:gap-4 shrink-0">
           <button 
             onClick={() => {
               const isDark = document.documentElement.classList.toggle('dark');

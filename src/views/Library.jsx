@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, FileText, ArrowLeft, Loader2, BookOpen, Bookmark, Bot, AlertCircle } from 'lucide-react';
+import { Search, Download, FileText, ArrowLeft, Loader2, BookOpen, Bookmark, Bot, AlertCircle, X, Filter, CheckCircle2, ChevronRight } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ export default function Library() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
   const [pageError, setPageError] = useState(null);
+  const [activeDocument, setActiveDocument] = useState(null);
 
   const filters = ['All', 'Past Questions', 'Lecture Notes', 'Syllabus'];
 
@@ -208,14 +209,12 @@ export default function Library() {
                       >
                         <Bookmark className={`w-4 h-4 ${savedMaterials?.has(resource?.id) ? 'fill-current' : ''}`} />
                       </button>
-                      <a 
-                        href={resource?.file_url || '#'} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => setActiveDocument(resource)}
                         className="w-8 h-8 bg-surface-container-low rounded-full flex items-center justify-center text-primary hover:bg-surface-container hover:text-primary-container transition-colors shadow-sm"
                       >
-                        <Download className="w-4 h-4" />
-                      </a>
+                        <FileText className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -224,6 +223,41 @@ export default function Library() {
           </div>
         )}
       </div>
+
+      {/* Document Viewer Modal */}
+      {activeDocument && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="flex items-center justify-between p-4 bg-surface-container-lowest border-b border-outline-variant/30">
+            <h3 className="font-bold text-on-surface truncate pr-4 text-sm md:text-base">
+              {activeDocument.title || 'Document Viewer'}
+            </h3>
+            <div className="flex items-center gap-2">
+              <a 
+                href={activeDocument.file_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors text-[13px] font-bold"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Download</span>
+              </a>
+              <button 
+                onClick={() => setActiveDocument(null)} 
+                className="text-outline hover:text-on-surface p-1.5 rounded-full hover:bg-surface-container transition-colors bg-surface-container-low"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 w-full relative">
+            <iframe
+              src={activeDocument.file_url}
+              className="w-full h-full border-none"
+              title="Document Viewer"
+            ></iframe>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -65,7 +65,7 @@ export default function Dashboard() {
   const [quizOpen, setQuizOpen] = useState(false);
   const [activeQuizContent, setActiveQuizContent] = useState("");
 
-  const topics = ["All Topics", "⚡ Trending in CS", "Calculus III", "Organic Chem"];
+  const [topics, setTopics] = useState(["All Topics"]);
 
   useEffect(() => {
     let isMounted = true;
@@ -83,6 +83,25 @@ export default function Dashboard() {
         alert(`Failed to fetch feed: ${error.message}`);
       } else if (data && isMounted) {
         setPosts(data);
+        
+        // Compute Dynamic Trending Topics from hashtags
+        const tagCounts = {};
+        data.forEach(post => {
+          const tags = post.content?.match(/#[\w]+/g) || [];
+          tags.forEach(tag => {
+            const cleanTag = tag.replace('#', '');
+            tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
+          });
+        });
+        
+        const sortedTags = Object.entries(tagCounts)
+          .sort((a, b) => b[1] - a[1])
+          .map(entry => `🔥 ${entry[0]}`)
+          .slice(0, 4);
+          
+        const defaultTopics = ["⚡ Trending in CS", "Calculus III", "Organic Chem"];
+        const combined = Array.from(new Set(["All Topics", ...sortedTags, ...defaultTopics])).slice(0, 5);
+        setTopics(combined);
       }
       if (isMounted) setIsLoading(false);
     };
@@ -142,7 +161,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Feed (Snap Scrolling) */}
-      <div className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-surface-container-highest">
+      <div className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide scroll-momentum bg-surface-container-highest">
 
 
 
@@ -187,9 +206,9 @@ export default function Dashboard() {
                     bountyAmount={post?.bounty_amount}
                     bountyDesc="best answer"
                     author={{ 
-                      name: post?.profiles?.full_name || post?.profiles?.username || 'Anonymous', 
-                      school: post?.profiles?.department || 'University', 
-                      avatar: post?.profiles?.avatar_url || '' 
+                      name: post?.is_anonymous ? 'Anonymous Student' : (post?.profiles?.full_name || post?.profiles?.username || 'Anonymous'), 
+                      school: post?.is_anonymous ? 'Incognito' : (post?.profiles?.department || 'University'), 
+                      avatar: post?.is_anonymous ? 'https://api.dicebear.com/9.x/glass/svg?seed=Anonymous' : (post?.profiles?.avatar_url || '') 
                     }}
                     course="General"
                     topic="Discussion"
