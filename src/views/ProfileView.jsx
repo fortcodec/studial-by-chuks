@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+import { useOutletContext, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Settings, Bookmark, Clock, LogOut, ChevronRight, FileText, Brain, GraduationCap, Loader2, X, Download } from 'lucide-react';
 import { PostCard } from '../components/PostCard';
@@ -7,6 +7,9 @@ import { PostCard } from '../components/PostCard';
 export default function ProfileView() {
   const { currentUser } = useOutletContext();
   const navigate = useNavigate();
+  const { id: profileId } = useParams();
+  
+  const [isOwnProfile, setIsOwnProfile] = useState(true);
   
   const [email, setEmail] = useState('');
   const [department, setDepartment] = useState('');
@@ -74,14 +77,21 @@ export default function ProfileView() {
       setIsLoading(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user && isMounted) {
-          setEmail(user.email);
+        
+        const targetId = profileId || user?.id;
+        const isCurrent = !profileId || profileId === user?.id;
+        setIsOwnProfile(isCurrent);
+
+        if (targetId && isMounted) {
+          if (isCurrent && user) {
+            setEmail(user.email);
+          }
           
           // Fetch additional profile data
           const { data: profile } = await supabase
             .from('profiles')
-            .select('department, username, university, full_name')
-            .eq('id', user.id)
+            .select('department, username, university, full_name, avatar_url')
+            .eq('id', targetId)
             .single();
             
           if (profile && isMounted) {
@@ -99,21 +109,25 @@ export default function ProfileView() {
           const { count: postsCount } = await supabase
             .from('posts')
             .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id);
+            .eq('user_id', targetId);
             
-          // Fetch live transactions
-          const { data: transactionData } = await supabase
-            .from('c_coin_transactions')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+          // Fetch live transactions only if own profile
+          let transactionData = [];
+          if (isCurrent) {
+            const { data } = await supabase
+              .from('c_coin_transactions')
+              .select('*')
+              .eq('user_id', targetId)
+              .order('created_at', { ascending: false });
+            transactionData = data || [];
+          }
 
           // Fetch My Posts
           setIsMyPostsLoading(true);
           const { data: postsData } = await supabase
             .from('posts')
             .select('*, profiles!user_id(username, full_name, avatar_url), post_likes(count), post_comments(count)')
-            .eq('user_id', user.id)
+            .eq('user_id', targetId)
             .order('created_at', { ascending: false });
 
           if (isMounted) {

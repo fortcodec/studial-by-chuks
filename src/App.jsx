@@ -82,6 +82,7 @@ function App() {
                     <Route path="/live" element={<LiveStudyRoom />} />
                     <Route path="/samuel" element={<AITutorView />} />
                     <Route path="/profile" element={<ProfileView />} />
+                    <Route path="/profile/:id" element={<ProfileView />} />
                     <Route path="/library" element={<Library />} />
                     <Route path="/studyRoom" element={<StudyRoom />} />
                     <Route path="/tasksHub" element={<TasksHub />} />
