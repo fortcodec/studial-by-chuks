@@ -251,7 +251,7 @@ export default function Library() {
           </div>
           <div className="flex-1 w-full relative">
             <iframe
-              src={activeDocument.file_url}
+              src={`https://docs.google.com/gview?url=${encodeURIComponent(activeDocument.file_url)}&embedded=true`}
               className="w-full h-full border-none"
               title="Document Viewer"
             ></iframe>
