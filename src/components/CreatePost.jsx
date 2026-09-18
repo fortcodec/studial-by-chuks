@@ -168,7 +168,18 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
       const { data: newPost, error } = await supabase.from('posts').insert([
         {
           user_id: currentUser.id,
-          content: content.trim()
+          content: content.trim(),
+          ...(pollData && {
+            type: 'poll',
+            options: validPollOptions
+          }),
+          ...(finalMediaUrl && {
+            media_url: finalMediaUrl
+          }),
+          ...(isBounty && {
+            bounty_amount: parsedBounty,
+            type: 'bounty'
+          })
         }
       ]).select().single();
 

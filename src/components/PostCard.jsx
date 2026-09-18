@@ -25,6 +25,11 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isAITyping, setIsAITyping] = useState(false);
 
+  // Poll States
+  const [pollVotes, setPollVotes] = useState({});
+  const [userVote, setUserVote] = useState(null);
+  const [isVoting, setIsVoting] = useState(false);
+
   // Initialize Like/Save state from DB on mount
   useEffect(() => {
     setLikeCount(stats?.upvotes || 0);
@@ -37,14 +42,31 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
       if (!currentUser?.id || !postId) return;
 
       try {
-        const [likeRes, saveRes] = await Promise.all([
+        const queries = [
           supabase.from('post_likes').select('id').eq('post_id', postId).eq('user_id', currentUser.id).maybeSingle(),
           supabase.from('saved_posts').select('id').eq('post_id', postId).eq('user_id', currentUser.id).maybeSingle()
-        ]);
+        ];
+        
+        if (type === 'poll') {
+          queries.push(supabase.from('poll_votes').select('option_index, user_id').eq('poll_id', postId));
+        }
+
+        const [likeRes, saveRes, pollRes] = await Promise.all(queries);
 
         if (isMounted) {
           setIsLiked(!!likeRes.data);
           setIsSaved(!!saveRes.data);
+          
+          if (type === 'poll' && pollRes?.data) {
+            const counts = {};
+            let myVote = null;
+            pollRes.data.forEach(vote => {
+              counts[vote.option_index] = (counts[vote.option_index] || 0) + 1;
+              if (vote.user_id === currentUser.id) myVote = vote.option_index;
+            });
+            setPollVotes(counts);
+            setUserVote(myVote);
+          }
         }
       } catch (err) {
         console.error("Error fetching interactions", err);
@@ -76,6 +98,30 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
       fetchComments();
     }
   }, [isCommentsOpen, postId]);
+
+  const handleVote = async (optionIndex) => {
+    if (!currentUser) return alert('You must be logged in to vote.');
+    if (userVote !== null) return; // Only vote once
+    
+    setIsVoting(true);
+    
+    try {
+      const { error } = await supabase.from('poll_votes').insert({
+        poll_id: postId,
+        user_id: currentUser.id,
+        option_index: optionIndex
+      });
+      if (error) throw error;
+      
+      setUserVote(optionIndex);
+      setPollVotes(prev => ({ ...prev, [optionIndex]: (prev[optionIndex] || 0) + 1 }));
+    } catch (err) {
+      console.error("Voting error", err);
+      alert("Failed to record vote: " + err.message);
+    } finally {
+      setIsVoting(false);
+    }
+  };
 
   const handleLike = async () => {
     if (!currentUser) return;
@@ -261,6 +307,53 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
           <img src={props.attachmentImage} alt="Attachment" className="w-full h-full object-cover" />
           {/* Gradient Overlay for text readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        </div>
+      ) : type === 'poll' && Array.isArray(props.options) ? (
+        <div className="absolute inset-0 z-0 flex items-center justify-center p-8 pb-32 bg-surface-container-highest">
+          <div className="w-full max-w-[320px] bg-surface rounded-3xl p-6 shadow-xl border border-outline-variant/30 flex flex-col gap-4">
+            <h2 className="text-on-surface text-xl font-bold leading-snug">
+              {content}
+            </h2>
+            <div className="flex flex-col gap-2.5 mt-2">
+              {props.options.map((option, idx) => {
+                 const votesForOption = pollVotes[idx] || 0;
+                 const totalVotes = Object.values(pollVotes).reduce((a, b) => a + b, 0);
+                 const percentage = totalVotes > 0 ? Math.round((votesForOption / totalVotes) * 100) : 0;
+                 const isSelected = userVote === idx;
+                 const hasVoted = userVote !== null;
+
+                 return (
+                   <button
+                     key={idx}
+                     onClick={() => handleVote(idx)}
+                     disabled={hasVoted || isVoting}
+                     className={`relative w-full overflow-hidden rounded-2xl border ${isSelected ? 'border-primary ring-1 ring-primary' : 'border-outline-variant/50'} text-left transition-all ${!hasVoted ? 'hover:bg-surface-container-low active:scale-[0.98]' : ''} p-3.5 min-h-[56px] flex items-center justify-between z-10 bg-surface`}
+                   >
+                     {/* Progress bar background */}
+                     {hasVoted && (
+                       <div 
+                         className={`absolute left-0 top-0 bottom-0 z-[-1] transition-all duration-700 ease-out ${isSelected ? 'bg-primary/15' : 'bg-outline-variant/20'}`} 
+                         style={{ width: `${percentage}%` }}
+                       />
+                     )}
+                     
+                     <span className={`font-semibold text-[15px] z-10 ${isSelected ? 'text-primary' : 'text-on-surface'}`}>
+                       {option}
+                     </span>
+                     
+                     {hasVoted && (
+                       <span className={`font-bold text-sm z-10 ${isSelected ? 'text-primary' : 'text-outline'}`}>
+                         {percentage}%
+                       </span>
+                     )}
+                   </button>
+                 );
+              })}
+            </div>
+            <p className="text-xs text-outline text-center mt-2 font-medium">
+              {Object.values(pollVotes).reduce((a, b) => a + b, 0)} votes
+            </p>
+          </div>
         </div>
       ) : (
         <div className="absolute inset-0 z-0 flex items-center justify-center p-8 pb-32 bg-gradient-to-br from-indigo-900 to-slate-800">

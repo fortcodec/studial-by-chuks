@@ -183,6 +183,7 @@ export default function Dashboard() {
                   <PostCard 
                     postId={post?.id}
                     type={post?.type || "normal"}
+                    options={post?.options}
                     bountyAmount={post?.bounty_amount}
                     bountyDesc="best answer"
                     author={{ 

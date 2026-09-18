@@ -296,6 +296,7 @@ export default function ProfileView() {
                   <PostCard 
                     postId={post.id}
                     type={post.type}
+                    options={post.options}
                     author={{
                       name: post.profiles?.full_name || post.profiles?.username,
                       avatar: post.profiles?.avatar_url
