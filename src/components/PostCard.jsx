@@ -105,6 +105,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
     
     setIsVoting(true);
     
+    console.log('Voting on post:', postId);
     try {
       const { error } = await supabase.from('poll_votes').insert({
         poll_id: postId,
