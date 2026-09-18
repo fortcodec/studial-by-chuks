@@ -210,23 +210,41 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
       // Handle @Samuel AI Tagging in Comments
       if (text.toLowerCase().includes('@samuel')) {
         setIsAITyping(true);
-        getSamuelProfileId().then(samuelId => {
-          askSamuel(`You are Samuel. The user is asking about the following content: "${content}". Their question is: "${text}". Please provide a helpful response.`).then(async (aiResponse) => {
-            if (!aiResponse) return;
-            const aiComment = {
-              post_id: postId,
-              author_id: samuelId,
-              content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
-            };
+        
+        const fetchSamuelResponse = async () => {
+          try {
+            const samuelId = await getSamuelProfileId();
             
-            const { data: insertedAiComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!author_id(*)').single();
-            if (!aiError && insertedAiComment) {
-              setComments(prev => [...prev, insertedAiComment]);
-              setCommentCount(prev => prev + 1);
-              await supabase.from('posts').update({ comments: commentCount + 2 }).eq('id', postId); // +2 because user comment + AI comment
+            const prompt = `A student asked this question: '${content}'. They replied with: '${text}'. Provide a clear, helpful academic answer as Samuel, an AI study assistant.`;
+            const aiResponse = await askSamuel(prompt);
+            
+            if (aiResponse) {
+              const aiComment = {
+                post_id: postId,
+                author_id: samuelId,
+                content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
+              };
+              
+              const { data: insertedAiComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!author_id(*)').single();
+              
+              if (aiError) {
+                console.error("Database error saving Samuel's comment:", aiError);
+                alert(`Failed to save AI comment: ${aiError.message}`);
+              } else if (insertedAiComment) {
+                setComments(prev => [...prev, insertedAiComment]);
+                setCommentCount(prev => prev + 1);
+                await supabase.from('posts').update({ comments: commentCount + 2 }).eq('id', postId); // +2 because user comment + AI comment
+              }
             }
-          }).catch(err => console.error("Samuel failed to respond:", err)).finally(() => setIsAITyping(false));
-        });
+          } catch (err) {
+            console.error("Samuel failed to respond:", err);
+            alert(`Samuel failed to respond: ${err.message || 'Check console'}`);
+          } finally {
+            setIsAITyping(false);
+          }
+        };
+        
+        fetchSamuelResponse();
       }
     }
   };
