@@ -3,6 +3,16 @@ import { UserPlus, Mail, Lock, BookOpen, ArrowLeft, Eye, EyeOff, Key, User, Chec
 import { supabase } from '../supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
 
+const DEPARTMENTS = [
+  "Computer Science", "Software Engineering", "Cybersecurity", "Information Technology",
+  "Physics", "Chemistry", "Mathematics", "Microbiology", "Biochemistry",
+  "Mechanical Engineering", "Electrical Engineering", "Civil Engineering", 
+  "Chemical Engineering", "Petroleum Engineering", "Mechatronics Engineering", "Computer Engineering",
+  "Medicine and Surgery", "Nursing", "Pharmacy", "Anatomy", "Physiology", "Medical Laboratory Science",
+  "Law", "Mass Communication", "English", "History", "International Relations", "Theatre Arts",
+  "Accounting", "Business Administration", "Economics", "Political Science", "Sociology", "Banking and Finance"
+];
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -17,9 +27,18 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [showDeptDropdown, setShowDeptDropdown] = useState(false);
+  const [filteredDepartments, setFilteredDepartments] = useState(DEPARTMENTS);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    if (name === 'department') {
+      const filtered = DEPARTMENTS.filter(d => d.toLowerCase().includes(value.toLowerCase()));
+      setFilteredDepartments(filtered);
+      setShowDeptDropdown(true);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -209,54 +228,39 @@ export default function Onboarding() {
             )}
           </div>
 
-          <div className="space-y-1 text-left">
+          <div className="space-y-1 text-left relative">
             <label className="block text-sm font-medium text-gray-700">Search Department</label>
             <input 
               type="text"
               name="department"
               value={formData.department}
               onChange={handleChange}
-              list="departments-list"
+              onFocus={() => {
+                setFilteredDepartments(DEPARTMENTS.filter(d => d.toLowerCase().includes(formData.department.toLowerCase())));
+                setShowDeptDropdown(true);
+              }}
+              onBlur={() => setTimeout(() => setShowDeptDropdown(false), 200)}
               placeholder="e.g. Computer Science"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50 text-gray-900"
               required
+              autoComplete="off"
             />
-            <datalist id="departments-list">
-              <option value="Computer Science" />
-              <option value="Software Engineering" />
-              <option value="Cybersecurity" />
-              <option value="Information Technology" />
-              <option value="Physics" />
-              <option value="Chemistry" />
-              <option value="Mathematics" />
-              <option value="Microbiology" />
-              <option value="Biochemistry" />
-              <option value="Mechanical Engineering" />
-              <option value="Electrical Engineering" />
-              <option value="Civil Engineering" />
-              <option value="Chemical Engineering" />
-              <option value="Petroleum Engineering" />
-              <option value="Mechatronics Engineering" />
-              <option value="Computer Engineering" />
-              <option value="Medicine and Surgery" />
-              <option value="Nursing" />
-              <option value="Pharmacy" />
-              <option value="Anatomy" />
-              <option value="Physiology" />
-              <option value="Medical Laboratory Science" />
-              <option value="Law" />
-              <option value="Mass Communication" />
-              <option value="English" />
-              <option value="History" />
-              <option value="International Relations" />
-              <option value="Theatre Arts" />
-              <option value="Accounting" />
-              <option value="Business Administration" />
-              <option value="Economics" />
-              <option value="Political Science" />
-              <option value="Sociology" />
-              <option value="Banking and Finance" />
-            </datalist>
+            {showDeptDropdown && filteredDepartments.length > 0 && (
+              <ul className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {filteredDepartments.map((dept, index) => (
+                  <li 
+                    key={index}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, department: dept }));
+                      setShowDeptDropdown(false);
+                    }}
+                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-gray-800 border-b border-gray-100 last:border-0"
+                  >
+                    {dept}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
 
