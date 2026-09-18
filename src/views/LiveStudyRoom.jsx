@@ -106,10 +106,6 @@ export default function LiveStudyRoom() {
     } else if (isActive && timeLeft === 0) {
       clearInterval(interval);
       setIsActive(false);
-      if (hasJoined && currentUser?.id) {
-        // Optimistic reward log
-        console.log("Sprint complete! Logging session for user:", currentUser.id);
-      }
     }
     return () => clearInterval(interval);
   }, [isActive, timeLeft, hasJoined]);

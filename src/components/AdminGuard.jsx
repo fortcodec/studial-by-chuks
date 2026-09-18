@@ -28,7 +28,6 @@ export default function AdminGuard() {
           .single();
 
         if (isMounted) {
-          console.log("Admin Access Check - User Role:", profile?.role);
           setAuthStatus(profile?.role === 'admin' ? 'admin' : 'student');
         }
       } catch (error) {

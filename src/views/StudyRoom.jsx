@@ -40,10 +40,10 @@ export default function StudyRoom() {
         setActiveUsers(users);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('User joined', newPresences);
+        // User joined
       })
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('User left', leftPresences);
+        // User left
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {

@@ -12,6 +12,7 @@ export default defineConfig({
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) return 'react-vendor';
             if (id.includes('lucide-react')) return 'icons';
             if (id.includes('@supabase')) return 'supabase';
+            if (id.includes('react-markdown') || id.includes('katex') || id.includes('rehype') || id.includes('remark')) return 'markdown-vendor';
             return 'vendor';
           }
         }
