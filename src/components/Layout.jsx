@@ -115,9 +115,9 @@ export default function Layout() {
           let currentCoins = profile.c_coins || 0;
           
           // Enforce 24-Hour Login Reward
-          const now = new Date();
-          const lastClaimed = profile.last_login_reward ? new Date(profile.last_login_reward) : null;
-          const hoursSinceLastReward = lastClaimed ? (now - lastClaimed) / (1000 * 60 * 60) : 24;
+          const now = Date.now();
+          const lastClaimed = profile.last_login_reward ? new Date(profile.last_login_reward).getTime() : 0;
+          const hoursSinceLastReward = (now - lastClaimed) / (1000 * 60 * 60);
           
           if (hoursSinceLastReward >= 24) {
             // More than 24 hours passed! Award the coins
@@ -126,7 +126,7 @@ export default function Layout() {
             // 2. Update Database
             await supabase.from('profiles').update({ 
               c_coins: currentCoins,
-              last_login_reward: now.toISOString()
+              last_login_reward: new Date(now).toISOString()
             }).eq('id', user.id);
             
             // Log Transaction

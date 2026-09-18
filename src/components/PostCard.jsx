@@ -48,7 +48,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         ];
         
         if (type === 'poll') {
-          queries.push(supabase.from('poll_votes').select('option_index, user_id').eq('post_id', postId));
+          queries.push(supabase.from('poll_votes').select('voted_option, user_id').eq('post_id', postId));
         }
 
         const [likeRes, saveRes, pollRes] = await Promise.all(queries);
@@ -61,8 +61,8 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
             const counts = {};
             let myVote = null;
             pollRes.data.forEach(vote => {
-              counts[vote.option_index] = (counts[vote.option_index] || 0) + 1;
-              if (vote.user_id === currentUser.id) myVote = vote.option_index;
+              counts[vote.voted_option] = (counts[vote.voted_option] || 0) + 1;
+              if (vote.user_id === currentUser.id) myVote = vote.voted_option;
             });
             setPollVotes(counts);
             setUserVote(myVote);
@@ -110,7 +110,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
       const { error } = await supabase.from('poll_votes').insert({
         post_id: postId,
         user_id: currentUser.id,
-        option_index: optionIndex
+        voted_option: optionIndex
       });
       if (error) throw error;
       
