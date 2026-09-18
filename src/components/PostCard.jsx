@@ -107,32 +107,16 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
     
     console.log('Post Object:', { id: postId, content, type, ...props });
     try {
-      // 1. Check for existing vote
-      const { data: existingVote } = await supabase
+      const { error } = await supabase
         .from('poll_votes')
-        .select('id')
-        .eq('post_id', postId)
-        .eq('user_id', currentUser.id)
-        .maybeSingle();
-
-      if (existingVote) {
-        // 2. Update existing vote
-        const { error } = await supabase
-          .from('poll_votes')
-          .update({ voted_option: optionIndex })
-          .eq('id', existingVote.id);
-        if (error) throw error;
-      } else {
-        // 3. Insert new vote
-        const { error } = await supabase
-          .from('poll_votes')
-          .insert({
-            post_id: postId,
-            user_id: currentUser.id,
-            voted_option: optionIndex
-          });
-        if (error) throw error;
-      }
+        .upsert({
+          post_id: postId,
+          user_id: currentUser.id,
+          voted_option: optionIndex
+        }, {
+          onConflict: 'post_id, user_id'
+        });
+      if (error) throw error;
       
       // 4. Update local UI state
       setPollVotes(prev => {
