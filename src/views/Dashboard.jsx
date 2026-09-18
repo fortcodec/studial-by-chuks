@@ -66,7 +66,7 @@ export default function Dashboard() {
   const [activeQuizContent, setActiveQuizContent] = useState("");
 
   const [topics, setTopics] = useState(["All Topics"]);
-  const [activeFilter, setActiveFilter] = useState("All Topics");
+  const [activeTopic, setActiveTopic] = useState("All Topics");
 
   useEffect(() => {
     let isMounted = true;
@@ -150,9 +150,9 @@ export default function Dashboard() {
         {topics.map((topic, idx) => (
           <button
             key={topic}
-            onClick={() => setActiveFilter(topic)}
+            onClick={() => setActiveTopic(topic)}
             className={`px-4 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors active:scale-95 ${
-              activeFilter === topic 
+              activeTopic === topic 
                 ? "bg-primary text-white shadow-md shadow-primary/20" 
                 : "bg-surface-container border border-outline-variant/30 text-on-surface hover:bg-surface-container-high"
             }`}
@@ -195,14 +195,20 @@ export default function Dashboard() {
             <p className="text-sm mt-1">Be the first to share something!</p>
           </div>
         ) : (() => {
-          const filteredPosts = activeFilter === "All Topics" 
+          const filteredPosts = activeTopic === "All Topics" 
             ? posts 
-            : posts.filter(post => post.content?.toLowerCase().includes(`#${activeFilter.replace('🔥 ', '').toLowerCase()}`));
+            : posts.filter(post => {
+                const topicStr = activeTopic.replace('🔥 ', '').toLowerCase();
+                const inContent = post.content?.toLowerCase().includes(`#${topicStr}`);
+                const inTopic = post.topic?.toLowerCase().includes(topicStr);
+                const inTags = post.tags?.some(tag => tag.toLowerCase().includes(topicStr));
+                return inContent || inTopic || inTags;
+              });
           
           if (filteredPosts.length === 0) {
             return (
               <div className="text-center py-10 text-outline">
-                <p className="font-semibold">No posts found for {activeFilter}.</p>
+                <p className="font-semibold">No posts found for {activeTopic}.</p>
               </div>
             );
           }

@@ -340,22 +340,13 @@ export default function Layout() {
             </div>
             <h2 className="font-extrabold text-2xl text-on-surface">Welcome to Studial!</h2>
             <p className="text-on-surface-variant text-[15px] leading-relaxed">
-              Studial is your campus network. Here you can ask questions, take quizzes, and connect with peers!
+              Welcome to your campus social hub! Earn C-Coins to unlock premium study materials. You get +2 C-Coins for your first login every day, and you can earn more by completing tasks posted by the admin.
             </p>
-            <div className="bg-surface-container rounded-2xl p-4 my-2 text-left space-y-3 border border-outline-variant/30">
-              <div className="flex gap-3">
-                <span className="text-xl">🪙</span>
-                <div>
-                  <h3 className="font-bold text-on-surface text-sm">C-Coin Economy</h3>
-                  <p className="text-outline text-xs mt-0.5">Earn +2 C-Coins for daily logins! You can also earn more by completing admin tasks and answering questions.</p>
-                </div>
-              </div>
-            </div>
             <button 
               onClick={handleCloseOnboarding}
               className="w-full bg-primary text-white font-bold py-3.5 rounded-full hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 mt-2"
             >
-              Get Started
+              Got it
             </button>
           </div>
         </div>
