@@ -18,12 +18,14 @@ export default function AdminGateway() {
   // Users State
   const [users, setUsers] = useState([]);
   const [isUsersLoading, setIsUsersLoading] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
 
   // Posts State
   const [posts, setPosts] = useState([]);
   const [isPostsLoading, setIsPostsLoading] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  const [contentSearchQuery, setContentSearchQuery] = useState('');
 
   // Tasks State
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
@@ -558,6 +560,17 @@ export default function AdminGateway() {
               {isUsersLoading ? (
                 <div className="p-12 flex justify-center"><Loader2 className="w-8 h-8 text-indigo-600 animate-spin" /></div>
               ) : (
+                <div className="p-6 pb-0">
+                  <input 
+                    type="text" 
+                    placeholder="Search users by name or email..." 
+                    className="mb-4 p-2 border border-gray-300 rounded-lg w-full max-w-sm outline-none focus:border-indigo-500"
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                  />
+                </div>
+              )}
+              {!isUsersLoading && (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -569,7 +582,13 @@ export default function AdminGateway() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {users?.map(user => (
+                      {users?.filter(user => {
+                        if (!userSearchQuery) return true;
+                        const q = userSearchQuery.toLowerCase();
+                        return (user?.full_name || '').toLowerCase().includes(q) || 
+                               (user?.username || '').toLowerCase().includes(q) ||
+                               (user?.email || '').toLowerCase().includes(q);
+                      }).map(user => (
                         <tr key={user?.id || Math.random()} className="hover:bg-gray-50">
                           <td className="p-4">
                             <div className="flex items-center gap-3">
@@ -622,6 +641,17 @@ export default function AdminGateway() {
               {isPostsLoading ? (
                 <div className="p-12 flex justify-center"><Loader2 className="w-8 h-8 text-indigo-600 animate-spin" /></div>
               ) : (
+                <div className="p-6 pb-0">
+                  <input 
+                    type="text" 
+                    placeholder="Search flagged content..." 
+                    className="mb-4 p-2 border border-gray-300 rounded-lg w-full max-w-sm outline-none focus:border-indigo-500"
+                    value={contentSearchQuery}
+                    onChange={(e) => setContentSearchQuery(e.target.value)}
+                  />
+                </div>
+              )}
+              {!isPostsLoading && (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -632,7 +662,14 @@ export default function AdminGateway() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {posts.map(post => (
+                      {posts.filter(post => {
+                        if (!contentSearchQuery) return true;
+                        const q = contentSearchQuery.toLowerCase();
+                        const authorMatch = (post.profiles?.full_name || '').toLowerCase().includes(q) || 
+                                            (post.profiles?.username || '').toLowerCase().includes(q);
+                        const contentMatch = (post.content || '').toLowerCase().includes(q);
+                        return authorMatch || contentMatch;
+                      }).map(post => (
                         <tr key={post.id} className="hover:bg-gray-50">
                           <td className="p-4 whitespace-nowrap">
                             <p className="font-bold text-gray-900">{post.profiles?.full_name || post.profiles?.username || 'Unknown'}</p>
