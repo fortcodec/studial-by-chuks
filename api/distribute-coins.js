@@ -64,7 +64,7 @@ export default async function handler(req, res) {
           .insert({
             user_id: student.id,
             title: 'Weekly C-Coins Awarded',
-            message: `You received ${amount} C-Coins for the week from the admin!`,
+            message: `You received ${amount} C-Coins for the week from super admin !`,
             type: 'weekly_drop',
             read: false
           });

@@ -88,13 +88,13 @@ export default function Layout() {
           .select('*')
           .eq('user_id', currentUser.id)
           .order('created_at', { ascending: false })
-          .limit(10),
+          .limit(50),
         supabase
           .from('notifications')
           .select('*')
           .eq('user_id', currentUser.id)
           .order('created_at', { ascending: false })
-          .limit(10)
+          .limit(50)
       ]);
       
       const combined = [...(txData || []), ...(notifData || [])].sort((a, b) => 
@@ -188,29 +188,6 @@ export default function Layout() {
               avatar: profile.avatar_url || ""
             });
           }
-
-          // Check for Unread Weekly Drop Notifications
-          const { data: weeklyDrops } = await supabase
-            .from('notifications')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('type', 'weekly_drop')
-            .eq('read', false);
-
-          if (weeklyDrops && weeklyDrops.length > 0) {
-            // Get the first unread weekly drop amount from message regex or fallback to 500
-            const amountMatch = weeklyDrops[0].message.match(/(\d+)/);
-            const amount = amountMatch ? parseInt(amountMatch[1]) : 500;
-            
-            if (isMounted) {
-              setWeeklyBonusAmount(amount);
-              setShowCoinRewardModal(true);
-            }
-
-            // Mark them as read
-            const dropIds = weeklyDrops.map(d => d.id);
-            await supabase.from('notifications').update({ read: true }).in('id', dropIds);
-          }
         }
       }
     };
@@ -218,6 +195,35 @@ export default function Layout() {
     fetchUser();
     return () => { isMounted = false; };
   }, []);
+
+  // Dedicated Weekly Drop Check
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    
+    const checkWeeklyDrop = async () => {
+      const { data: weeklyDrops } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('type', 'weekly_drop')
+        .eq('read', false);
+
+      if (weeklyDrops && weeklyDrops.length > 0) {
+        // Get the first unread weekly drop amount from message regex or fallback to 500
+        const amountMatch = weeklyDrops[0].message.match(/(\d+)/);
+        const amount = amountMatch ? parseInt(amountMatch[1]) : 500;
+        
+        setWeeklyBonusAmount(amount);
+        setShowCoinRewardModal(true);
+
+        // Mark them as read
+        const dropIds = weeklyDrops.map(d => d.id);
+        await supabase.from('notifications').update({ read: true }).in('id', dropIds);
+      }
+    };
+
+    checkWeeklyDrop();
+  }, [currentUser?.id]);
 
   return (
     <div className="flex flex-col min-h-[100dvh] h-[100dvh] pt-safe pb-safe relative bg-background overflow-hidden w-full max-w-md md:max-w-3xl lg:max-w-4xl mx-auto shadow-2xl md:border-x border-outline-variant/30">
