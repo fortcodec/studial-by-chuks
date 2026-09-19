@@ -221,16 +221,16 @@ export default function AdminGateway() {
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Are you sure you want to delete this user? This will remove their profile data.")) return;
     try {
-      const { data, error } = await supabase.from('profiles').delete().eq('id', userId).select();
-      
-      if (error) {
-        setToastMessage({ type: 'error', text: `Failed to delete user: ${error.message}` });
-        setTimeout(() => setToastMessage(null), 5000);
-        return;
-      }
-      
-      if (!data || data.length === 0) {
-        setToastMessage({ type: 'error', text: 'Delete failed. Check Foreign Key Constraints (Cascade Deletion) or RLS policies.' });
+      const response = await fetch('/api/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setToastMessage({ type: 'error', text: `Failed to delete user: ${result.error || 'Unknown error'}` });
         setTimeout(() => setToastMessage(null), 5000);
         return;
       }
