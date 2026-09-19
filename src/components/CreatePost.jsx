@@ -203,6 +203,17 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
         }).catch(err => console.error("Samuel failed to respond:", err));
       }
 
+      // Background AI Moderation Trigger (Fire-and-forget)
+      fetch('/api/moderate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          post_id: newPost.id,
+          content: content.trim(),
+          user_id: currentUser.id
+        })
+      }).catch(err => console.error("Failed to trigger moderation:", err));
+
       // Clear form
       setContent('');
       setMediaUrl('');

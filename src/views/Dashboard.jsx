@@ -83,7 +83,12 @@ export default function Dashboard() {
         console.error("Error fetching posts:", error);
         alert(`Failed to fetch feed: ${error.message}`);
       } else if (data && isMounted) {
-        setPosts(data);
+        // Shadow Ban Logic: Filter out shadow-banned users' posts, unless it belongs to the current user
+        const filteredPosts = data.filter(post => 
+          !post.profiles?.is_shadow_banned || post.user_id === currentUser?.id
+        );
+        
+        setPosts(filteredPosts);
         
         // Compute Dynamic Trending Topics from hashtags
         const tagCounts = {};
@@ -124,6 +129,11 @@ export default function Dashboard() {
             .single();
 
           if (profile) {
+            // Shadow Ban Logic: Don't show new post if author is shadow-banned, unless it's the current user
+            if (profile.is_shadow_banned && payload.new.user_id !== currentUser?.id) {
+              return;
+            }
+
             const newPost = {
               ...payload.new,
               profiles: profile

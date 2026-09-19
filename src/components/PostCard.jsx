@@ -91,7 +91,11 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
           console.error("Error fetching comments:", error);
           alert(`Failed to load comments: ${error.message}`);
         } else if (data) {
-          setComments(data);
+          // Shadow Ban Logic: Filter out shadow-banned users' comments, unless it belongs to the current user
+          const filteredComments = data.filter(comment => 
+            !comment.profiles?.is_shadow_banned || comment.author_id === currentUser?.id
+          );
+          setComments(filteredComments);
         }
         setIsLoadingComments(false);
       };
