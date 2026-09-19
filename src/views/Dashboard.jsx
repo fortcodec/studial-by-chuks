@@ -156,7 +156,7 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col h-full relative overflow-hidden bg-surface-container-lowest">
       {/* Sticky Filter Pills */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3 px-5 z-30 shrink-0 border-b border-outline-variant/30" style={{ maskImage: 'linear-gradient(to right, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}>
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3 px-5 z-30 shrink-0 border-b border-outline-variant/30 mt-2" style={{ maskImage: 'linear-gradient(to right, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}>
         {topics.map((topic, idx) => (
           <button
             key={topic}

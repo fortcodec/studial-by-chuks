@@ -227,8 +227,6 @@ export default function ProfileView() {
         <p className="text-[13px] text-outline mb-1">{username ? `@${username}` : (email || 'Loading...')}</p>
         <p className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded mb-4">{department || 'University Student'}</p>
 
-        <p className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded mb-4">{department || 'University Student'}</p>
-
         {isOwnProfile && (
           <div className="flex items-center gap-2 bg-warning/10 border border-warning/20 px-4 py-1.5 rounded-full shadow-sm z-10">
             <span className="text-warning text-sm drop-shadow-sm">🪙</span>
