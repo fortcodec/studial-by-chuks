@@ -55,8 +55,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'ok', message: 'No students found.' });
     }
 
-    const defaultTitle = "C-Coins Received!";
-    const notificationMessage = message && message.trim() ? message.trim() : `You received ${giftAmount} C-Coins from admin!`;
+    const defaultTitle = `Gift: ${giftAmount} C-Coins`;
+    const notificationMessage = message && message.trim() ? message.trim() : `You have received a gift of ${giftAmount} C-Coins!`;
 
     // Process in chunks to avoid overwhelming the Vercel/Supabase limits
     const CHUNK_SIZE = 50;

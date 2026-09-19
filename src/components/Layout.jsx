@@ -245,9 +245,9 @@ export default function Layout() {
         .eq('read', false);
 
       if (coinDrops && coinDrops.length > 0) {
-        // Get the first unread drop amount from message regex or fallback to 500
+        // Get the first unread drop amount from title regex or fallback to 500
         const firstDrop = coinDrops[0];
-        const amountMatch = firstDrop.message.match(/(\d+)/);
+        const amountMatch = firstDrop.title.match(/(\d+)/);
         const amount = amountMatch ? parseInt(amountMatch[1]) : 500;
         
         setWeeklyBonusAmount(amount);

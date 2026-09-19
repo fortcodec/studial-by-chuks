@@ -34,6 +34,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'ok', message: 'No students found.' });
     }
 
+    const customMessage = body.message && body.message.trim() ? body.message.trim() : `You received ${amount} C-Coins for the week from admin! Keep up the great work!`;
+
     // We process in chunks to avoid overwhelming the Vercel/Supabase limits
     const CHUNK_SIZE = 50;
     
@@ -63,8 +65,8 @@ export default async function handler(req, res) {
           .from('notifications')
           .insert({
             user_id: student.id,
-            title: 'Weekly C-Coins Awarded',
-            message: `You received ${amount} C-Coins for the week from super admin !`,
+            title: `Weekly Drop: ${amount} C-Coins`,
+            message: customMessage,
             type: 'weekly_drop',
             read: false
           });

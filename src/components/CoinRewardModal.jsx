@@ -39,14 +39,23 @@ export default function CoinRewardModal({ amount = 500, title, message, onClose 
             <Coins className="w-10 h-10 text-yellow-500 relative z-10" />
           </div>
 
-          <h2 className="text-2xl font-extrabold text-gray-900 mb-2">{title || "Campus Bonus!"}</h2>
-          <p className="text-gray-500 text-[15px] leading-relaxed mb-6">
-            {message || "Congratulations! You've received your weekly campus bonus from the admin."}
-          </p>
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-yellow-400 blur-2xl opacity-20 rounded-full animate-pulse"></div>
+            <div className="relative bg-gradient-to-br from-yellow-100 to-yellow-50 border border-yellow-200 shadow-xl shadow-yellow-200/50 rounded-2xl px-10 py-6 text-center">
+              <p className="text-sm font-bold text-yellow-700 tracking-widest uppercase mb-1.5 drop-shadow-sm">Reward Amount</p>
+              <h2 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-yellow-500 drop-shadow-sm">
+                +{amount} C
+              </h2>
+            </div>
+          </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full mb-6">
-            <p className="text-sm font-semibold text-yellow-700 uppercase tracking-wide mb-1">Reward Amount</p>
-            <p className="text-3xl font-black text-yellow-600">+{amount} C</p>
+          <div className="w-full bg-gray-50 border border-gray-100 rounded-xl p-5 mb-8 relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+              Message from Admin
+            </div>
+            <p className="text-gray-600 text-[15px] leading-relaxed italic text-center font-medium">
+              "{message || "Congratulations! You've received a campus bonus!"}"
+            </p>
           </div>
 
           <button 
