@@ -53,3 +53,14 @@ CREATE TABLE IF NOT EXISTS public.task_submissions (
 -- Note: The 'task-proofs' bucket must be created in Supabase Storage.
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('task-proofs', 'task-proofs', true) ON CONFLICT DO NOTHING;
 
+
+-- 5. Saved Materials RLS
+ALTER TABLE public.saved_materials ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can manage their own saved materials" ON public.saved_materials;
+
+CREATE POLICY "Users can manage their own saved materials" 
+ON public.saved_materials FOR ALL 
+USING (auth.uid() = user_id) 
+WITH CHECK (auth.uid() = user_id);
+
