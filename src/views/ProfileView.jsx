@@ -3,6 +3,7 @@ import { useOutletContext, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Settings, Bookmark, Clock, LogOut, ChevronRight, FileText, Brain, GraduationCap, Loader2, X, Download } from 'lucide-react';
 import { PostCard } from '../components/PostCard';
+import ChatModal from '../components/ChatModal';
 
 export default function ProfileView() {
   const { currentUser } = useOutletContext();
@@ -15,6 +16,7 @@ export default function ProfileView() {
   const [department, setDepartment] = useState('');
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
+  const [targetAvatarUrl, setTargetAvatarUrl] = useState('');
   const [stats, setStats] = useState({
     posts: 0,
     quizzes: 0,
@@ -28,6 +30,7 @@ export default function ProfileView() {
   // Modals state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({ username: '', department: '', university: '' });
   const [savedMaterials, setSavedMaterials] = useState([]);
   const fileInputRef = useRef(null);
@@ -98,6 +101,7 @@ export default function ProfileView() {
             setDepartment(profile.department || 'Computer Science');
             setFullName(profile.full_name || '');
             setUsername(profile.username || '');
+            setTargetAvatarUrl(profile.avatar_url || '');
             setEditForm({
               username: profile.username || '',
               department: profile.department || '',
@@ -223,10 +227,14 @@ export default function ProfileView() {
         <p className="text-[13px] text-outline mb-1">{username ? `@${username}` : (email || 'Loading...')}</p>
         <p className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded mb-4">{department || 'University Student'}</p>
 
-        <div className="flex items-center gap-2 bg-warning/10 border border-warning/20 px-4 py-1.5 rounded-full shadow-sm z-10">
-          <span className="text-warning text-sm drop-shadow-sm">🪙</span>
-          <span className="text-[14px] font-bold text-on-surface">{currentUser?.c_coins?.toLocaleString() || 0} C-Coins</span>
-        </div>
+        <p className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded mb-4">{department || 'University Student'}</p>
+
+        {isOwnProfile && (
+          <div className="flex items-center gap-2 bg-warning/10 border border-warning/20 px-4 py-1.5 rounded-full shadow-sm z-10">
+            <span className="text-warning text-sm drop-shadow-sm">🪙</span>
+            <span className="text-[14px] font-bold text-on-surface">{currentUser?.c_coins?.toLocaleString() || 0} C-Coins</span>
+          </div>
+        )}
       </div>
 
       {/* Stats Grid */}
@@ -263,7 +271,8 @@ export default function ProfileView() {
       </div>
 
       {/* Transaction Ledger */}
-      <div>
+      {isOwnProfile && (
+        <div>
         <h3 className="font-bold text-on-surface mb-3 flex items-center gap-2">
           <Clock className="w-4 h-4 text-warning" />
           Recent Transactions
@@ -287,7 +296,8 @@ export default function ProfileView() {
             ))
           )}
         </div>
-      </div>
+        </div>
+      )}
 
       {/* My Posts Section */}
       <div>
@@ -334,44 +344,53 @@ export default function ProfileView() {
         )}
       </div>
 
-      {/* Action Links */}
-      <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm flex flex-col">
-        <button 
-          onClick={() => setIsEditModalOpen(true)}
-          className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full"
-        >
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 p-2 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-              <Settings className="w-5 h-5" />
+      {/* Action Links or Message Button */}
+      {isOwnProfile ? (
+        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+          <button 
+            onClick={() => setIsEditModalOpen(true)}
+            className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full"
+          >
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/10 p-2 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                <Settings className="w-5 h-5" />
+              </div>
+              <span className="text-[15px] font-semibold text-on-surface">Edit Profile Info</span>
             </div>
-            <span className="text-[15px] font-semibold text-on-surface">Edit Profile Info</span>
-          </div>
-          <ChevronRight className="w-5 h-5 text-outline group-hover:text-primary transition-colors" />
-        </button>
+            <ChevronRight className="w-5 h-5 text-outline group-hover:text-primary transition-colors" />
+          </button>
 
-        <button 
-          onClick={async () => {
-            setIsSavedModalOpen(true);
-            if (currentUser?.id) {
-              const { data } = await supabase
-                .from('saved_materials')
-                .select(`id, study_materials (*)`)
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false });
-              if (data) setSavedMaterials(data.map(item => item.study_materials));
-            }
-          }}
-          className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors group w-full"
-        >
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-600 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-              <Bookmark className="w-5 h-5" />
+          <button 
+            onClick={async () => {
+              setIsSavedModalOpen(true);
+              if (currentUser?.id) {
+                const { data } = await supabase
+                  .from('saved_materials')
+                  .select(`id, study_materials (*)`)
+                  .eq('user_id', currentUser.id)
+                  .order('created_at', { ascending: false });
+                if (data) setSavedMaterials(data.map(item => item.study_materials));
+              }
+            }}
+            className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors group w-full"
+          >
+            <div className="flex items-center gap-3">
+              <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-600 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                <Bookmark className="w-5 h-5" />
+              </div>
+              <span className="text-[15px] font-semibold text-on-surface">Saved Study Materials</span>
             </div>
-            <span className="text-[15px] font-semibold text-on-surface">Saved Study Materials</span>
-          </div>
-          <ChevronRight className="w-5 h-5 text-outline group-hover:text-indigo-600 transition-colors" />
+            <ChevronRight className="w-5 h-5 text-outline group-hover:text-indigo-500 transition-colors" />
+          </button>
+        </div>
+      ) : (
+        <button 
+          onClick={() => setIsChatModalOpen(true)}
+          className="w-full bg-primary text-white font-bold py-3.5 rounded-full hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 flex justify-center items-center gap-2"
+        >
+          Message
         </button>
-      </div>
+      )}
 
       {/* Logout Button */}
       <button 
@@ -455,6 +474,14 @@ export default function ProfileView() {
             </div>
           </div>
         </div>
+      )}
+      {/* Chat Modal */}
+      {isChatModalOpen && !isOwnProfile && (
+        <ChatModal 
+          currentUser={currentUser} 
+          targetUser={{ id: profileId, username, full_name: fullName, avatar_url: targetAvatarUrl }}
+          onClose={() => setIsChatModalOpen(false)} 
+        />
       )}
     </div>
   );
