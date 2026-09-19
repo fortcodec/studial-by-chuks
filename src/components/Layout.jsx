@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, Coins, Megaphone, Check, CheckCircle2 } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { supabase } from "../supabaseClient";
 import { X, Loader2 } from "lucide-react";
@@ -22,16 +22,19 @@ export default function Layout() {
 
   // Notification Dropdown State
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+  const [notificationsData, setNotificationsData] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [activeTab, setActiveTab] = useState('notifications'); // 'notifications' or 'transactions'
+  const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
+  const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
+  const notificationRef = useRef(null);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showCoinRewardModal, setShowCoinRewardModal] = useState(false);
   const [weeklyBonusAmount, setWeeklyBonusAmount] = useState(0);
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
-
-  const [transactions, setTransactions] = useState([]);
-  const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
-  const notificationRef = useRef(null);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -82,11 +85,28 @@ export default function Layout() {
     setShowOnboarding(false);
   };
 
-  const fetchTransactions = async () => {
+  const fetchUnreadCount = async () => {
+    if (!currentUser?.id) return;
+    try {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', currentUser.id)
+        .eq('read', false);
+      if (!error && count !== null) {
+        setUnreadCount(count);
+      }
+    } catch (err) {
+      console.error("Error fetching unread count", err);
+    }
+  };
+
+  const fetchTrayData = async () => {
     if (!currentUser?.id) return;
     setIsTransactionsLoading(true);
+    setIsNotificationsLoading(true);
     try {
-      const [{ data: txData }, { data: notifData }] = await Promise.all([
+      const [txRes, notifRes] = await Promise.all([
         supabase
           .from('c_coin_transactions')
           .select('*')
@@ -101,30 +121,42 @@ export default function Layout() {
           .limit(50)
       ]);
       
-      const combined = [...(txData || []), ...(notifData || [])].sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-
-      setTransactions(combined);
-      setHasNotifications(false);
-      
-      // Mark fetched notifications as read
-      if (notifData && notifData.length > 0) {
-        const unreadIds = notifData.filter(n => !n.read).map(n => n.id);
-        if (unreadIds.length > 0) {
-          await supabase.from('notifications').update({ read: true }).in('id', unreadIds);
-        }
+      if (txRes.data) setTransactions(txRes.data);
+      if (notifRes.data) {
+        setNotificationsData(notifRes.data);
+        const unread = notifRes.data.filter(n => !n.read).length;
+        setUnreadCount(unread);
       }
     } catch (err) {
-      console.error("Error fetching transactions:", err);
+      console.error("Error fetching tray data:", err);
     } finally {
       setIsTransactionsLoading(false);
+      setIsNotificationsLoading(false);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (!currentUser?.id || unreadCount === 0) return;
+    try {
+      await supabase.from('notifications')
+        .update({ read: true })
+        .eq('user_id', currentUser.id)
+        .eq('read', false);
+      
+      setUnreadCount(0);
+      setNotificationsData(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      console.error("Error marking all as read", err);
     }
   };
 
   useEffect(() => {
+    fetchUnreadCount();
+  }, [currentUser?.id]);
+
+  useEffect(() => {
     if (isNotificationsOpen) {
-      fetchTransactions();
+      fetchTrayData();
     }
   }, [isNotificationsOpen, currentUser?.id]);
 
@@ -320,51 +352,97 @@ export default function Layout() {
               className="relative text-outline hover:text-on-surface transition-colors active:scale-95"
             >
               <Bell className="w-6 h-6" />
-              {hasNotifications && (
-                <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center bg-error text-white text-[10px] font-bold rounded-full border-2 border-surface">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
               )}
             </button>
 
             {isNotificationsOpen && (
-              <div className="absolute right-0 mt-3 w-80 bg-surface-container-lowest rounded-2xl shadow-xl border border-outline-variant/30 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="p-4 border-b border-outline-variant/30 bg-surface-container-low flex justify-between items-center">
-                  <h3 className="font-bold text-on-surface">C-Coin History</h3>
+              <div className="absolute right-0 mt-3 w-80 md:w-96 bg-surface-container-lowest rounded-2xl shadow-xl border border-outline-variant/30 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="p-3 border-b border-outline-variant/30 bg-surface-container-low">
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <h3 className="font-bold text-on-surface">Activity</h3>
+                    {activeTab === 'notifications' && unreadCount > 0 && (
+                      <button onClick={handleMarkAllAsRead} className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex bg-surface-container rounded-lg p-1">
+                    <button 
+                      onClick={() => setActiveTab('notifications')}
+                      className={`flex-1 text-sm font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'notifications' ? 'bg-surface shadow-sm text-on-surface' : 'text-outline hover:text-on-surface'}`}
+                    >
+                      Notifications
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('transactions')}
+                      className={`flex-1 text-sm font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'transactions' ? 'bg-surface shadow-sm text-on-surface' : 'text-outline hover:text-on-surface'}`}
+                    >
+                      Transactions
+                    </button>
+                  </div>
                 </div>
-                <div className="max-h-[300px] overflow-y-auto overscroll-contain">
-                  {isTransactionsLoading ? (
-                    <div className="p-4 text-center text-outline">Loading...</div>
-                  ) : transactions.length === 0 ? (
-                    <div className="p-4 text-center text-outline">No recent activity</div>
-                  ) : (
-                    <div className="divide-y divide-outline-variant/30">
-                      {transactions.map((tx) => (
-                        <div key={tx.id || Math.random()} className="p-4 border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors flex items-start gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${tx.amount ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'}`}>
-                            {tx.amount ? <Coins className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            {tx.amount ? (
-                              <>
-                                <p className="text-[14px] text-on-surface font-medium leading-snug">
-                                  {tx.description}
-                                </p>
-                                <p className="text-[13px] font-bold text-primary mt-0.5">{tx.amount}</p>
-                              </>
-                            ) : (
-                              <>
-                                <p className="text-[14px] text-on-surface font-medium leading-snug">
-                                  {tx.title}
-                                </p>
-                                <p className="text-[13px] text-outline mt-0.5">{tx.message}</p>
-                              </>
+                <div className="max-h-[350px] overflow-y-auto overscroll-contain">
+                  {/* Notifications Tab Content */}
+                  {activeTab === 'notifications' && (
+                    isNotificationsLoading ? (
+                      <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+                    ) : notificationsData.length === 0 ? (
+                      <div className="p-8 text-center text-outline text-sm">No notifications yet.</div>
+                    ) : (
+                      <div className="divide-y divide-outline-variant/30">
+                        {notificationsData.map((notif) => (
+                          <div key={notif.id} className={`p-4 hover:bg-surface-container-low transition-colors flex items-start gap-3 relative ${!notif.read ? 'bg-primary/5' : ''}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${notif.type === 'admin_gift' || notif.type === 'weekly_drop' ? 'bg-warning/10 text-warning' : notif.type === 'announcement' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'}`}>
+                              {notif.type === 'admin_gift' || notif.type === 'weekly_drop' ? <Coins className="w-4 h-4" /> : notif.type === 'announcement' ? <Megaphone className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                            </div>
+                            <div className="flex-1 min-w-0 pr-4">
+                              <p className="text-[14px] text-on-surface font-bold leading-snug truncate">
+                                {notif.title}
+                              </p>
+                              <p className="text-[13px] text-outline mt-0.5 line-clamp-2 leading-snug">{notif.message}</p>
+                              <p className="text-[11px] text-outline-variant mt-1.5 font-medium">
+                                {new Date(notif.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                            {!notif.read && (
+                              <div className="w-2 h-2 rounded-full bg-primary absolute top-5 right-4 shadow-sm"></div>
                             )}
-                            <p className="text-[11px] text-outline-variant mt-1">
-                              {new Date(tx.created_at).toLocaleDateString()}
-                            </p>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )
+                  )}
+
+                  {/* Transactions Tab Content */}
+                  {activeTab === 'transactions' && (
+                    isTransactionsLoading ? (
+                      <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+                    ) : transactions.length === 0 ? (
+                      <div className="p-8 text-center text-outline text-sm">No recent activity.</div>
+                    ) : (
+                      <div className="divide-y divide-outline-variant/30">
+                        {transactions.map((tx) => (
+                          <div key={tx.id} className="p-4 hover:bg-surface-container-low transition-colors flex items-start gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${tx.amount.startsWith('+') ? 'bg-secondary-green/10 text-secondary-green' : 'bg-error/10 text-error'}`}>
+                              <Coins className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[14px] text-on-surface font-medium leading-snug">
+                                {tx.description}
+                              </p>
+                              <p className={`text-[13px] font-bold mt-0.5 ${tx.amount.startsWith('+') ? 'text-secondary-green' : 'text-error'}`}>{tx.amount}</p>
+                              <p className="text-[11px] text-outline-variant mt-1.5 font-medium">
+                                {new Date(tx.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )
                   )}
                 </div>
               </div>
