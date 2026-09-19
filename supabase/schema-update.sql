@@ -64,3 +64,25 @@ ON public.saved_materials FOR ALL
 USING (auth.uid() = user_id) 
 WITH CHECK (auth.uid() = user_id);
 
+
+-- 6. Task Submissions RLS
+ALTER TABLE public.task_submissions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can view all submissions" ON public.task_submissions;
+DROP POLICY IF EXISTS "Users can insert their own submissions" ON public.task_submissions;
+DROP POLICY IF EXISTS "Users can view their own submissions" ON public.task_submissions;
+
+CREATE POLICY "Admins can view all submissions" 
+ON public.task_submissions FOR SELECT 
+USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+CREATE POLICY "Users can view their own submissions" 
+ON public.task_submissions FOR SELECT 
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own submissions" 
+ON public.task_submissions FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
+

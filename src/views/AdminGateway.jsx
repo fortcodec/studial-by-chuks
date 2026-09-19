@@ -189,12 +189,19 @@ export default function AdminGateway() {
         .select(`*, tasks(title, reward_coins), profiles!inner(full_name, username)`)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
+      
       if (error) {
         console.error("Error fetching tasks:", error);
-        alert("Failed to fetch pending submissions.");
-      } else if (data) {
-        setPendingSubmissions(data);
-      }
+        // Only show toast if it's a real error, not just 0 rows (though 0 rows usually doesn't throw)
+        if (error.code !== 'PGRST116') {
+          setToastMessage({ type: 'error', text: 'Failed to fetch pending submissions.' });
+          setTimeout(() => setToastMessage(null), 5000);
+        }
+      } 
+      
+      // Update state regardless (if data is null, fallback to empty array)
+      setPendingSubmissions(data || []);
+      
     } catch (err) {
       console.error("Unexpected error in fetchPendingSubmissions:", err);
     } finally {
@@ -529,9 +536,9 @@ export default function AdminGateway() {
                 </div>
                 {isTasksLoading ? (
                   <div className="p-12 flex justify-center"><Loader2 className="w-8 h-8 text-indigo-600 animate-spin" /></div>
-                ) : pendingSubmissions.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500 font-medium">No pending submissions.</div>
-                ) : (
+                  ) : pendingSubmissions.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500 font-medium">No pending submissions at this time.</div>
+                  ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
