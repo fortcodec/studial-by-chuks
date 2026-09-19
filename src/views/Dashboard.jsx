@@ -65,9 +65,6 @@ export default function Dashboard() {
   const [quizOpen, setQuizOpen] = useState(false);
   const [activeQuizContent, setActiveQuizContent] = useState("");
 
-  const [topics, setTopics] = useState(["All Topics"]);
-  const [activeTopic, setActiveTopic] = useState("All Topics");
-
   useEffect(() => {
     let isMounted = true;
     
@@ -88,25 +85,6 @@ export default function Dashboard() {
           );
           
           setPosts(filteredPosts);
-          
-          // Compute Dynamic Trending Topics from hashtags
-          const tagCounts = {};
-          data.forEach(post => {
-            const tags = post.content?.match(/#[\w]+/g) || [];
-            tags.forEach(tag => {
-              const cleanTag = tag.replace('#', '');
-              tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
-            });
-          });
-          
-          const sortedTags = Object.entries(tagCounts)
-            .sort((a, b) => b[1] - a[1])
-            .map(entry => `🔥 ${entry[0]}`)
-            .slice(0, 4);
-            
-          const defaultTopics = ["⚡ Trending in CS", "Calculus III", "Organic Chem"];
-          const combined = Array.from(new Set(["All Topics", ...sortedTags, ...defaultTopics])).slice(0, 5);
-          setTopics(combined);
         }
       } catch (err) {
         console.error("Unexpected error fetching posts:", err);
@@ -163,26 +141,9 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full relative overflow-hidden bg-surface-container-lowest">
-      {/* Sticky Filter Pills */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide py-3 px-5 z-30 shrink-0 border-b border-outline-variant/30 mt-2" style={{ maskImage: 'linear-gradient(to right, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}>
-        {topics.map((topic, idx) => (
-          <button
-            key={topic}
-            onClick={() => setActiveTopic(topic)}
-            className={`px-4 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors active:scale-95 ${
-              activeTopic === topic 
-                ? "bg-primary text-white shadow-md shadow-primary/20" 
-                : "bg-surface-container border border-outline-variant/30 text-on-surface hover:bg-surface-container-high"
-            }`}
-          >
-            {topic}
-          </button>
-        ))}
-      </div>
-
+    <div className="flex flex-col h-full relative overflow-hidden bg-surface-container-highest">
       {/* Main Feed (Snap Scrolling) */}
-      <div className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide scroll-momentum bg-surface-container-highest">
+      <div className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide scroll-momentum">
 
 
 
@@ -213,26 +174,8 @@ export default function Dashboard() {
             <p className="font-semibold">No posts yet.</p>
             <p className="text-sm mt-1">Be the first to share something!</p>
           </div>
-        ) : (() => {
-          const filteredPosts = activeTopic === "All Topics" 
-            ? posts 
-            : posts.filter(post => {
-                const topicStr = activeTopic.replace('🔥 ', '').toLowerCase();
-                const inContent = post.content?.toLowerCase().includes(`#${topicStr}`);
-                const inTopic = post.topic?.toLowerCase().includes(topicStr);
-                const inTags = post.tags?.some(tag => tag.toLowerCase().includes(topicStr));
-                return inContent || inTopic || inTags;
-              });
-          
-          if (filteredPosts.length === 0) {
-            return (
-              <div className="text-center py-10 text-outline">
-                <p className="font-semibold">No posts found for {activeTopic}.</p>
-              </div>
-            );
-          }
-
-          return filteredPosts.map((post, index) => {
+        ) : (
+          posts.map((post, index) => {
             if (!post) return null;
             return (
               <ErrorBoundary key={post?.id || index}>
@@ -270,8 +213,8 @@ export default function Dashboard() {
                 </React.Fragment>
               </ErrorBoundary>
             );
-          });
-        })()}
+          })
+        )}
       </div>
 
       <QuizModal 
