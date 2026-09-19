@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Bot, Send, Sparkles, AlertCircle, Loader2, BookOpen } from 'lucide-react';
-import { askSamuel } from '../utils/gemini';
 
 export default function AITutorView() {
   const { currentUser, setCurrentUser } = useOutletContext();
@@ -50,38 +49,9 @@ export default function AITutorView() {
     const textToSubmit = textOverride || inputText;
     if (!textToSubmit.trim()) return;
 
-    // Check C-Coin Balance
+    // Check C-Coin Balance locally first
     if ((currentUser?.c_coins || 0) < QUERY_COST) {
       alert(`You need at least ${QUERY_COST} C-Coins to ask the tutor a question. Earn more by logging in daily or sharing posts!`);
-      return;
-    }
-
-    // Deduct Coins
-    try {
-      const newBalance = currentUser.c_coins - QUERY_COST;
-      const { error } = await supabase
-        .from('profiles')
-        .update({ c_coins: newBalance })
-        .eq('id', currentUser.id);
-
-      if (error) throw error;
-
-      // Log Transaction (Optimistic if no table, but good practice)
-      try {
-        await supabase.from('c_coin_transactions').insert({
-          user_id: currentUser.id,
-          amount: `-${QUERY_COST} C`,
-          description: 'AI Tutor Query'
-        });
-      } catch (e) {
-        // Ignore transaction log failure if table doesn't exist
-      }
-
-      // Update Local State
-      setCurrentUser(prev => ({ ...prev, c_coins: newBalance }));
-    } catch (error) {
-      console.error("Failed to deduct C-Coins:", error);
-      alert("Failed to process transaction. Please try again.");
       return;
     }
 
@@ -91,19 +61,70 @@ export default function AITutorView() {
     setInputText('');
     setIsTyping(true);
 
-    // Generate Real AI Response
+    const aiMsgId = Date.now() + 1;
+    let startedStreaming = false;
+
     try {
-      const responseText = await askSamuel(textToSubmit);
-      setIsTyping(false);
-      const aiMsg = { 
-        id: Date.now() + 1, 
-        role: 'ai', 
-        text: responseText
-      };
-      setMessages(prev => [...prev, aiMsg]);
+      // Create a new AI message placeholder
+      setMessages(prev => [...prev, { id: aiMsgId, role: 'ai', text: "" }]);
+      
+      const response = await fetch('/api/ask-samuel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: textToSubmit, userId: currentUser.id })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}`);
+      }
+
+      // Read the stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let fullResponse = "";
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        
+        if (value) {
+          if (!startedStreaming) {
+            setIsTyping(false);
+            startedStreaming = true;
+            
+            // Re-sync local coin balance silently in background
+            supabase.from('profiles').select('c_coins').eq('id', currentUser.id).single().then(({ data }) => {
+              if (data) setCurrentUser(prev => ({ ...prev, c_coins: data.c_coins }));
+            });
+          }
+          
+          const chunkText = decoder.decode(value, { stream: !done });
+          fullResponse += chunkText;
+          
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === aiMsgId ? { ...msg, text: fullResponse } : msg
+            )
+          );
+        }
+      }
+      
+      if (!startedStreaming) {
+         setIsTyping(false);
+      }
+      
     } catch (error) {
+      console.error("AI Streaming Error:", error);
       setIsTyping(false);
-      setMessages(prev => [...prev, { id: Date.now() + 1, role: 'ai', text: "Sorry, I'm having trouble connecting right now. Please make sure your API key is configured!" }]);
+      
+      if (!startedStreaming) {
+         setMessages(prev => 
+           prev.map(msg => 
+             msg.id === aiMsgId ? { ...msg, text: "Sorry, I'm having trouble connecting right now or there was a timeout. Please try again!" } : msg
+           )
+         );
+      }
     }
   };
 
