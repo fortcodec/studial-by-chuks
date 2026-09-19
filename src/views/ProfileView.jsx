@@ -194,7 +194,7 @@ export default function ProfileView() {
         {/* Decorative background glow */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
         
-        <div className="relative mb-3 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+        <div className={`relative mb-3 ${isOwnProfile ? 'group cursor-pointer' : ''}`} onClick={() => isOwnProfile && fileInputRef.current?.click()}>
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -218,9 +218,11 @@ export default function ProfileView() {
               <Loader2 className="w-6 h-6 text-primary animate-spin" />
             </div>
           )}
-          <div className="absolute bottom-0 right-0 bg-surface rounded-full p-1.5 border border-outline-variant/30 shadow-sm hover:bg-surface-container">
-            <Settings className="w-4 h-4 text-outline" />
-          </div>
+          {isOwnProfile && (
+            <div className="absolute bottom-0 right-0 bg-surface rounded-full p-1.5 border border-outline-variant/30 shadow-sm hover:bg-surface-container">
+              <Settings className="w-4 h-4 text-outline" />
+            </div>
+          )}
         </div>
 
         <h2 className="text-xl font-bold text-on-surface mb-1">{fullName || currentUser?.name || 'Student'}</h2>
@@ -301,13 +303,13 @@ export default function ProfileView() {
       <div>
         <h3 className="font-bold text-on-surface mb-3 flex items-center gap-2">
           <FileText className="w-4 h-4 text-primary" />
-          My Posts
+          {isOwnProfile ? "My Posts" : "Posts"}
         </h3>
         {isMyPostsLoading ? (
           <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : myPosts.length === 0 ? (
           <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 text-center text-outline text-sm shadow-sm">
-            You haven't made any posts yet.
+            {isOwnProfile ? "You haven't made any posts yet." : "No posts found."}
           </div>
         ) : (
           <div className="flex flex-col gap-6">
@@ -391,13 +393,15 @@ export default function ProfileView() {
       )}
 
       {/* Logout Button */}
-      <button 
-        onClick={handleLogout}
-        className="mt-2 flex items-center justify-center gap-2 w-full p-4 bg-error/10 hover:bg-error/20 text-error rounded-2xl font-bold transition-colors active:scale-[0.98]"
-      >
-        <LogOut className="w-5 h-5" />
-        Log Out
-      </button>
+      {isOwnProfile && (
+        <button 
+          onClick={handleLogout}
+          className="mt-2 flex items-center justify-center gap-2 w-full p-4 bg-error/10 hover:bg-error/20 text-error rounded-2xl font-bold transition-colors active:scale-[0.98]"
+        >
+          <LogOut className="w-5 h-5" />
+          Log Out
+        </button>
+      )}
 
       {/* Edit Profile Modal */}
       {isEditModalOpen && (
