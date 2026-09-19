@@ -58,21 +58,35 @@ Respond ONLY with a JSON object: { "flagged": true/false, "reason": "Brief expla
 Post Content: "${content}"
     `;
 
-    const aiResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            flagged: { type: "BOOLEAN" },
-            reason: { type: "STRING" }
-          },
-          required: ["flagged", "reason"]
+    let aiResponse;
+    try {
+      // Timeout wrapper (15 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('AI request timed out')), 15000);
+      });
+
+      const aiPromise = ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              flagged: { type: "BOOLEAN" },
+              reason: { type: "STRING" }
+            },
+            required: ["flagged", "reason"]
+          }
         }
-      }
-    });
+      });
+
+      aiResponse = await Promise.race([aiPromise, timeoutPromise]);
+    } catch (aiError) {
+      console.error("AI Evaluation failed or timed out:", aiError);
+      // Fallback: If AI fails, do not shadow ban. Let it pass regex or fail safe.
+      return res.status(200).json({ status: 'ok', flagged: false, reason: 'AI service unavailable' });
+    }
 
     let result = { flagged: false, reason: "" };
     
@@ -82,7 +96,7 @@ Post Content: "${content}"
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
       // Fallback
-      if (aiResponse.text().includes('"flagged": true')) {
+      if (aiResponse && aiResponse.text && aiResponse.text().includes('"flagged": true')) {
          result = { flagged: true, reason: "AI flagged content but returned invalid JSON" };
       }
     }
