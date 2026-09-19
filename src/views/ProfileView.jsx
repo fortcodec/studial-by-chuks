@@ -13,6 +13,9 @@ import {
   Loader2,
   X,
   Download,
+  ArrowLeft,
+  Camera,
+  Pencil,
 } from "lucide-react";
 import { PostCard } from "../components/PostCard";
 import ChatModal from "../components/ChatModal";
@@ -47,6 +50,8 @@ export default function ProfileView() {
     username: "",
     department: "",
     university: "",
+    full_name: "",
+    bio: "",
   });
   const [savedMaterials, setSavedMaterials] = useState([]);
   const fileInputRef = useRef(null);
@@ -126,6 +131,8 @@ export default function ProfileView() {
               username: profile.username || "",
               department: profile.department || "",
               university: profile.university || "",
+              full_name: profile.full_name || "",
+              bio: profile.bio || "",
             });
           }
 
@@ -498,19 +505,21 @@ export default function ProfileView() {
         </button>
       )}
 
-      {/* Edit Profile Modal */}
+      {/* Edit Profile Full-width View / Slide-up Sheet */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
+        <div className="fixed inset-0 z-50 bg-surface flex flex-col animate-slide-up md:max-w-md md:mx-auto md:border-x border-outline-variant/30 shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center px-4 py-3 border-b border-outline-variant/30 sticky top-0 bg-surface/90 backdrop-blur z-20">
             <button
               onClick={() => setIsEditModalOpen(false)}
-              className="absolute top-4 right-4 text-outline hover:text-on-surface bg-surface-container p-1 rounded-full"
+              className="p-2 -ml-2 rounded-full hover:bg-surface-container transition-colors"
             >
-              <X className="w-5 h-5" />
+              <ArrowLeft className="w-6 h-6 text-on-surface" />
             </button>
-            <h2 className="text-xl font-bold text-on-surface mb-4">
-              Edit Profile
-            </h2>
+            <h2 className="text-[17px] font-bold text-on-surface ml-2">Edit profile</h2>
+          </div>
+
+          <div className="flex-1 overflow-y-auto pb-safe scrollbar-hide">
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -523,56 +532,127 @@ export default function ProfileView() {
                     .update(editForm)
                     .eq("id", user.id);
                   setDepartment(editForm.department);
+                  setFullName(editForm.full_name);
+                  setUsername(editForm.username);
                   setIsEditModalOpen(false);
                 }
               }}
-              className="space-y-4"
+              className="flex flex-col pb-8"
             >
-              <div>
-                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  value={editForm.username}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, username: e.target.value })
-                  }
-                  className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium"
-                />
+              {/* Avatar Section */}
+              <div className="flex flex-col items-center justify-center py-8">
+                <div 
+                  className="relative group cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {currentUser?.avatar || targetAvatarUrl ? (
+                    <img
+                      src={currentUser?.avatar || targetAvatarUrl}
+                      alt="Profile"
+                      className={`w-24 h-24 rounded-full object-cover border-4 border-surface shadow-sm transition-opacity ${isUploadingAvatar ? "opacity-50" : "group-hover:opacity-80"}`}
+                    />
+                  ) : (
+                    <div
+                      className={`w-24 h-24 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border-4 border-surface shadow-sm text-3xl transition-opacity ${isUploadingAvatar ? "opacity-50" : "group-hover:opacity-80"}`}
+                    >
+                      {(fullName || currentUser?.name || "S").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-8 h-8 text-white" />
+                  </div>
+                  <div className="absolute bottom-0 right-0 bg-primary rounded-full p-1.5 border-2 border-surface shadow-sm">
+                    <Camera className="w-4 h-4 text-white" />
+                  </div>
+                  {isUploadingAvatar && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <span className="text-primary font-semibold text-[13px] mt-3 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                  Change photo
+                </span>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">
-                  Department
-                </label>
-                <input
-                  type="text"
-                  value={editForm.department}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, department: e.target.value })
-                  }
-                  className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium"
-                />
+
+              {/* Input Fields */}
+              <div className="flex flex-col border-t border-outline-variant/20">
+                
+                {/* Name Row */}
+                <div className="flex items-center px-4 py-3.5 border-b border-outline-variant/20 group focus-within:bg-surface-container-lowest transition-colors">
+                  <span className="w-28 text-[15px] font-semibold text-on-surface">Name</span>
+                  <input
+                    type="text"
+                    value={editForm.full_name}
+                    onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                    className="flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-outline-variant"
+                    placeholder="Your full name"
+                  />
+                  <Pencil className="w-4 h-4 text-outline group-focus-within:text-primary transition-colors ml-2 flex-shrink-0" />
+                </div>
+
+                {/* Username Row */}
+                <div className="flex items-center px-4 py-3.5 border-b border-outline-variant/20 group focus-within:bg-surface-container-lowest transition-colors">
+                  <span className="w-28 text-[15px] font-semibold text-on-surface">Username</span>
+                  <input
+                    type="text"
+                    value={editForm.username}
+                    onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                    className="flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-outline-variant"
+                    placeholder="Your username"
+                  />
+                  <Pencil className="w-4 h-4 text-outline group-focus-within:text-primary transition-colors ml-2 flex-shrink-0" />
+                </div>
+
+                {/* Bio Row */}
+                <div className="flex items-center px-4 py-3.5 border-b border-outline-variant/20 group focus-within:bg-surface-container-lowest transition-colors">
+                  <span className="w-28 text-[15px] font-semibold text-on-surface">Bio</span>
+                  <input
+                    type="text"
+                    value={editForm.bio}
+                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                    className="flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-outline-variant"
+                    placeholder="Add a bio"
+                  />
+                  <Pencil className="w-4 h-4 text-outline group-focus-within:text-primary transition-colors ml-2 flex-shrink-0" />
+                </div>
+
+                {/* Department Row */}
+                <div className="flex items-center px-4 py-3.5 border-b border-outline-variant/20 group focus-within:bg-surface-container-lowest transition-colors">
+                  <span className="w-28 text-[15px] font-semibold text-on-surface">Department</span>
+                  <input
+                    type="text"
+                    value={editForm.department}
+                    onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                    className="flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-outline-variant"
+                    placeholder="e.g. Computer Science"
+                  />
+                  <Pencil className="w-4 h-4 text-outline group-focus-within:text-primary transition-colors ml-2 flex-shrink-0" />
+                </div>
+
+                {/* University Row */}
+                <div className="flex items-center px-4 py-3.5 border-b border-outline-variant/20 group focus-within:bg-surface-container-lowest transition-colors">
+                  <span className="w-28 text-[15px] font-semibold text-on-surface">University</span>
+                  <input
+                    type="text"
+                    value={editForm.university}
+                    onChange={(e) => setEditForm({ ...editForm, university: e.target.value })}
+                    className="flex-1 bg-transparent text-[15px] text-on-surface outline-none placeholder:text-outline-variant"
+                    placeholder="e.g. Harvard University"
+                  />
+                  <Pencil className="w-4 h-4 text-outline group-focus-within:text-primary transition-colors ml-2 flex-shrink-0" />
+                </div>
+
               </div>
-              <div>
-                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">
-                  University
-                </label>
-                <input
-                  type="text"
-                  value={editForm.university}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, university: e.target.value })
-                  }
-                  className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium"
-                />
+
+              <div className="px-4 mt-8">
+                <button
+                  type="submit"
+                  className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 rounded-full transition-all shadow-md shadow-primary/20 active:scale-[0.98]"
+                >
+                  Save Changes
+                </button>
               </div>
-              <button
-                type="submit"
-                className="w-full bg-primary hover:bg-primary-container hover:text-white text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 mt-2"
-              >
-                Save Changes
-              </button>
             </form>
           </div>
         </div>
