@@ -71,45 +71,48 @@ export default function Dashboard() {
   useEffect(() => {
     let isMounted = true;
     
-    // Fetch Posts
     const fetchPosts = async () => {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*, profiles!user_id(*), post_likes(count), post_comments(count)')
-        .order('created_at', { ascending: false });
-        
-      if (error) {
-        console.error("Error fetching posts:", error);
-        alert(`Failed to fetch feed: ${error.message}`);
-      } else if (data && isMounted) {
-        // Shadow Ban Logic: Filter out shadow-banned users' posts, unless it belongs to the current user
-        const filteredPosts = data.filter(post => 
-          !post.profiles?.is_shadow_banned || post.user_id === currentUser?.id
-        );
-        
-        setPosts(filteredPosts);
-        
-        // Compute Dynamic Trending Topics from hashtags
-        const tagCounts = {};
-        data.forEach(post => {
-          const tags = post.content?.match(/#[\w]+/g) || [];
-          tags.forEach(tag => {
-            const cleanTag = tag.replace('#', '');
-            tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
-          });
-        });
-        
-        const sortedTags = Object.entries(tagCounts)
-          .sort((a, b) => b[1] - a[1])
-          .map(entry => `🔥 ${entry[0]}`)
-          .slice(0, 4);
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*, profiles!user_id(*), post_likes(count), post_comments(count)')
+          .order('created_at', { ascending: false });
           
-        const defaultTopics = ["⚡ Trending in CS", "Calculus III", "Organic Chem"];
-        const combined = Array.from(new Set(["All Topics", ...sortedTags, ...defaultTopics])).slice(0, 5);
-        setTopics(combined);
+        if (error) {
+          console.error("Error fetching posts:", error);
+        } else if (data && isMounted) {
+          // Shadow Ban Logic: Filter out shadow-banned users' posts, unless it belongs to the current user
+          const filteredPosts = data.filter(post => 
+            !post.profiles?.is_shadow_banned || post.user_id === currentUser?.id
+          );
+          
+          setPosts(filteredPosts);
+          
+          // Compute Dynamic Trending Topics from hashtags
+          const tagCounts = {};
+          data.forEach(post => {
+            const tags = post.content?.match(/#[\w]+/g) || [];
+            tags.forEach(tag => {
+              const cleanTag = tag.replace('#', '');
+              tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
+            });
+          });
+          
+          const sortedTags = Object.entries(tagCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(entry => `🔥 ${entry[0]}`)
+            .slice(0, 4);
+            
+          const defaultTopics = ["⚡ Trending in CS", "Calculus III", "Organic Chem"];
+          const combined = Array.from(new Set(["All Topics", ...sortedTags, ...defaultTopics])).slice(0, 5);
+          setTopics(combined);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching posts:", err);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
-      if (isMounted) setIsLoading(false);
     };
 
     fetchPosts();
@@ -121,27 +124,33 @@ export default function Dashboard() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'posts' },
         async (payload) => {
-          // Fetch the profile for the new post
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, full_name, avatar_url, department')
-            .eq('id', payload.new.user_id)
-            .single();
+          try {
+            // Fetch the profile for the new post
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('username, full_name, avatar_url, department, is_shadow_banned')
+              .eq('id', payload.new.user_id)
+              .single();
 
-          if (profile) {
-            // Shadow Ban Logic: Don't show new post if author is shadow-banned, unless it's the current user
-            if (profile.is_shadow_banned && payload.new.user_id !== currentUser?.id) {
-              return;
+            if (error) throw error;
+
+            if (profile) {
+              // Shadow Ban Logic: Don't show new post if author is shadow-banned, unless it's the current user
+              if (profile.is_shadow_banned && payload.new.user_id !== currentUser?.id) {
+                return;
+              }
+
+              const newPost = {
+                ...payload.new,
+                profiles: profile
+              };
+
+              if (isMounted) {
+                setPosts(prev => [newPost, ...prev]);
+              }
             }
-
-            const newPost = {
-              ...payload.new,
-              profiles: profile
-            };
-
-            if (isMounted) {
-              setPosts(prev => [newPost, ...prev]);
-            }
+          } catch (err) {
+            console.error("Error processing realtime post:", err);
           }
         }
       )

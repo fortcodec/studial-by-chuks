@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Bell, Search } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { supabase } from "../supabaseClient";
-import CreatePost from "./CreatePost";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { Avatar } from "./Avatar";
-import CoinRewardModal from "./CoinRewardModal";
+
+const CreatePost = lazy(() => import("./CreatePost"));
+const CoinRewardModal = lazy(() => import("./CoinRewardModal"));
 
 export default function Layout() {
   const [currentUser, setCurrentUser] = useState({
@@ -378,19 +379,21 @@ export default function Layout() {
 
       {/* Create Post Modal */}
       {isCreatePostOpen && (
-        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-in fade-in duration-200">
-          <div className="bg-surface w-full max-w-md md:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full duration-300 relative">
-            <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low">
-              <h2 className="font-bold text-on-surface">Create Post</h2>
-              <button onClick={() => setIsCreatePostOpen(false)} className="p-1.5 rounded-full bg-surface-container hover:bg-outline-variant/30 transition-colors text-outline hover:text-on-surface">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="max-h-[80vh] overflow-y-auto p-4 scrollbar-hide">
-              <CreatePost currentUser={currentUser} onPostCreated={() => setIsCreatePostOpen(false)} />
+        <Suspense fallback={<div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center"><Loader2 className="w-8 h-8 text-white animate-spin" /></div>}>
+          <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-in fade-in duration-200">
+            <div className="bg-surface w-full max-w-md md:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full duration-300 relative">
+              <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low">
+                <h2 className="font-bold text-on-surface">Create Post</h2>
+                <button onClick={() => setIsCreatePostOpen(false)} className="p-1.5 rounded-full bg-surface-container hover:bg-outline-variant/30 transition-colors text-outline hover:text-on-surface">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="max-h-[80vh] overflow-y-auto p-4 scrollbar-hide">
+                <CreatePost currentUser={currentUser} onPostCreated={() => setIsCreatePostOpen(false)} />
+              </div>
             </div>
           </div>
-        </div>
+        </Suspense>
       )}
 
       {/* Onboarding Modal */}
@@ -425,10 +428,12 @@ export default function Layout() {
 
       {/* Coin Reward Modal */}
       {showCoinRewardModal && (
-        <CoinRewardModal 
-          amount={weeklyBonusAmount} 
-          onClose={() => setShowCoinRewardModal(false)} 
-        />
+        <Suspense fallback={null}>
+          <CoinRewardModal 
+            amount={weeklyBonusAmount} 
+            onClose={() => setShowCoinRewardModal(false)} 
+          />
+        </Suspense>
       )}
     </div>
   );

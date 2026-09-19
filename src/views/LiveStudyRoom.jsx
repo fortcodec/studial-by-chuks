@@ -35,17 +35,23 @@ export default function LiveStudyRoom() {
     
     // Fetch initial messages
     const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from('study_room_messages')
-        .select(`
-          *,
-          profiles!user_id (username, full_name, avatar_url)
-        `)
-        .eq('room_id', 'global')
-        .order('created_at', { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from('study_room_messages')
+          .select(`
+            *,
+            profiles!user_id (username, full_name, avatar_url)
+          `)
+          .eq('room_id', 'global')
+          .order('created_at', { ascending: true });
+          
+        if (error) throw error;
         
-      if (!error && data && isMounted) {
-        setMessages(data);
+        if (data && isMounted) {
+          setMessages(data);
+        }
+      } catch (err) {
+        console.error("Error fetching room messages:", err);
       }
     };
 
@@ -65,20 +71,26 @@ export default function LiveStudyRoom() {
           filter: 'room_id=eq.global'
         },
         async (payload) => {
-          // Fetch the profile for the new message
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, full_name, avatar_url')
-            .eq('id', payload.new.user_id)
-            .single();
+          try {
+            // Fetch the profile for the new message
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('username, full_name, avatar_url')
+              .eq('id', payload.new.user_id)
+              .single();
 
-          const completeMessage = {
-            ...payload.new,
-            profiles: profile
-          };
+            if (error) throw error;
 
-          if (isMounted) {
-            setMessages(prev => [...prev, completeMessage]);
+            const completeMessage = {
+              ...payload.new,
+              profiles: profile
+            };
+
+            if (isMounted) {
+              setMessages(prev => [...prev, completeMessage]);
+            }
+          } catch (err) {
+            console.error("Error processing realtime message:", err);
           }
         }
       )

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Search, Download, FileText, ArrowLeft, Loader2, BookOpen, Bookmark, Bot, AlertCircle, X, Filter, CheckCircle2, ChevronRight, Lock, Trash2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import UnlockMaterialModal from '../components/UnlockMaterialModal';
+
+const UnlockMaterialModal = lazy(() => import('../components/UnlockMaterialModal'));
 
 export default function Library() {
   const { currentUser } = useOutletContext();
@@ -328,15 +329,19 @@ export default function Library() {
       )}
 
       {/* Unlock Material Modal */}
-      <UnlockMaterialModal 
-        isOpen={unlockModalOpen}
-        onClose={() => setUnlockModalOpen(false)}
-        material={selectedMaterialForUnlock}
-        userCoins={currentUser?.c_coins || 0}
-        userId={currentUser?.id}
-        onSuccess={handleUnlockSuccess}
-        navigateTo={navigate}
-      />
+      {unlockModalOpen && (
+        <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"><Loader2 className="w-8 h-8 text-white animate-spin" /></div>}>
+          <UnlockMaterialModal 
+            isOpen={unlockModalOpen}
+            onClose={() => setUnlockModalOpen(false)}
+            material={selectedMaterialForUnlock}
+            userCoins={currentUser?.c_coins || 0}
+            userId={currentUser?.id}
+            onSuccess={handleUnlockSuccess}
+            navigateTo={navigate}
+          />
+        </Suspense>
+      )}
 
       {/* Toast Notification */}
       {toastMessage && (

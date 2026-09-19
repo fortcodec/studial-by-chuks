@@ -15,10 +15,15 @@ export default function StudyRoom() {
   // 1. Fetch Current User
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-        setCurrentUser(profile);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+          if (error) throw error;
+          setCurrentUser(profile);
+        }
+      } catch (err) {
+        console.error("Error fetching user for study room:", err);
       }
     };
     fetchUser();
@@ -47,13 +52,17 @@ export default function StudyRoom() {
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          await room.track({
-            id: currentUser.id,
-            full_name: currentUser.full_name,
-            username: currentUser.username,
-            avatar_url: currentUser.avatar_url,
-            department: currentUser.department,
-          });
+          try {
+            await room.track({
+              id: currentUser.id,
+              full_name: currentUser.full_name || 'Anonymous',
+              username: currentUser.username || 'user',
+              avatar_url: currentUser.avatar_url || '',
+              department: currentUser.department || 'Unknown',
+            });
+          } catch (err) {
+            console.error("Error tracking presence in study room:", err);
+          }
         }
       });
 

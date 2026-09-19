@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, Award } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
@@ -12,6 +12,13 @@ export default function PomodoroCard({ currentUser }) {
   const [timeLeft, setTimeLeft] = useState(FOCUS_TIME);
   const [isActive, setIsActive] = useState(false);
   const [showReward, setShowReward] = useState(false);
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     let interval = null;
@@ -48,7 +55,7 @@ export default function PomodoroCard({ currentUser }) {
       }
 
       // Show reward briefly, then switch to break
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setShowReward(false);
         switchMode('break');
       }, 3000);
