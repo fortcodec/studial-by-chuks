@@ -241,7 +241,7 @@ export default function Layout() {
         .from('notifications')
         .select('*')
         .eq('user_id', currentUser.id)
-        .in('type', ['weekly_drop', 'admin_gift'])
+        .in('type', ['weekly_drop', 'admin_gift', 'task_approved'])
         .eq('read', false);
 
       if (coinDrops && coinDrops.length > 0) {
@@ -395,9 +395,18 @@ export default function Layout() {
                     ) : (
                       <div className="divide-y divide-outline-variant/30">
                         {notificationsData.map((notif) => (
-                          <div key={notif.id} className={`p-4 hover:bg-surface-container-low transition-colors flex items-start gap-3 relative ${!notif.read ? 'bg-primary/5' : ''}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${notif.type === 'admin_gift' || notif.type === 'weekly_drop' ? 'bg-warning/10 text-warning' : notif.type === 'announcement' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'}`}>
-                              {notif.type === 'admin_gift' || notif.type === 'weekly_drop' ? <Coins className="w-4 h-4" /> : notif.type === 'announcement' ? <Megaphone className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                          <div 
+                            key={notif.id} 
+                            onClick={() => {
+                              if (notif.type === 'new_task') {
+                                setIsNotificationsOpen(false);
+                                navigate('/tasksHub');
+                              }
+                            }}
+                            className={`p-4 transition-colors flex items-start gap-3 relative ${!notif.read ? 'bg-primary/5' : ''} ${notif.type === 'new_task' ? 'cursor-pointer hover:bg-surface-container-low' : 'hover:bg-surface-container-low'}`}
+                          >
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${notif.type === 'admin_gift' || notif.type === 'weekly_drop' || notif.type === 'task_approved' ? 'bg-warning/10 text-warning' : notif.type === 'announcement' || notif.type === 'new_task' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'}`}>
+                              {notif.type === 'admin_gift' || notif.type === 'weekly_drop' || notif.type === 'task_approved' ? <Coins className="w-4 h-4" /> : notif.type === 'announcement' ? <Megaphone className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
                             </div>
                             <div className="flex-1 min-w-0 pr-4">
                               <p className="text-[14px] text-on-surface font-bold leading-snug truncate">

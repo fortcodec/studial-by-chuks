@@ -63,7 +63,17 @@ export default function TasksHub() {
   };
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selected = e.target.files[0];
+    if (selected) {
+      // Enforce file size limit (~10MB representing roughly 30s of media)
+      if (selected.size > 10 * 1024 * 1024) {
+        alert("File size exceeds 10MB. Please ensure your audio/video is no longer than 30 seconds.");
+        e.target.value = '';
+        setFile(null);
+        return;
+      }
+      setFile(selected);
+    }
   };
 
   const handleSubmitProof = async (e) => {
@@ -97,7 +107,7 @@ export default function TasksHub() {
 
       if (dbError) throw dbError;
 
-      alert('Proof submitted successfully! It is now pending admin verification.');
+      alert('The super admin will look into it now...');
       setSelectedTask(null);
       setFile(null);
       setNotes('');
@@ -237,7 +247,7 @@ export default function TasksHub() {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition cursor-pointer relative">
                   <input 
                     type="file" 
-                    accept="image/*,audio/*" 
+                    accept="image/*,audio/*,video/*" 
                     onChange={handleFileChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     required

@@ -308,15 +308,32 @@ export default function AdminGateway() {
     e.preventDefault();
     setIsCreatingTask(true);
     try {
-      const { error } = await supabase.from('tasks').insert([{
+      const { data: taskData, error } = await supabase.from('tasks').insert([{
         title: taskForm.title,
         description: taskForm.description,
         reward_coins: parseInt(taskForm.reward_coins, 10)
-      }]);
+      }]).select().single();
+      
       if (error) throw error;
-      alert('Task created successfully!');
+
+      // Bulk insert notification for all users
+      const { data: allUsers } = await supabase.from('profiles').select('id').eq('role', 'student');
+      if (allUsers && allUsers.length > 0) {
+        const notifications = allUsers.map(user => ({
+          user_id: user.id,
+          title: `New Task: ${taskForm.title}`,
+          message: `Earn ${taskForm.reward_coins} C-Coins by completing this new task!`,
+          type: 'new_task',
+          read: false
+        }));
+        // Supabase allows bulk inserts by passing an array
+        await supabase.from('notifications').insert(notifications);
+      }
+
+      alert('Task created successfully! Notifications sent to all students.');
       setTaskForm({ title: '', description: '', reward_coins: 0 });
     } catch (err) {
+      console.error(err);
       alert("Failed to create task.");
     } finally {
       setIsCreatingTask(false);
@@ -326,15 +343,21 @@ export default function AdminGateway() {
   const handleApproveSubmission = async (submissionId) => {
     if (!currentUser) return;
     try {
-      const { error } = await supabase.rpc('approve_task_submission', {
-        p_submission_id: submissionId,
-        p_admin_id: currentUser.id
+      const response = await fetch('/api/approve-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submissionId, adminId: currentUser.id })
       });
-      if (error) throw error;
+      
+      if (!response.ok) {
+         const errData = await response.json();
+         throw new Error(errData.error || 'Failed to approve task');
+      }
+
       alert("Submission approved and C-Coins credited!");
       setPendingSubmissions(prev => prev.filter(sub => sub.id !== submissionId));
     } catch (err) {
-      alert("Failed to approve submission: " + err.message);
+      alert(err.message || 'Error approving submission.');
     }
   };
 
