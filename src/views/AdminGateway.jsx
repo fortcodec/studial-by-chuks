@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, ShieldAlert, Coins, LogOut, Loader2, Trash2, Edit2, CheckCircle, ListTodo, BookOpen, Upload, FileText, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, ShieldAlert, Coins, LogOut, Loader2, Trash2, Edit2, CheckCircle, ListTodo, BookOpen, Upload, FileText, MessageSquare, Gift } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
@@ -39,7 +39,7 @@ export default function AdminGateway() {
 
   // Editing User State
   const [editingUser, setEditingUser] = useState(null);
-  const [editForm, setEditForm] = useState({ role: '', c_coins: 0 });
+  const [editForm, setEditForm] = useState({ role: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Messages State
@@ -49,6 +49,10 @@ export default function AdminGateway() {
   // Economy State
   const [weeklyCoinAmount, setWeeklyCoinAmount] = useState(500);
   const [isDistributingCoins, setIsDistributingCoins] = useState(false);
+
+  // Gift Users State
+  const [giftForm, setGiftForm] = useState({ targetUserId: 'ALL', amount: 50, message: '' });
+  const [isGifting, setIsGifting] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -371,6 +375,32 @@ export default function AdminGateway() {
     }
   };
 
+  const handleGiftUsers = async (e) => {
+    e.preventDefault();
+    if (giftForm.amount <= 0) return alert("Amount must be greater than 0");
+    setIsGifting(true);
+    try {
+      const response = await fetch('/api/gift-coins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetUserId: giftForm.targetUserId,
+          amount: giftForm.amount,
+          message: giftForm.message
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to gift coins');
+      alert(`Successfully gifted ${giftForm.amount} C-Coins to ${data.giftedCount} user(s)!`);
+      setGiftForm({ targetUserId: 'ALL', amount: 50, message: '' });
+      if (activeTab === 'Dashboard') fetchDashboardStats();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setIsGifting(false);
+    }
+  };
+
   const navigation = [
     { name: 'Dashboard', icon: LayoutDashboard },
     { name: 'Tasks Manager', icon: ListTodo },
@@ -378,6 +408,7 @@ export default function AdminGateway() {
     { name: 'Users', icon: Users },
     { name: 'Content Moderation', icon: ShieldAlert },
     { name: 'Users Chats', icon: MessageSquare },
+    { name: 'Gift Users', icon: Gift },
     { name: 'Economy', icon: Coins },
   ];
 
@@ -644,7 +675,7 @@ export default function AdminGateway() {
                           <td className="p-4 font-semibold text-gray-900">{user?.c_coins || 0} C</td>
                           <td className="p-4 text-right flex justify-end gap-2">
                             <button 
-                              onClick={() => { setEditingUser(user); setEditForm({ role: user?.role || 'student', c_coins: user?.c_coins || 0 }); }}
+                              onClick={() => { setEditingUser(user); setEditForm({ role: user?.role || 'student' }); }}
                               className="text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50 transition-colors"
                               title="Edit User"
                             >
@@ -728,6 +759,62 @@ export default function AdminGateway() {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'Gift Users' && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-2xl mx-auto">
+              <div className="text-center mb-8">
+                <Gift className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Gift Users</h3>
+                <p className="text-gray-500">Send C-Coins to individual students or to everyone at once.</p>
+              </div>
+
+              <form onSubmit={handleGiftUsers} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Select Recipient</label>
+                  <select 
+                    value={giftForm.targetUserId} 
+                    onChange={e => setGiftForm({...giftForm, targetUserId: e.target.value})} 
+                    className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500"
+                  >
+                    <option value="ALL">🌟 All Students (Mass Broadcast)</option>
+                    {users?.map(u => (
+                      <option key={u.id} value={u.id}>{u.full_name || u.username} ({u.email || u.id.substring(0,6)})</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Coin Amount</label>
+                  <input 
+                    type="number" 
+                    required 
+                    value={giftForm.amount} 
+                    onChange={e => setGiftForm({...giftForm, amount: e.target.value})} 
+                    className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" 
+                    placeholder="e.g. 50" 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Custom Message (Optional)</label>
+                  <textarea 
+                    rows="2" 
+                    value={giftForm.message} 
+                    onChange={e => setGiftForm({...giftForm, message: e.target.value})} 
+                    className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" 
+                    placeholder="You got C-Coins from Admin!"
+                  ></textarea>
+                </div>
+                
+                <div className="flex justify-end pt-2">
+                  <button type="submit" disabled={isGifting} className="w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2">
+                    {isGifting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Gift className="w-5 h-5" />}
+                    {isGifting ? 'Sending Gift...' : 'Send Gift'}
+                  </button>
+                </div>
+              </form>
             </div>
           )}
 
@@ -838,15 +925,6 @@ export default function AdminGateway() {
                   <option value="student">Student</option>
                   <option value="admin">Admin</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">C-Coins Balance</label>
-                <input 
-                  type="number" 
-                  value={editForm.c_coins}
-                  onChange={(e) => setEditForm({...editForm, c_coins: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                />
               </div>
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setEditingUser(null)} className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Coins, X, Sparkles } from 'lucide-react';
 
-export default function CoinRewardModal({ amount = 500, onClose }) {
+export default function CoinRewardModal({ amount = 500, title, message, onClose }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -39,9 +39,9 @@ export default function CoinRewardModal({ amount = 500, onClose }) {
             <Coins className="w-10 h-10 text-yellow-500 relative z-10" />
           </div>
 
-          <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Campus Bonus!</h2>
+          <h2 className="text-2xl font-extrabold text-gray-900 mb-2">{title || "Campus Bonus!"}</h2>
           <p className="text-gray-500 text-[15px] leading-relaxed mb-6">
-            Congratulations! You've received your weekly campus bonus from the admin.
+            {message || "Congratulations! You've received your weekly campus bonus from the admin."}
           </p>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full mb-6">

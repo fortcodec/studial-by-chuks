@@ -25,6 +25,8 @@ export default function Layout() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showCoinRewardModal, setShowCoinRewardModal] = useState(false);
   const [weeklyBonusAmount, setWeeklyBonusAmount] = useState(0);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
 
   const [transactions, setTransactions] = useState([]);
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
@@ -197,33 +199,36 @@ export default function Layout() {
     return () => { isMounted = false; };
   }, []);
 
-  // Dedicated Weekly Drop Check
+  // Dedicated Coin Drops Check (Weekly or Admin Gift)
   useEffect(() => {
     if (!currentUser?.id) return;
     
-    const checkWeeklyDrop = async () => {
-      const { data: weeklyDrops } = await supabase
+    const checkCoinDrops = async () => {
+      const { data: coinDrops } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', currentUser.id)
-        .eq('type', 'weekly_drop')
+        .in('type', ['weekly_drop', 'admin_gift'])
         .eq('read', false);
 
-      if (weeklyDrops && weeklyDrops.length > 0) {
-        // Get the first unread weekly drop amount from message regex or fallback to 500
-        const amountMatch = weeklyDrops[0].message.match(/(\d+)/);
+      if (coinDrops && coinDrops.length > 0) {
+        // Get the first unread drop amount from message regex or fallback to 500
+        const firstDrop = coinDrops[0];
+        const amountMatch = firstDrop.message.match(/(\d+)/);
         const amount = amountMatch ? parseInt(amountMatch[1]) : 500;
         
         setWeeklyBonusAmount(amount);
+        setModalTitle(firstDrop.title);
+        setModalMessage(firstDrop.message);
         setShowCoinRewardModal(true);
 
         // Mark them as read
-        const dropIds = weeklyDrops.map(d => d.id);
+        const dropIds = coinDrops.map(d => d.id);
         await supabase.from('notifications').update({ read: true }).in('id', dropIds);
       }
     };
 
-    checkWeeklyDrop();
+    checkCoinDrops();
   }, [currentUser?.id]);
 
   return (
@@ -431,6 +436,8 @@ export default function Layout() {
         <Suspense fallback={null}>
           <CoinRewardModal 
             amount={weeklyBonusAmount} 
+            title={modalTitle}
+            message={modalMessage}
             onClose={() => setShowCoinRewardModal(false)} 
           />
         </Suspense>
