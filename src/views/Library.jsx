@@ -87,6 +87,8 @@ export default function Library() {
         const newSaved = new Set(savedMaterials);
         newSaved.delete(materialId);
         setSavedMaterials(newSaved);
+        setToastMessage({ type: 'success', text: 'Material removed from your profile' });
+        setTimeout(() => setToastMessage(null), 3000);
       } else {
         const { error } = await supabase.from('saved_materials').insert({ user_id: currentUser.id, material_id: materialId });
         if (error) throw error;
@@ -94,10 +96,13 @@ export default function Library() {
         const newSaved = new Set(savedMaterials);
         newSaved.add(materialId);
         setSavedMaterials(newSaved);
+        setToastMessage({ type: 'success', text: 'Material saved to your profile!' });
+        setTimeout(() => setToastMessage(null), 3000);
       }
     } catch (err) {
       console.error("Error toggling save", err);
-      // Optional: Add a toast notification here to let user know it failed
+      setToastMessage({ type: 'error', text: `Failed to save: ${err.message}` });
+      setTimeout(() => setToastMessage(null), 5000);
     }
   };
 
