@@ -5,6 +5,7 @@ import { BottomNav } from "./BottomNav";
 import { supabase } from "../supabaseClient";
 import { X, Loader2 } from "lucide-react";
 import { Avatar } from "./Avatar";
+import CCoinBadge from "./CCoinBadge";
 
 const CreatePost = lazy(() => import("./CreatePost"));
 const CoinRewardModal = lazy(() => import("./CoinRewardModal"));
@@ -311,10 +312,7 @@ export default function Layout() {
             )}
           </button>
           
-          <div className="flex items-center gap-1.5 bg-surface-container-low border border-outline-variant/30 px-3 py-1.5 rounded-full shadow-sm">
-            <span className="text-warning text-sm drop-shadow-sm">🪙</span>
-            <span className="text-[13px] font-bold text-on-surface">{currentUser.c_coins.toLocaleString()} C</span>
-          </div>
+          <CCoinBadge balance={currentUser.c_coins} className="shadow-sm" />
           
           <div className="relative" ref={notificationRef}>
             <button 

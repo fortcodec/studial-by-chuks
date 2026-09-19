@@ -26,34 +26,24 @@ export default function UnlockMaterialModal({
     setError(null);
 
     try {
-      // Deduct coins and record unlock (Ideally done via RPC for atomicity)
-      // Here is a client side approach for demonstration if RPC isn't available:
+      // Deduct coins and record unlock via backend endpoint
+      const response = await fetch('/api/unlock-material', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          materialId: material.id,
+          cost: cost
+        })
+      });
+
+      const data = await response.json();
       
-      // 1. Insert into unlocked_materials
-      const { error: unlockError } = await supabase
-        .from('unlocked_materials')
-        .insert([{ user_id: userId, material_id: material.id }]);
-        
-      if (unlockError) throw unlockError;
-
-      // 2. Deduct coins from profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ c_coins: userCoins - cost })
-        .eq('id', userId);
-
-      if (updateError) throw updateError;
-
-      // 3. Record transaction
-      const { error: txError } = await supabase
-        .from('c_coin_transactions')
-        .insert({
-          user_id: userId,
-          amount: `-${cost} C`,
-          description: `Purchased Material: ${material.title || 'Unknown'}`
-        });
-        
-      if (txError) console.error("Failed to record tx:", txError);
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to unlock material');
+      }
 
       onSuccess(material.id);
       onClose();
