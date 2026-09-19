@@ -34,7 +34,7 @@ export default function AdminGateway() {
   const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   // Study Materials State
-  const [materialForm, setMaterialForm] = useState({ title: '', course_code: '', description: '', file: null });
+  const [materialForm, setMaterialForm] = useState({ title: '', course_code: '', description: '', price_in_coins: 0, file: null });
   const [isUploadingMaterial, setIsUploadingMaterial] = useState(false);
 
   // Editing User State
@@ -356,13 +356,14 @@ export default function AdminGateway() {
         title: materialForm.title,
         course_code: materialForm.course_code,
         description: materialForm.description,
+        price_in_coins: parseInt(materialForm.price_in_coins, 10) || 0,
         file_url: fileUrl
       }]);
 
       if (dbError) throw dbError;
 
       alert("Study material uploaded successfully!");
-      setMaterialForm({ title: '', course_code: '', description: '', file: null });
+      setMaterialForm({ title: '', course_code: '', description: '', price_in_coins: 0, file: null });
     } catch (err) {
       alert("Failed to upload material: " + err.message);
     } finally {
@@ -559,6 +560,10 @@ export default function AdminGateway() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Course Code</label>
                     <input type="text" required value={materialForm.course_code} onChange={e => setMaterialForm({...materialForm, course_code: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="MTH101" />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Price in C-Coins (0 for free)</label>
+                  <input type="number" min="0" required value={materialForm.price_in_coins} onChange={e => setMaterialForm({...materialForm, price_in_coins: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="e.g. 50" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Description (Optional)</label>

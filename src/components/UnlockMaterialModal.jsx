@@ -17,7 +17,7 @@ export default function UnlockMaterialModal({
 
   if (!isOpen || !material) return null;
 
-  const cost = material.cost_coins !== undefined ? material.cost_coins : 5;
+  const cost = material.price_in_coins !== undefined ? material.price_in_coins : 5;
   const canAfford = userCoins >= cost;
 
   const handleUnlock = async () => {
@@ -43,6 +43,17 @@ export default function UnlockMaterialModal({
         .eq('id', userId);
 
       if (updateError) throw updateError;
+
+      // 3. Record transaction
+      const { error: txError } = await supabase
+        .from('c_coin_transactions')
+        .insert({
+          user_id: userId,
+          amount: `-${cost} C`,
+          description: `Purchased Material: ${material.title || 'Unknown'}`
+        });
+        
+      if (txError) console.error("Failed to record tx:", txError);
 
       onSuccess(material.id);
       onClose();
@@ -99,7 +110,9 @@ export default function UnlockMaterialModal({
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-red-500 text-sm font-medium">Insufficient C Coins.</p>
+            <p className="text-red-500 text-sm font-bold bg-red-50 p-3 rounded-lg border border-red-100">
+              Insufficient Balance! You need {cost - userCoins} more C-Coins to unlock this material.
+            </p>
             <button 
               onClick={() => {
                 onClose();

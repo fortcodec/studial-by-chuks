@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, FileText, ArrowLeft, Loader2, BookOpen, Bookmark, Bot, AlertCircle, X, Filter, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Search, Download, FileText, ArrowLeft, Loader2, BookOpen, Bookmark, Bot, AlertCircle, X, Filter, CheckCircle2, ChevronRight, Lock, Trash2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useOutletContext, useNavigate } from 'react-router-dom';
+import UnlockMaterialModal from '../components/UnlockMaterialModal';
 
 export default function Library() {
   const { currentUser } = useOutletContext();
   const navigate = useNavigate();
   const [resources, setResources] = useState([]);
   const [savedMaterials, setSavedMaterials] = useState(new Set());
+  const [unlockedMaterials, setUnlockedMaterials] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
   const [pageError, setPageError] = useState(null);
   const [activeDocument, setActiveDocument] = useState(null);
+  const [unlockModalOpen, setUnlockModalOpen] = useState(false);
+  const [selectedMaterialForUnlock, setSelectedMaterialForUnlock] = useState(null);
+
+  // Check if admin
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
 
   const filters = ['All', 'Past Questions', 'Lecture Notes', 'Syllabus'];
 
@@ -50,18 +57,19 @@ export default function Library() {
 
   useEffect(() => {
     let isMounted = true;
-    const fetchSaved = async () => {
+    const fetchSavedAndUnlocked = async () => {
       if (!currentUser?.id) return;
-      const { data } = await supabase
-        .from('saved_materials')
-        .select('material_id')
-        .eq('user_id', currentUser.id);
+      const [{ data: savedData }, { data: unlockedData }] = await Promise.all([
+        supabase.from('saved_materials').select('material_id').eq('user_id', currentUser.id),
+        supabase.from('unlocked_materials').select('material_id').eq('user_id', currentUser.id)
+      ]);
       
-      if (data && isMounted) {
-        setSavedMaterials(new Set(data.map(item => item.material_id)));
+      if (isMounted) {
+        if (savedData) setSavedMaterials(new Set(savedData.map(item => item.material_id)));
+        if (unlockedData) setUnlockedMaterials(new Set(unlockedData.map(item => item.material_id)));
       }
     };
-    fetchSaved();
+    fetchSavedAndUnlocked();
     return () => { isMounted = false; };
   }, [currentUser]);
 
@@ -84,6 +92,36 @@ export default function Library() {
     } catch (err) {
       console.error("Error toggling save", err);
     }
+  };
+
+  const handleDeleteMaterial = async (materialId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this material?")) return;
+    try {
+      const { error } = await supabase.from('study_materials').delete().eq('id', materialId);
+      if (error) throw error;
+      setResources(prev => prev.filter(r => r.id !== materialId));
+    } catch (err) {
+      alert("Failed to delete material: " + err.message);
+    }
+  };
+
+  const handleMaterialClick = (resource) => {
+    const isFree = !resource.price_in_coins || resource.price_in_coins === 0;
+    const isUnlocked = unlockedMaterials.has(resource.id);
+    
+    if (isFree || isUnlocked || isAdmin) {
+      setActiveDocument(resource);
+    } else {
+      setSelectedMaterialForUnlock(resource);
+      setUnlockModalOpen(true);
+    }
+  };
+
+  const handleUnlockSuccess = (materialId) => {
+    setUnlockedMaterials(prev => new Set(prev).add(materialId));
+    // Optionally auto-open the document after unlock
+    const unlockedDoc = resources.find(r => r.id === materialId);
+    if (unlockedDoc) setActiveDocument(unlockedDoc);
   };
 
   const filteredResources = Array.isArray(resources) ? resources.filter(res => {
@@ -189,6 +227,15 @@ export default function Library() {
                     <span className="bg-primary-container/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
                       {resource?.course_code || 'UNK'}
                     </span>
+                    {(!resource.price_in_coins || resource.price_in_coins === 0) ? (
+                      <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Free</span>
+                    ) : unlockedMaterials.has(resource.id) ? (
+                      <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Purchased</span>
+                    ) : (
+                      <span className="bg-yellow-100 text-yellow-700 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        <Lock className="w-3 h-3" /> {resource.price_in_coins} C
+                      </span>
+                    )}
                   </div>
                   <h3 className="font-bold text-on-surface text-[15px] leading-tight mb-2 truncate">{resource?.title || 'Untitled Document'}</h3>
                   <p className="text-[12px] text-outline mb-2 line-clamp-2">{resource?.description || 'No description available.'}</p>
@@ -197,6 +244,15 @@ export default function Library() {
                         Studial Admin
                       </span>
                       <div className="flex items-center gap-2 flex-shrink-0">
+                        {isAdmin && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteMaterial(resource.id); }}
+                            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm bg-red-50 text-red-500 hover:bg-red-100"
+                            title="Delete Material"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => navigate('/samuel', { state: { studyContext: resource } })}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition-colors shadow-sm active:scale-95 text-[11px] font-bold"
@@ -204,16 +260,24 @@ export default function Library() {
                           <Bot className="w-3.5 h-3.5" /> Ask Samuel
                         </button>
                         <button
-                        onClick={() => handleToggleSave(resource?.id)}
+                        onClick={(e) => { e.stopPropagation(); handleToggleSave(resource?.id); }}
                         className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${savedMaterials?.has(resource?.id) ? 'bg-indigo-500/10 text-indigo-600' : 'bg-surface-container-low text-outline hover:bg-surface-container hover:text-on-surface'}`}
                       >
                         <Bookmark className={`w-4 h-4 ${savedMaterials?.has(resource?.id) ? 'fill-current' : ''}`} />
                       </button>
                       <button
-                        onClick={() => setActiveDocument(resource)}
-                        className="w-8 h-8 bg-surface-container-low rounded-full flex items-center justify-center text-primary hover:bg-surface-container hover:text-primary-container transition-colors shadow-sm"
+                        onClick={(e) => { e.stopPropagation(); handleMaterialClick(resource); }}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${
+                          (!resource.price_in_coins || resource.price_in_coins === 0 || unlockedMaterials.has(resource.id) || isAdmin)
+                            ? 'bg-primary/10 text-primary hover:bg-primary/20'
+                            : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                        }`}
                       >
-                        <FileText className="w-4 h-4" />
+                        {(!resource.price_in_coins || resource.price_in_coins === 0 || unlockedMaterials.has(resource.id) || isAdmin) ? (
+                          <FileText className="w-4 h-4" />
+                        ) : (
+                          <Lock className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -258,6 +322,17 @@ export default function Library() {
           </div>
         </div>
       )}
+
+      {/* Unlock Material Modal */}
+      <UnlockMaterialModal 
+        isOpen={unlockModalOpen}
+        onClose={() => setUnlockModalOpen(false)}
+        material={selectedMaterialForUnlock}
+        userCoins={currentUser?.c_coins || 0}
+        userId={currentUser?.id}
+        onSuccess={handleUnlockSuccess}
+        navigateTo={navigate}
+      />
     </div>
   );
 }
