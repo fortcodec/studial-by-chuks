@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { UserPlus, Mail, Lock, BookOpen, ArrowLeft, Eye, EyeOff, Key, User, CheckCircle, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { UserPlus, Mail, Lock, BookOpen, ArrowLeft, Eye, EyeOff, Key, User, CheckCircle, ArrowRight, Loader2, XCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -30,6 +30,69 @@ export default function Onboarding() {
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [filteredDepartments, setFilteredDepartments] = useState(DEPARTMENTS);
 
+  // Validation State
+  const [usernameStatus, setUsernameStatus] = useState('idle'); // idle, checking, available, taken
+  const [identifierStatus, setIdentifierStatus] = useState('idle'); // idle, checking, available, taken
+  const [usernameSuggestions, setUsernameSuggestions] = useState([]);
+  
+  // Debounce effects
+  useEffect(() => {
+    const checkUsername = async () => {
+      const cleanUsername = formData.username.replace(/\s+/g, '').toLowerCase();
+      if (!cleanUsername) {
+        setUsernameStatus('idle');
+        setUsernameSuggestions([]);
+        return;
+      }
+      
+      setUsernameStatus('checking');
+      const { data, error } = await supabase.from('profiles').select('id').eq('username', cleanUsername);
+      
+      if (!error && data && data.length > 0) {
+        setUsernameStatus('taken');
+        // Generate suggestions
+        const suggestions = [
+          `${cleanUsername}_1`,
+          `${cleanUsername}99`,
+          `${cleanUsername}_student`
+        ];
+        setUsernameSuggestions(suggestions);
+      } else {
+        setUsernameStatus('available');
+        setUsernameSuggestions([]);
+      }
+    };
+
+    const timer = setTimeout(checkUsername, 500);
+    return () => clearTimeout(timer);
+  }, [formData.username]);
+
+  useEffect(() => {
+    const checkIdentifier = async () => {
+      const id = formData.identifier.trim();
+      if (!id) {
+        setIdentifierStatus('idle');
+        return;
+      }
+
+      setIdentifierStatus('checking');
+      const isPhone = id.startsWith('+') && /\d/.test(id);
+      const column = isPhone ? 'phone' : 'email';
+      const cleanId = isPhone ? id.replace(/[\s-]/g, '') : id.toLowerCase();
+      
+      const { data, error } = await supabase.from('profiles').select('id').eq(column, cleanId);
+      
+      if (!error && data && data.length > 0) {
+        setIdentifierStatus('taken');
+      } else {
+        setIdentifierStatus('available');
+      }
+    };
+
+    const timer = setTimeout(checkIdentifier, 500);
+    return () => clearTimeout(timer);
+  }, [formData.identifier]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -43,8 +106,14 @@ export default function Onboarding() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (usernameStatus === 'taken' || identifierStatus === 'taken' || usernameStatus === 'checking' || identifierStatus === 'checking') {
+      setMessage({ type: 'error', text: 'Please resolve validation errors before submitting.' });
+      return;
+    }
+
     setLoading(true);
-    setMessage({ type: '', text: '' });
+    setMessage({ type: 'error', text: '' });
 
     try {
       const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -98,6 +167,9 @@ export default function Onboarding() {
       
       // Explicitly insert into profiles table to ensure name sync and admin visibility
       if (data?.user) {
+        const phoneValue = isPhone ? formData.identifier.replace(/[\s-]/g, '') : null;
+        const emailValue = isPhone ? null : formData.identifier.toLowerCase();
+        
         const { error: profileError } = await supabase.from('profiles').insert([{
           id: data.user.id,
           full_name: formData.fullName,
@@ -105,7 +177,9 @@ export default function Onboarding() {
           university: finalUniversity,
           department: formData.department,
           role: 'student',
-          c_coins: 0
+          c_coins: 0,
+          phone: phoneValue,
+          email: emailValue
         }]);
 
         if (profileError) {
@@ -118,7 +192,9 @@ export default function Onboarding() {
             university: formData.university,
             department: formData.department,
             role: 'student',
-            c_coins: 0
+            c_coins: 0,
+            phone: phoneValue,
+            email: emailValue
           });
         }
       }
@@ -182,15 +258,42 @@ export default function Onboarding() {
 
           <div className="space-y-1 text-left">
             <label className="block text-sm font-medium text-gray-700">Username</label>
-            <input 
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="e.g., johndoe"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50 text-gray-900"
-              required
-            />
+            <div className="relative">
+              <input 
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="e.g., johndoe"
+                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 outline-none transition bg-gray-50 text-gray-900 pr-10
+                  ${usernameStatus === 'taken' ? 'border-red-300 focus:ring-red-200 focus:border-red-500' : 
+                    usernameStatus === 'available' ? 'border-green-300 focus:ring-green-200 focus:border-green-500' : 
+                    'border-gray-300 focus:ring-primary-navy focus:border-primary-navy'}`}
+                required
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {usernameStatus === 'checking' && <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />}
+                {usernameStatus === 'available' && <CheckCircle className="w-5 h-5 text-green-500" />}
+                {usernameStatus === 'taken' && <XCircle className="w-5 h-5 text-red-500" />}
+              </div>
+            </div>
+            {usernameStatus === 'taken' && (
+              <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <p className="text-xs text-red-600 mb-2 font-medium">This username is already taken. Try one of these:</p>
+                <div className="flex flex-wrap gap-2">
+                  {usernameSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, username: suggestion })}
+                      className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-medium transition-colors border border-gray-200"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1 text-left">
@@ -266,18 +369,31 @@ export default function Onboarding() {
 
           <div className="space-y-1 text-left">
             <label className="block text-sm font-medium text-gray-700">Email or Phone Number</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
-              <input 
-                type="text"
-                name="identifier"
-                value={formData.identifier}
-                onChange={handleChange}
-                placeholder="e.g., student@university.edu or +2348012345678"
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50"
-                required
-              />
-            </div>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
+                <input 
+                  type="text"
+                  name="identifier"
+                  value={formData.identifier}
+                  onChange={handleChange}
+                  placeholder="e.g., student@university.edu or +2348012345678"
+                  className={`w-full pl-10 pr-10 py-3 rounded-lg border focus:ring-2 outline-none transition bg-gray-50 
+                    ${identifierStatus === 'taken' ? 'border-red-300 focus:ring-red-200 focus:border-red-500' : 
+                      identifierStatus === 'available' ? 'border-green-300 focus:ring-green-200 focus:border-green-500' : 
+                      'border-gray-300 focus:ring-primary-navy focus:border-primary-navy'}`}
+                  required
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {identifierStatus === 'checking' && <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />}
+                  {identifierStatus === 'available' && <CheckCircle className="w-5 h-5 text-green-500" />}
+                  {identifierStatus === 'taken' && <XCircle className="w-5 h-5 text-red-500" />}
+                </div>
+              </div>
+              {identifierStatus === 'taken' && (
+                <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <p className="text-xs text-red-600 font-medium">This email or phone number is already registered. Please sign in instead.</p>
+                </div>
+              )}
           </div>
 
           <div className="space-y-1 text-left">
