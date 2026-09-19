@@ -17,6 +17,7 @@ export default function Library() {
   const [activeDocument, setActiveDocument] = useState(null);
   const [unlockModalOpen, setUnlockModalOpen] = useState(false);
   const [selectedMaterialForUnlock, setSelectedMaterialForUnlock] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
   // Check if admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
@@ -100,8 +101,11 @@ export default function Library() {
       const { error } = await supabase.from('study_materials').delete().eq('id', materialId);
       if (error) throw error;
       setResources(prev => prev.filter(r => r.id !== materialId));
+      setToastMessage({ type: 'success', text: 'Material deleted successfully!' });
+      setTimeout(() => setToastMessage(null), 3000);
     } catch (err) {
-      alert("Failed to delete material: " + err.message);
+      setToastMessage({ type: 'error', text: `Failed to delete material: ${err.message}` });
+      setTimeout(() => setToastMessage(null), 5000);
     }
   };
 
@@ -333,6 +337,17 @@ export default function Library() {
         onSuccess={handleUnlockSuccess}
         navigateTo={navigate}
       />
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-5">
+          <div className={`px-4 py-3 rounded-xl shadow-lg border ${
+            toastMessage.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <span className="font-semibold text-sm">{toastMessage.text}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
