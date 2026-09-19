@@ -105,30 +105,30 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
 
   const handleVote = async (optionIndex) => {
     if (!currentUser) return alert('You must be logged in to vote.');
-    if (userVote !== null) return; // Cannot vote more than once
+    if (userVote === optionIndex) return; // Cannot vote for the exact same option again
     
     setIsVoting(true);
     
     try {
       const { error } = await supabase
         .from('poll_votes')
-        .insert({
+        .upsert({
           post_id: postId,
           user_id: currentUser.id,
           voted_option: optionIndex
+        }, {
+          onConflict: 'post_id, user_id'
         });
         
-      if (error) {
-        if (error.code === '23505') {
-          alert('You have already voted on this poll.');
-          return;
-        }
-        throw error;
-      }
+      if (error) throw error;
       
       // Update local UI state
       setPollVotes(prev => {
         const newVotes = { ...prev };
+        if (userVote !== null) {
+          // Decrement old vote
+          newVotes[userVote] = Math.max(0, (newVotes[userVote] || 1) - 1);
+        }
         // Increment new vote
         newVotes[optionIndex] = (newVotes[optionIndex] || 0) + 1;
         return newVotes;
@@ -344,9 +344,9 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                  return (
                     <button
                       key={idx}
-                      onClick={() => !hasVoted && handleVote(idx)}
-                      disabled={isVoting || hasVoted}
-                      className={`relative w-full overflow-hidden rounded-2xl border ${isSelected ? 'border-primary ring-1 ring-primary' : 'border-outline-variant/50'} text-left transition-all ${!hasVoted ? 'hover:bg-surface-container-low active:scale-[0.98]' : ''} p-3.5 min-h-[56px] flex items-center justify-between z-10 bg-surface`}
+                      onClick={() => handleVote(idx)}
+                      disabled={isVoting}
+                      className={`relative w-full overflow-hidden rounded-2xl border ${isSelected ? 'border-primary ring-1 ring-primary' : 'border-outline-variant/50'} text-left transition-all hover:bg-surface-container-low active:scale-[0.98] p-3.5 min-h-[56px] flex items-center justify-between z-10 bg-surface`}
                     >
                      {/* Progress bar background */}
                      {hasVoted && (
@@ -369,9 +369,11 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                  );
               })}
             </div>
-            <p className="text-xs text-outline text-center mt-2 font-medium">
-              {Object.values(pollVotes).reduce((a, b) => a + b, 0)} votes
-            </p>
+            {userVote !== null && (
+              <p className="text-xs text-outline text-center mt-2 font-medium">
+                {Object.values(pollVotes).reduce((a, b) => a + b, 0)} votes
+              </p>
+            )}
           </div>
         </div>
       ) : (
