@@ -1,26 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useOutletContext, useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import { Settings, Bookmark, Clock, LogOut, ChevronRight, FileText, Brain, GraduationCap, Loader2, X, Download } from 'lucide-react';
-import { PostCard } from '../components/PostCard';
-import ChatModal from '../components/ChatModal';
+import React, { useState, useEffect, useRef } from "react";
+import { useOutletContext, useNavigate, useParams } from "react-router-dom";
+import { supabase } from "../supabaseClient";
+import {
+  Settings,
+  Bookmark,
+  Clock,
+  LogOut,
+  ChevronRight,
+  FileText,
+  Brain,
+  GraduationCap,
+  Loader2,
+  X,
+  Download,
+} from "lucide-react";
+import { PostCard } from "../components/PostCard";
+import ChatModal from "../components/ChatModal";
 
 export default function ProfileView() {
   const { currentUser } = useOutletContext();
   const navigate = useNavigate();
   const { id: profileId } = useParams();
-  
+
   const [isOwnProfile, setIsOwnProfile] = useState(true);
-  
-  const [email, setEmail] = useState('');
-  const [department, setDepartment] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [targetAvatarUrl, setTargetAvatarUrl] = useState('');
+
+  const [email, setEmail] = useState("");
+  const [department, setDepartment] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [targetAvatarUrl, setTargetAvatarUrl] = useState("");
   const [stats, setStats] = useState({
     posts: 0,
     quizzes: 0,
-    studyHours: 0
+    studyHours: 0,
   });
   const [transactions, setTransactions] = useState([]);
   const [myPosts, setMyPosts] = useState([]);
@@ -31,7 +43,11 @@ export default function ProfileView() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ username: '', department: '', university: '' });
+  const [editForm, setEditForm] = useState({
+    username: "",
+    department: "",
+    university: "",
+  });
   const [savedMaterials, setSavedMaterials] = useState([]);
   const fileInputRef = useRef(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -42,32 +58,34 @@ export default function ProfileView() {
 
     setIsUploadingAvatar(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
+        .from("avatars")
         .upload(fileName, file);
-      
+
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
       const publicUrl = data.publicUrl;
 
       const { error: updateError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({ avatar_url: publicUrl })
-        .eq('id', user.id);
+        .eq("id", user.id);
 
       if (updateError) throw updateError;
-      
-      alert('Avatar updated successfully!');
+
+      alert("Avatar updated successfully!");
       window.location.reload();
     } catch (err) {
       console.error(err);
-      alert('Failed to update avatar: ' + (err.message || 'Unknown error'));
+      alert("Failed to update avatar: " + (err.message || "Unknown error"));
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -79,8 +97,10 @@ export default function ProfileView() {
     const fetchProfileData = async () => {
       setIsLoading(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
         const targetId = profileId || user?.id;
         const isCurrent = !profileId || profileId === user?.id;
         setIsOwnProfile(isCurrent);
@@ -89,69 +109,73 @@ export default function ProfileView() {
           if (isCurrent && user) {
             setEmail(user.email);
           }
-          
+
           // Fetch additional profile data
           const { data: profile } = await supabase
-            .from('profiles')
-            .select('department, username, university, full_name, avatar_url')
-            .eq('id', targetId)
+            .from("profiles")
+            .select("department, username, university, full_name, avatar_url")
+            .eq("id", targetId)
             .single();
-            
+
           if (profile && isMounted) {
-            setDepartment(profile.department || 'Computer Science');
-            setFullName(profile.full_name || '');
-            setUsername(profile.username || '');
-            setTargetAvatarUrl(profile.avatar_url || '');
+            setDepartment(profile.department || "Computer Science");
+            setFullName(profile.full_name || "");
+            setUsername(profile.username || "");
+            setTargetAvatarUrl(profile.avatar_url || "");
             setEditForm({
-              username: profile.username || '',
-              department: profile.department || '',
-              university: profile.university || ''
+              username: profile.username || "",
+              department: profile.department || "",
+              university: profile.university || "",
             });
           }
 
           // Fetch Posts Count
           const { count: postsCount } = await supabase
-            .from('posts')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', targetId);
-            
+            .from("posts")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", targetId);
+
           // Fetch live transactions only if own profile
           let transactionData = [];
           if (isCurrent) {
             const { data } = await supabase
-              .from('c_coin_transactions')
-              .select('*')
-              .eq('user_id', targetId)
-              .order('created_at', { ascending: false });
+              .from("c_coin_transactions")
+              .select("*")
+              .eq("user_id", targetId)
+              .order("created_at", { ascending: false });
             transactionData = data || [];
           }
 
           // Fetch My Posts
           setIsMyPostsLoading(true);
           const { data: postsData } = await supabase
-            .from('posts')
-            .select('*, profiles!user_id(username, full_name, avatar_url), post_likes(count), post_comments(count)')
-            .eq('user_id', targetId)
-            .order('created_at', { ascending: false });
+            .from("posts")
+            .select(
+              "*, profiles!user_id(username, full_name, avatar_url), post_likes(count), post_comments(count)",
+            )
+            .eq("user_id", targetId)
+            .order("created_at", { ascending: false });
 
           if (isMounted) {
             setStats({
               posts: postsCount || 0,
               quizzes: 0, // Default to 0
-              studyHours: 0 // Default to 0
+              studyHours: 0, // Default to 0
             });
-            
+
             setMyPosts(postsData || []);
             setIsMyPostsLoading(false);
-            
+
             // Map the DB format to the UI format
             if (transactionData) {
-              setTransactions(transactionData.map(tx => ({
-                id: tx.id,
-                type: tx.description,
-                amount: tx.amount,
-                date: new Date(tx.created_at).toLocaleDateString()
-              })));
+              setTransactions(
+                transactionData.map((tx) => ({
+                  id: tx.id,
+                  type: tx.description,
+                  amount: tx.amount,
+                  date: new Date(tx.created_at).toLocaleDateString(),
+                })),
+              );
             } else {
               setTransactions([]);
             }
@@ -166,16 +190,18 @@ export default function ProfileView() {
 
     fetchProfileData();
 
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/login', { replace: true });
+      navigate("/login", { replace: true });
     } catch (error) {
-      console.error('Error logging out:', error);
-      alert('Failed to log out.');
+      console.error("Error logging out:", error);
+      alert("Failed to log out.");
     }
   };
 
@@ -193,24 +219,29 @@ export default function ProfileView() {
       <div className="bg-surface-container-low rounded-3xl p-6 border border-outline-variant/30 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
         {/* Decorative background glow */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
-        
-        <div className={`relative mb-3 ${isOwnProfile ? 'group cursor-pointer' : ''}`} onClick={() => isOwnProfile && fileInputRef.current?.click()}>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleAvatarChange} 
-            accept="image/*" 
-            className="hidden" 
+
+        <div
+          className={`relative mb-3 ${isOwnProfile ? "group cursor-pointer" : ""}`}
+          onClick={() => isOwnProfile && fileInputRef.current?.click()}
+        >
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleAvatarChange}
+            accept="image/*"
+            className="hidden"
           />
           {currentUser?.avatar ? (
-            <img 
-              src={currentUser.avatar} 
-              alt="Profile" 
-              className={`w-20 h-20 rounded-full object-cover border-4 border-surface shadow-sm transition-opacity ${isUploadingAvatar ? 'opacity-50' : 'group-hover:opacity-80'}`}
+            <img
+              src={currentUser.avatar}
+              alt="Profile"
+              className={`w-20 h-20 rounded-full object-cover border-4 border-surface shadow-sm transition-opacity ${isUploadingAvatar ? "opacity-50" : "group-hover:opacity-80"}`}
             />
           ) : (
-            <div className={`w-20 h-20 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border-4 border-surface shadow-sm text-2xl transition-opacity ${isUploadingAvatar ? 'opacity-50' : 'group-hover:opacity-80'}`}>
-              {(fullName || currentUser?.name || 'S').charAt(0).toUpperCase()}
+            <div
+              className={`w-20 h-20 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border-4 border-surface shadow-sm text-2xl transition-opacity ${isUploadingAvatar ? "opacity-50" : "group-hover:opacity-80"}`}
+            >
+              {(fullName || currentUser?.name || "S").charAt(0).toUpperCase()}
             </div>
           )}
           {isUploadingAvatar && (
@@ -225,14 +256,22 @@ export default function ProfileView() {
           )}
         </div>
 
-        <h2 className="text-xl font-bold text-on-surface mb-1">{fullName || currentUser?.name || 'Student'}</h2>
-        <p className="text-[13px] text-outline mb-1">{username ? `@${username}` : (email || 'Loading...')}</p>
-        <p className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded mb-4">{department || 'University Student'}</p>
+        <h2 className="text-xl font-bold text-on-surface mb-1">
+          {fullName || currentUser?.name || "Student"}
+        </h2>
+        <p className="text-[13px] text-outline mb-1">
+          {username ? `@${username}` : email || "Loading..."}
+        </p>
+        <p className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded mb-4">
+          {department || "University Student"}
+        </p>
 
         {isOwnProfile && (
           <div className="flex items-center gap-2 bg-warning/10 border border-warning/20 px-4 py-1.5 rounded-full shadow-sm z-10">
             <span className="text-warning text-sm drop-shadow-sm">🪙</span>
-            <span className="text-[14px] font-bold text-on-surface">{currentUser?.c_coins?.toLocaleString() || 0} C-Coins</span>
+            <span className="text-[14px] font-bold text-on-surface">
+              {currentUser?.c_coins?.toLocaleString() || 0} C-Coins
+            </span>
           </div>
         )}
       </div>
@@ -244,18 +283,26 @@ export default function ProfileView() {
             <FileText className="w-4 h-4 text-primary" />
           </div>
           <div className="text-center">
-            <h4 className="text-lg font-bold text-on-surface leading-none mb-1">{stats.posts}</h4>
-            <span className="text-[10px] font-semibold text-outline uppercase tracking-wider">Posts</span>
+            <h4 className="text-lg font-bold text-on-surface leading-none mb-1">
+              {stats.posts}
+            </h4>
+            <span className="text-[10px] font-semibold text-outline uppercase tracking-wider">
+              Posts
+            </span>
           </div>
         </div>
-        
+
         <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-sm">
           <div className="w-8 h-8 rounded-full bg-secondary-green/10 flex items-center justify-center">
             <Brain className="w-4 h-4 text-secondary-green" />
           </div>
           <div className="text-center">
-            <h4 className="text-lg font-bold text-on-surface leading-none mb-1">{stats.quizzes}</h4>
-            <span className="text-[10px] font-semibold text-outline uppercase tracking-wider">Quizzes</span>
+            <h4 className="text-lg font-bold text-on-surface leading-none mb-1">
+              {stats.quizzes}
+            </h4>
+            <span className="text-[10px] font-semibold text-outline uppercase tracking-wider">
+              Quizzes
+            </span>
           </div>
         </div>
 
@@ -264,8 +311,12 @@ export default function ProfileView() {
             <GraduationCap className="w-4 h-4 text-tertiary-orange" />
           </div>
           <div className="text-center">
-            <h4 className="text-lg font-bold text-on-surface leading-none mb-1">{stats.studyHours}h</h4>
-            <span className="text-[10px] font-semibold text-outline uppercase tracking-wider">Studied</span>
+            <h4 className="text-lg font-bold text-on-surface leading-none mb-1">
+              {stats.studyHours}h
+            </h4>
+            <span className="text-[10px] font-semibold text-outline uppercase tracking-wider">
+              Studied
+            </span>
           </div>
         </div>
       </div>
@@ -273,29 +324,37 @@ export default function ProfileView() {
       {/* Transaction Ledger */}
       {isOwnProfile && (
         <div>
-        <h3 className="font-bold text-on-surface mb-3 flex items-center gap-2">
-          <Clock className="w-4 h-4 text-warning" />
-          Recent Transactions
-        </h3>
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
-          {transactions.length === 0 ? (
-            <div className="p-6 text-center text-outline text-sm">
-              No transactions yet. Complete quizzes or post answers to earn C-Coins!
-            </div>
-          ) : (
-            transactions.map((tx, idx) => (
-              <div key={tx.id} className={`flex items-center justify-between p-4 ${idx !== transactions.length - 1 ? 'border-b border-outline-variant/20' : ''}`}>
-                <div>
-                  <p className="font-semibold text-sm text-on-surface">{tx.type}</p>
-                  <p className="text-xs text-outline">{tx.date}</p>
-                </div>
-                <span className={`font-bold text-sm ${tx.amount.startsWith('+') ? 'text-secondary-green' : 'text-error'}`}>
-                  {tx.amount}
-                </span>
+          <h3 className="font-bold text-on-surface mb-3 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-warning" />
+            Recent Transactions
+          </h3>
+          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
+            {transactions.length === 0 ? (
+              <div className="p-6 text-center text-outline text-sm">
+                No transactions yet. Complete quizzes or post answers to earn
+                C-Coins!
               </div>
-            ))
-          )}
-        </div>
+            ) : (
+              transactions.map((tx, idx) => (
+                <div
+                  key={tx.id}
+                  className={`flex items-center justify-between p-4 ${idx !== transactions.length - 1 ? "border-b border-outline-variant/20" : ""}`}
+                >
+                  <div>
+                    <p className="font-semibold text-sm text-on-surface">
+                      {tx.type}
+                    </p>
+                    <p className="text-xs text-outline">{tx.date}</p>
+                  </div>
+                  <span
+                    className={`font-bold text-sm ${tx.amount.startsWith("+") ? "text-secondary-green" : "text-error"}`}
+                  >
+                    {tx.amount}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 
@@ -306,36 +365,51 @@ export default function ProfileView() {
           {isOwnProfile ? "My Posts" : "Posts"}
         </h3>
         {isMyPostsLoading ? (
-          <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          <div className="flex justify-center p-8">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
         ) : myPosts.length === 0 ? (
           <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 text-center text-outline text-sm shadow-sm">
-            {isOwnProfile ? "You haven't made any posts yet." : "No posts found."}
+            {isOwnProfile
+              ? "You haven't made any posts yet."
+              : "No posts found."}
           </div>
         ) : (
           <div className="flex flex-col gap-6">
-            {myPosts.map(post => (
-              <div key={post.id} className="rounded-[2.5rem] overflow-hidden shadow-lg border border-outline-variant/30 relative" style={{ height: '70vh' }}>
+            {myPosts.map((post) => (
+              <div
+                key={post.id}
+                className="rounded-[2.5rem] overflow-hidden shadow-lg border border-outline-variant/30 relative"
+                style={{ height: "70vh" }}
+              >
                 {/* Override the h-[85vh] in PostCard with a wrapper */}
                 <div className="absolute inset-0 [&>div]:h-full">
-                  <PostCard 
+                  <PostCard
                     postId={post.id}
                     type={post.type}
                     options={post.options}
                     author={{
-                      name: post.is_anonymous ? 'Anonymous Student' : (post.profiles?.full_name || post.profiles?.username),
-                      avatar: post.is_anonymous ? 'https://api.dicebear.com/9.x/glass/svg?seed=Anonymous' : post.profiles?.avatar_url
+                      name: post.is_anonymous
+                        ? "Anonymous Student"
+                        : post.profiles?.full_name || post.profiles?.username,
+                      avatar: post.is_anonymous
+                        ? "https://api.dicebear.com/9.x/glass/svg?seed=Anonymous"
+                        : post.profiles?.avatar_url,
                     }}
                     authorId={post.user_id}
-                    course={post.course_code || 'General'}
+                    course={post.course_code || "General"}
                     timeAgo={new Date(post.created_at).toLocaleDateString()}
                     content={post.content}
                     attachmentImage={post.media_url}
-                    stats={{ 
-                      upvotes: post?.post_likes?.[0]?.count || post?.likes || 0, 
-                      answers: post?.post_comments?.[0]?.count || post?.comments || 0 
+                    stats={{
+                      upvotes: post?.post_likes?.[0]?.count || post?.likes || 0,
+                      answers:
+                        post?.post_comments?.[0]?.count || post?.comments || 0,
                     }}
                     currentUser={currentUser}
-                    onDelete={(id) => setMyPosts(prev => prev.filter(p => p.id !== id))}
+                    onDelete={(id) =>
+                      setMyPosts((prev) => prev.filter((p) => p.id !== id))
+                    }
                   />
                 </div>
               </div>
@@ -347,7 +421,7 @@ export default function ProfileView() {
       {/* Action Links or Message Button */}
       {isOwnProfile ? (
         <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm flex flex-col">
-          <button 
+          <button
             onClick={() => setIsEditModalOpen(true)}
             className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full"
           >
@@ -355,47 +429,57 @@ export default function ProfileView() {
               <div className="bg-primary/10 p-2 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                 <Settings className="w-5 h-5" />
               </div>
-              <span className="text-[15px] font-semibold text-on-surface">Edit Profile Info</span>
+              <span className="text-[15px] font-semibold text-on-surface">
+                Edit Profile Info
+              </span>
             </div>
             <ChevronRight className="w-5 h-5 text-outline group-hover:text-primary transition-colors" />
           </button>
 
-          <button              onClick={async () => {
-                setIsSavedModalOpen(true);
-                if (currentUser?.id) {
-                  try {
-                    const { data, error } = await supabase
-                      .from('saved_materials')
-                      .select(`id, study_materials (*)`)
-                      .eq('user_id', currentUser.id)
-                      .order('created_at', { ascending: false });
-                      
-                    if (error) {
-                      console.error("Error fetching saved materials:", error);
-                      return;
-                    }
-                    if (data) {
-                      const materials = data.map(item => item.study_materials).filter(Boolean);
-                      setSavedMaterials(materials);
-                    }
-                  } catch (err) {
-                    console.error("Unexpected error fetching saved materials:", err);
+          <button
+            onClick={async () => {
+              setIsSavedModalOpen(true);
+              if (currentUser?.id) {
+                try {
+                  const { data, error } = await supabase
+                    .from("saved_materials")
+                    .select(`id, study_materials (*)`)
+                    .eq("user_id", currentUser.id)
+                    .order("created_at", { ascending: false });
+
+                  if (error) {
+                    console.error("Error fetching saved materials:", error);
+                    return;
                   }
+                  if (data) {
+                    const materials = data
+                      .map((item) => item.study_materials)
+                      .filter(Boolean);
+                    setSavedMaterials(materials);
+                  }
+                } catch (err) {
+                  console.error(
+                    "Unexpected error fetching saved materials:",
+                    err,
+                  );
                 }
-              }}
+              }
+            }}
             className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors group w-full"
           >
             <div className="flex items-center gap-3">
               <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-600 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
                 <Bookmark className="w-5 h-5" />
               </div>
-              <span className="text-[15px] font-semibold text-on-surface">Saved Study Materials</span>
+              <span className="text-[15px] font-semibold text-on-surface">
+                Saved Study Materials
+              </span>
             </div>
             <ChevronRight className="w-5 h-5 text-outline group-hover:text-indigo-500 transition-colors" />
           </button>
         </div>
       ) : (
-        <button 
+        <button
           onClick={() => setIsChatModalOpen(true)}
           className="w-full bg-primary text-white font-bold py-3.5 rounded-full hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 flex justify-center items-center gap-2"
         >
@@ -405,7 +489,7 @@ export default function ProfileView() {
 
       {/* Logout Button */}
       {isOwnProfile && (
-        <button 
+        <button
           onClick={handleLogout}
           className="mt-2 flex items-center justify-center gap-2 w-full p-4 bg-error/10 hover:bg-error/20 text-error rounded-2xl font-bold transition-colors active:scale-[0.98]"
         >
@@ -418,32 +502,75 @@ export default function ProfileView() {
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
-            <button onClick={() => setIsEditModalOpen(false)} className="absolute top-4 right-4 text-outline hover:text-on-surface bg-surface-container p-1 rounded-full">
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute top-4 right-4 text-outline hover:text-on-surface bg-surface-container p-1 rounded-full"
+            >
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-xl font-bold text-on-surface mb-4">Edit Profile</h2>
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              const { data: { user } } = await supabase.auth.getUser();
-              if (user) {
-                await supabase.from('profiles').update(editForm).eq('id', user.id);
-                setDepartment(editForm.department);
-                setIsEditModalOpen(false);
-              }
-            }} className="space-y-4">
+            <h2 className="text-xl font-bold text-on-surface mb-4">
+              Edit Profile
+            </h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const {
+                  data: { user },
+                } = await supabase.auth.getUser();
+                if (user) {
+                  await supabase
+                    .from("profiles")
+                    .update(editForm)
+                    .eq("id", user.id);
+                  setDepartment(editForm.department);
+                  setIsEditModalOpen(false);
+                }
+              }}
+              className="space-y-4"
+            >
               <div>
-                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">Username</label>
-                <input type="text" value={editForm.username} onChange={e => setEditForm({...editForm, username: e.target.value})} className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium" />
+                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={editForm.username}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, username: e.target.value })
+                  }
+                  className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium"
+                />
               </div>
               <div>
-                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">Department</label>
-                <input type="text" value={editForm.department} onChange={e => setEditForm({...editForm, department: e.target.value})} className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium" />
+                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">
+                  Department
+                </label>
+                <input
+                  type="text"
+                  value={editForm.department}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, department: e.target.value })
+                  }
+                  className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium"
+                />
               </div>
               <div>
-                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">University</label>
-                <input type="text" value={editForm.university} onChange={e => setEditForm({...editForm, university: e.target.value})} className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium" />
+                <label className="block text-xs font-bold text-outline mb-1 uppercase tracking-wider">
+                  University
+                </label>
+                <input
+                  type="text"
+                  value={editForm.university}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, university: e.target.value })
+                  }
+                  className="w-full bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-on-surface font-medium"
+                />
               </div>
-              <button type="submit" className="w-full bg-primary hover:bg-primary-container hover:text-white text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 mt-2">
+              <button
+                type="submit"
+                className="w-full bg-primary hover:bg-primary-container hover:text-white text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 mt-2"
+              >
                 Save Changes
               </button>
             </form>
@@ -455,7 +582,10 @@ export default function ProfileView() {
       {isSavedModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative flex flex-col max-h-[80vh]">
-            <button onClick={() => setIsSavedModalOpen(false)} className="absolute top-4 right-4 text-outline hover:text-on-surface bg-surface-container p-1 rounded-full z-10">
+            <button
+              onClick={() => setIsSavedModalOpen(false)}
+              className="absolute top-4 right-4 text-outline hover:text-on-surface bg-surface-container p-1 rounded-full z-10"
+            >
               <X className="w-5 h-5" />
             </button>
             <h2 className="text-xl font-bold text-on-surface mb-4 flex items-center gap-2">
@@ -467,18 +597,28 @@ export default function ProfileView() {
                   No materials saved yet. Browse the Library to save some!
                 </div>
               ) : (
-                savedMaterials.map(resource => (
-                  <div key={resource.id} className="bg-surface-container-lowest rounded-2xl p-3 border border-outline-variant/30 flex items-start gap-3 relative">
+                savedMaterials.map((resource) => (
+                  <div
+                    key={resource.id}
+                    className="bg-surface-container-lowest rounded-2xl p-3 border border-outline-variant/30 flex items-start gap-3 relative"
+                  >
                     <div className="w-10 h-10 rounded-lg bg-error/10 border border-error/20 flex items-center justify-center flex-shrink-0">
                       <FileText className="w-5 h-5 text-error" />
                     </div>
                     <div className="flex-grow min-w-0 pr-8">
-                      <h4 className="font-bold text-on-surface text-[14px] leading-tight mb-1 truncate">{resource.title}</h4>
+                      <h4 className="font-bold text-on-surface text-[14px] leading-tight mb-1 truncate">
+                        {resource.title}
+                      </h4>
                       <span className="bg-primary-container/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
                         {resource.course_code}
                       </span>
                     </div>
-                    <a href={resource.file_url} target="_blank" rel="noopener noreferrer" className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-surface-container flex items-center justify-center rounded-full text-primary hover:bg-primary-container hover:text-white transition-colors">
+                    <a
+                      href={resource.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-surface-container flex items-center justify-center rounded-full text-primary hover:bg-primary-container hover:text-white transition-colors"
+                    >
                       <Download className="w-4 h-4" />
                     </a>
                   </div>
@@ -490,10 +630,15 @@ export default function ProfileView() {
       )}
       {/* Chat Modal */}
       {isChatModalOpen && !isOwnProfile && (
-        <ChatModal 
-          currentUser={currentUser} 
-          targetUser={{ id: profileId, username, full_name: fullName, avatar_url: targetAvatarUrl }}
-          onClose={() => setIsChatModalOpen(false)} 
+        <ChatModal
+          currentUser={currentUser}
+          targetUser={{
+            id: profileId,
+            username,
+            full_name: fullName,
+            avatar_url: targetAvatarUrl,
+          }}
+          onClose={() => setIsChatModalOpen(false)}
         />
       )}
     </div>
