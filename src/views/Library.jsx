@@ -79,20 +79,25 @@ export default function Library() {
     if (!currentUser) return;
     const isSaved = savedMaterials.has(materialId);
     
-    // Optimistic UI
-    const newSaved = new Set(savedMaterials);
-    if (isSaved) newSaved.delete(materialId);
-    else newSaved.add(materialId);
-    setSavedMaterials(newSaved);
-
     try {
       if (isSaved) {
-        await supabase.from('saved_materials').delete().eq('user_id', currentUser.id).eq('material_id', materialId);
+        const { error } = await supabase.from('saved_materials').delete().eq('user_id', currentUser.id).eq('material_id', materialId);
+        if (error) throw error;
+        
+        const newSaved = new Set(savedMaterials);
+        newSaved.delete(materialId);
+        setSavedMaterials(newSaved);
       } else {
-        await supabase.from('saved_materials').insert({ user_id: currentUser.id, material_id: materialId });
+        const { error } = await supabase.from('saved_materials').insert({ user_id: currentUser.id, material_id: materialId });
+        if (error) throw error;
+        
+        const newSaved = new Set(savedMaterials);
+        newSaved.add(materialId);
+        setSavedMaterials(newSaved);
       }
     } catch (err) {
       console.error("Error toggling save", err);
+      // Optional: Add a toast notification here to let user know it failed
     }
   };
 

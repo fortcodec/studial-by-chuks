@@ -360,18 +360,29 @@ export default function ProfileView() {
             <ChevronRight className="w-5 h-5 text-outline group-hover:text-primary transition-colors" />
           </button>
 
-          <button 
-            onClick={async () => {
-              setIsSavedModalOpen(true);
-              if (currentUser?.id) {
-                const { data } = await supabase
-                  .from('saved_materials')
-                  .select(`id, study_materials (*)`)
-                  .eq('user_id', currentUser.id)
-                  .order('created_at', { ascending: false });
-                if (data) setSavedMaterials(data.map(item => item.study_materials));
-              }
-            }}
+          <button              onClick={async () => {
+                setIsSavedModalOpen(true);
+                if (currentUser?.id) {
+                  try {
+                    const { data, error } = await supabase
+                      .from('saved_materials')
+                      .select(`id, study_materials (*)`)
+                      .eq('user_id', currentUser.id)
+                      .order('created_at', { ascending: false });
+                      
+                    if (error) {
+                      console.error("Error fetching saved materials:", error);
+                      return;
+                    }
+                    if (data) {
+                      const materials = data.map(item => item.study_materials).filter(Boolean);
+                      setSavedMaterials(materials);
+                    }
+                  } catch (err) {
+                    console.error("Unexpected error fetching saved materials:", err);
+                  }
+                }
+              }}
             className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors group w-full"
           >
             <div className="flex items-center gap-3">
