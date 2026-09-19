@@ -257,7 +257,7 @@ export default function AdminGateway() {
   };
 
   const handleDistributeCoins = async () => {
-    if (!window.confirm(`Are you sure you want to distribute +${weeklyCoinAmount} C-Coins to all students?`)) return;
+    if (!window.confirm(`Are you sure you want to distribute ${weeklyCoinAmount} C-Coins to all active users? This cannot be undone.`)) return;
     setIsDistributingCoins(true);
     try {
       const response = await fetch('/api/distribute-coins', {
@@ -268,7 +268,8 @@ export default function AdminGateway() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to distribute coins');
       
-      setToastMessage({ type: 'success', text: `Successfully distributed ${weeklyCoinAmount} C-Coins to ${result.distributedTo || 'all'} students!` });
+      setToastMessage({ type: 'success', text: `Successfully distributed ${weeklyCoinAmount} C-Coins to all students!` });
+      setWeeklyCoinAmount(''); // Clear the input field after completion
       setTimeout(() => setToastMessage(null), 5000);
     } catch (err) {
       setToastMessage({ type: 'error', text: err.message });
