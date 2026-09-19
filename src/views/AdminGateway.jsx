@@ -46,6 +46,10 @@ export default function AdminGateway() {
   const [allMessages, setAllMessages] = useState([]);
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
 
+  // Economy State
+  const [weeklyCoinAmount, setWeeklyCoinAmount] = useState(500);
+  const [isDistributingCoins, setIsDistributingCoins] = useState(false);
+
   useEffect(() => {
     let isMounted = true;
     
@@ -248,6 +252,28 @@ export default function AdminGateway() {
     } catch (err) {
       setToastMessage({ type: 'error', text: `Failed to delete user: ${err.message}` });
       setTimeout(() => setToastMessage(null), 5000);
+    }
+  };
+
+  const handleDistributeCoins = async () => {
+    if (!window.confirm(`Are you sure you want to distribute +${weeklyCoinAmount} C-Coins to all students?`)) return;
+    setIsDistributingCoins(true);
+    try {
+      const response = await fetch('/api/distribute-coins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: weeklyCoinAmount })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to distribute coins');
+      
+      setToastMessage({ type: 'success', text: `Successfully distributed ${weeklyCoinAmount} C-Coins to ${result.distributedTo || 'all'} students!` });
+      setTimeout(() => setToastMessage(null), 5000);
+    } catch (err) {
+      setToastMessage({ type: 'error', text: err.message });
+      setTimeout(() => setToastMessage(null), 5000);
+    } finally {
+      setIsDistributingCoins(false);
     }
   };
 
@@ -701,12 +727,38 @@ export default function AdminGateway() {
           )}
 
           {activeTab === 'Economy' && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-              <Coins className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Economy Module</h3>
-              <p className="text-gray-500 max-w-sm mx-auto">
-                Detailed transaction logs and inflation metrics will be built out in the next phase.
-              </p>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-2xl mx-auto">
+              <div className="text-center mb-8">
+                <Coins className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Economy Management</h3>
+                <p className="text-gray-500">Trigger weekly distributions or manage the campus economy.</p>
+              </div>
+
+              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6">
+                <h4 className="font-bold text-indigo-900 mb-2">Weekly C-Coin Drop</h4>
+                <p className="text-sm text-indigo-700 mb-4">
+                  Send a batch distribution of C-Coins to all active student profiles. This will automatically notify them and update their balances.
+                </p>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-indigo-900 mb-1">Coin Amount</label>
+                    <input 
+                      type="number" 
+                      value={weeklyCoinAmount} 
+                      onChange={(e) => setWeeklyCoinAmount(Number(e.target.value))} 
+                      className="border border-indigo-200 rounded-lg p-2.5 outline-none focus:border-indigo-500 w-32"
+                    />
+                  </div>
+                  <button 
+                    onClick={handleDistributeCoins}
+                    disabled={isDistributingCoins || weeklyCoinAmount <= 0}
+                    className="mt-5 px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 transition-all"
+                  >
+                    {isDistributingCoins ? <Loader2 className="w-5 h-5 animate-spin" /> : <Coins className="w-5 h-5" />}
+                    {isDistributingCoins ? 'Distributing...' : 'Distribute Coins'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

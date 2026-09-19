@@ -6,6 +6,7 @@ import { supabase } from "../supabaseClient";
 import CreatePost from "./CreatePost";
 import { X } from "lucide-react";
 import { Avatar } from "./Avatar";
+import CoinRewardModal from "./CoinRewardModal";
 
 export default function Layout() {
   const [currentUser, setCurrentUser] = useState({
@@ -21,6 +22,9 @@ export default function Layout() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showCoinRewardModal, setShowCoinRewardModal] = useState(false);
+  const [weeklyBonusAmount, setWeeklyBonusAmount] = useState(0);
+
   const [transactions, setTransactions] = useState([]);
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
   const notificationRef = useRef(null);
@@ -78,16 +82,34 @@ export default function Layout() {
     if (!currentUser?.id) return;
     setIsTransactionsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('c_coin_transactions')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      const [{ data: txData }, { data: notifData }] = await Promise.all([
+        supabase
+          .from('c_coin_transactions')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false })
+          .limit(10)
+      ]);
       
-      if (!error && data) {
-        setTransactions(data);
-        setHasNotifications(false); // Clear red dot when viewed
+      const combined = [...(txData || []), ...(notifData || [])].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setTransactions(combined);
+      setHasNotifications(false);
+      
+      // Mark fetched notifications as read
+      if (notifData && notifData.length > 0) {
+        const unreadIds = notifData.filter(n => !n.read).map(n => n.id);
+        if (unreadIds.length > 0) {
+          await supabase.from('notifications').update({ read: true }).in('id', unreadIds);
+        }
       }
     } catch (err) {
       console.error("Error fetching transactions:", err);
@@ -165,6 +187,29 @@ export default function Layout() {
               c_coins: currentCoins,
               avatar: profile.avatar_url || ""
             });
+          }
+
+          // Check for Unread Weekly Drop Notifications
+          const { data: weeklyDrops } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('type', 'weekly_drop')
+            .eq('read', false);
+
+          if (weeklyDrops && weeklyDrops.length > 0) {
+            // Get the first unread weekly drop amount from message regex or fallback to 500
+            const amountMatch = weeklyDrops[0].message.match(/(\d+)/);
+            const amount = amountMatch ? parseInt(amountMatch[1]) : 500;
+            
+            if (isMounted) {
+              setWeeklyBonusAmount(amount);
+              setShowCoinRewardModal(true);
+            }
+
+            // Mark them as read
+            const dropIds = weeklyDrops.map(d => d.id);
+            await supabase.from('notifications').update({ read: true }).in('id', dropIds);
           }
         }
       }
@@ -275,29 +320,40 @@ export default function Layout() {
                 <div className="p-4 border-b border-outline-variant/30 bg-surface-container-low flex justify-between items-center">
                   <h3 className="font-bold text-on-surface">C-Coin History</h3>
                 </div>
-                <div className="max-h-[300px] overflow-y-auto">
+                <div className="max-h-[300px] overflow-y-auto overscroll-contain">
                   {isTransactionsLoading ? (
-                    <div className="p-6 text-center text-outline text-sm">Loading transactions...</div>
+                    <div className="p-4 text-center text-outline">Loading...</div>
                   ) : transactions.length === 0 ? (
-                    <div className="p-6 text-center text-outline text-sm font-medium">
-                      No recent transactions yet.<br/><span className="text-xs">Complete tasks to earn C-Coins!</span>
-                    </div>
+                    <div className="p-4 text-center text-outline">No recent activity</div>
                   ) : (
                     <div className="divide-y divide-outline-variant/30">
-                      {transactions.map(t => {
-                        const isPositive = t.amount?.startsWith('+');
-                        return (
-                          <div key={t.id || Math.random()} className="p-4 hover:bg-surface-container-lowest transition-colors flex justify-between items-center">
-                            <div>
-                              <p className="text-sm font-bold text-on-surface">{t.description || 'Transaction'}</p>
-                              <p className="text-xs text-outline font-medium">{new Date(t.created_at).toLocaleDateString()}</p>
-                            </div>
-                            <span className={`text-sm font-bold ${isPositive ? 'text-secondary-green' : 'text-error'}`}>
-                              {t.amount}
-                            </span>
+                      {transactions.map((tx) => (
+                        <div key={tx.id || Math.random()} className="p-4 border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors flex items-start gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${tx.amount ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'}`}>
+                            {tx.amount ? <Coins className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
                           </div>
-                        );
-                      })}
+                          <div className="flex-1 min-w-0">
+                            {tx.amount ? (
+                              <>
+                                <p className="text-[14px] text-on-surface font-medium leading-snug">
+                                  {tx.description}
+                                </p>
+                                <p className="text-[13px] font-bold text-primary mt-0.5">{tx.amount}</p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-[14px] text-on-surface font-medium leading-snug">
+                                  {tx.title}
+                                </p>
+                                <p className="text-[13px] text-outline mt-0.5">{tx.message}</p>
+                              </>
+                            )}
+                            <p className="text-[11px] text-outline-variant mt-1">
+                              {new Date(tx.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -360,6 +416,14 @@ export default function Layout() {
       <div className="shrink-0 bg-surface z-40 fixed bottom-0 w-full max-w-md md:max-w-3xl lg:max-w-4xl border-x border-outline-variant/30 pb-safe">
         <BottomNav onNewPost={() => setIsCreatePostOpen(true)} />
       </div>
+
+      {/* Coin Reward Modal */}
+      {showCoinRewardModal && (
+        <CoinRewardModal 
+          amount={weeklyBonusAmount} 
+          onClose={() => setShowCoinRewardModal(false)} 
+        />
+      )}
     </div>
   );
 }
