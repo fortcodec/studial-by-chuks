@@ -221,12 +221,31 @@ export default function AdminGateway() {
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Are you sure you want to delete this user? This will remove their profile data.")) return;
     try {
-      const { error } = await supabase.from('profiles').delete().eq('id', userId);
-      if (error) throw error;
-      alert("User deleted successfully.");
+      const { data, error } = await supabase.from('profiles').delete().eq('id', userId).select();
+      
+      if (error) {
+        setToastMessage({ type: 'error', text: `Failed to delete user: ${error.message}` });
+        setTimeout(() => setToastMessage(null), 5000);
+        return;
+      }
+      
+      if (!data || data.length === 0) {
+        setToastMessage({ type: 'error', text: 'Delete failed. Check Foreign Key Constraints (Cascade Deletion) or RLS policies.' });
+        setTimeout(() => setToastMessage(null), 5000);
+        return;
+      }
+
+      setToastMessage({ type: 'success', text: 'User deleted successfully.' });
+      setTimeout(() => setToastMessage(null), 3000);
+      
+      // Update local React state instantly
       setUsers(prev => prev.filter(u => u.id !== userId));
+      
+      // Trigger a re-fetch to ensure sync with the server
+      fetchUsers();
     } catch (err) {
-      alert("Failed to delete user: " + err.message);
+      setToastMessage({ type: 'error', text: `Failed to delete user: ${err.message}` });
+      setTimeout(() => setToastMessage(null), 5000);
     }
   };
 
