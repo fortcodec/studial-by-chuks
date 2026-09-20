@@ -23,6 +23,7 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [commentsError, setCommentsError] = useState(null);
   const [isAITyping, setIsAITyping] = useState(false);
 
   // Poll States
@@ -81,6 +82,7 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
     if (isCommentsOpen && postId) {
       const fetchComments = async () => {
         setIsLoadingComments(true);
+        setCommentsError(null);
         const { data, error } = await supabase
           .from('post_comments')
           .select('id, content, created_at, is_ai_response, profiles!author_id(id, username, full_name, avatar_url, department)')
@@ -89,7 +91,7 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
         
         if (error) {
           console.error("Error fetching comments:", error);
-          alert(`Failed to load comments: ${error.message}`);
+          setCommentsError(error.message);
         } else if (data) {
           // Shadow Ban Logic: Filter out shadow-banned users' comments, unless it belongs to the current user
           const filteredComments = data.filter(comment => 
@@ -493,7 +495,13 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-safe">
               {isLoadingComments ? (
-                <div className="text-center py-4 text-outline text-sm">Loading answers...</div>
+                <div className="text-center py-4 text-outline text-sm flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Loading answers...
+                </div>
+              ) : commentsError ? (
+                <div className="text-center py-4 text-red-500 text-sm bg-red-50 rounded-lg border border-red-100">
+                  <span className="font-semibold">Error:</span> {commentsError}
+                </div>
               ) : !comments || comments.length === 0 ? (
                 <div className="text-center py-4 text-outline text-sm font-medium">No answers yet. Be the first to help!</div>
               ) : (
