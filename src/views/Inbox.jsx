@@ -111,7 +111,7 @@ export default function Inbox() {
             {conversations.map((conv) => (
               <button
                 key={conv.id}
-                onClick={() => navigate(`/chat/${conv.id}`)}
+                onClick={() => navigate(`/chat/${conv.id}`, { state: { otherUser: conv.otherUser } })}
                 className="flex items-center gap-4 p-4 hover:bg-surface-container-low transition-colors border-b border-outline-variant/10 last:border-0 text-left w-full active:bg-surface-container-high"
               >
                 <div className="relative">

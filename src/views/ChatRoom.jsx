@@ -1,16 +1,34 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, useOutletContext } from "react-router-dom";
+import { useParams, useNavigate, useLocation, useOutletContext } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { Avatar } from "../components/Avatar";
+import { usePresence } from "../hooks/usePresence";
+
+const getTimeAgo = (dateStr) => {
+  if (!dateStr) return "Offline";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Active just now";
+  if (minutes < 60) return `Active ${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Active ${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Active yesterday";
+  return `Active ${days}d ago`;
+};
 
 export default function ChatRoom() {
   const { conversationId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useOutletContext();
   
+  // Track online users
+  const { onlineUsers } = usePresence(currentUser);
+  
   const [messages, setMessages] = useState([]);
-  const [otherUser, setOtherUser] = useState(null);
+  const [otherUser, setOtherUser] = useState(location.state?.otherUser || null);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -26,12 +44,12 @@ export default function ChatRoom() {
 
     const fetchChatData = async () => {
       try {
-        // Fetch conversation details to get the other user
+        // Fetch conversation details to get the other user and last_seen
         const { data: convData, error: convError } = await supabase
           .from("conversations")
           .select(`
-            user1:profiles!user1_id(id, username, full_name, avatar_url),
-            user2:profiles!user2_id(id, username, full_name, avatar_url)
+            user1:profiles!user1_id(id, username, full_name, avatar_url, last_seen),
+            user2:profiles!user2_id(id, username, full_name, avatar_url, last_seen)
           `)
           .eq("id", conversationId)
           .single();
@@ -114,7 +132,9 @@ export default function ChatRoom() {
     }
   };
 
-  if (isLoading) {
+  const isOnline = otherUser?.id && onlineUsers[otherUser.id];
+
+  if (isLoading && !otherUser) {
     return (
       <div className="flex h-[calc(100vh-64px)] md:h-screen w-full items-center justify-center bg-background md:border-x border-outline-variant/30">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -125,29 +145,36 @@ export default function ChatRoom() {
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] md:h-screen w-full max-w-2xl mx-auto bg-background md:border-x border-outline-variant/30">
       
-      {/* Chat Header */}
-      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 px-4 py-3 flex items-center gap-3">
+      {/* TikTok-Style Chat Header */}
+      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 px-4 py-2.5 flex items-center gap-3 shadow-sm">
         <button 
           onClick={() => navigate("/inbox")}
           className="p-1.5 -ml-1.5 rounded-full hover:bg-surface-container-low transition-colors text-on-surface"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-6 h-6" />
         </button>
         
-        <Avatar url={otherUser?.avatar_url} name={otherUser?.username || otherUser?.full_name} size="sm" />
-        
-        <div className="flex flex-col">
-          <span className="font-bold text-sm text-on-surface">
-            {otherUser?.full_name || otherUser?.username || "Unknown User"}
-          </span>
-          <span className="text-[10px] text-outline">
-            @{otherUser?.username || "student"}
-          </span>
+        <div className="flex flex-1 items-center gap-3 justify-center absolute inset-0 pointer-events-none pr-10">
+          <div className="relative pointer-events-auto">
+            <Avatar url={otherUser?.avatar_url} name={otherUser?.username || otherUser?.full_name} size="sm" />
+            {isOnline && (
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-surface rounded-full shadow-sm"></div>
+            )}
+          </div>
+          
+          <div className="flex flex-col pointer-events-auto items-center">
+            <span className="font-bold text-[15px] text-on-surface truncate leading-tight">
+              {otherUser?.full_name || otherUser?.username || "Unknown User"}
+            </span>
+            <span className={`text-[12px] truncate ${isOnline ? 'text-green-500 font-medium' : 'text-outline'}`}>
+              {isOnline ? "Active now" : getTimeAgo(otherUser?.last_seen)}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-6">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-outline space-y-3 opacity-60">
             <MessageSquare className="w-10 h-10" />
@@ -177,7 +204,7 @@ export default function ChatRoom() {
       </div>
 
       {/* Message Input Area */}
-      <div className="p-3 border-t border-outline-variant/30 bg-surface">
+      <div className="p-3 border-t border-outline-variant/30 bg-surface pb-safe">
         <form onSubmit={handleSendMessage} className="flex items-end gap-2 bg-surface-container-low rounded-3xl p-1.5 border border-outline-variant/30 focus-within:ring-2 focus-within:ring-primary/30 transition-all shadow-sm">
           <textarea
             value={newMessage}
