@@ -31,21 +31,47 @@ export default function Onboarding() {
   const [filteredDepartments, setFilteredDepartments] = useState(DEPARTMENTS);
 
   // Validation State
-  const [usernameStatus, setUsernameStatus] = useState('idle'); // idle, checking, available, taken
+  const [usernameStatus, setUsernameStatus] = useState('idle'); // idle, checking, available, taken, invalid
   const [identifierStatus, setIdentifierStatus] = useState('idle'); // idle, checking, available, taken
   const [usernameSuggestions, setUsernameSuggestions] = useState([]);
+  const [usernameError, setUsernameError] = useState('');
+  
+  // Verification State
+  const [isVerificationRequired, setIsVerificationRequired] = useState(false);
   
   // Debounce effects
   useEffect(() => {
     const checkUsername = async () => {
-      const cleanUsername = formData.username.replace(/\s+/g, '').toLowerCase();
-      if (!cleanUsername) {
+      const username = formData.username;
+      if (!username) {
         setUsernameStatus('idle');
         setUsernameSuggestions([]);
+        setUsernameError('');
         return;
       }
       
+      if (username.includes('@')) {
+        setUsernameStatus('invalid');
+        setUsernameError("Usernames cannot contain '@'. Use the Email field below.");
+        return;
+      }
+      
+      if (/\s/.test(username)) {
+        setUsernameStatus('invalid');
+        setUsernameError("Usernames cannot contain spaces.");
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+        setUsernameStatus('invalid');
+        setUsernameError("Username must be 3-20 characters long and contain only letters, numbers, and underscores.");
+        return;
+      }
+
+      setUsernameError('');
       setUsernameStatus('checking');
+      const cleanUsername = username.toLowerCase();
+      
       const { data, error } = await supabase.from('profiles').select('id').eq('username', cleanUsername);
       
       if (!error && data && data.length > 0) {
@@ -107,7 +133,7 @@ export default function Onboarding() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (usernameStatus === 'taken' || identifierStatus === 'taken' || usernameStatus === 'checking' || identifierStatus === 'checking') {
+    if (usernameStatus === 'taken' || identifierStatus === 'taken' || usernameStatus === 'checking' || identifierStatus === 'checking' || usernameStatus === 'invalid') {
       setMessage({ type: 'error', text: 'Please resolve validation errors before submitting.' });
       return;
     }
@@ -116,6 +142,15 @@ export default function Onboarding() {
     setMessage({ type: 'error', text: '' });
 
     try {
+      const isPhone = formData.identifier.startsWith('+') && /\d/.test(formData.identifier);
+      if (!isPhone) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.identifier)) {
+          setMessage({ type: 'error', text: 'Please enter a valid email address.' });
+          setLoading(false);
+          return;
+        }
+      }
       const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
       if (!passwordRegex.test(formData.password)) {
         setMessage({ type: 'error', text: 'Password must be at least 8 characters and include a letter, a number, and a special symbol.' });
@@ -123,7 +158,6 @@ export default function Onboarding() {
         return;
       }
 
-      const isPhone = formData.identifier.startsWith('+') && /\d/.test(formData.identifier);
       const cleanUsername = formData.username.replace(/\s+/g, '').toLowerCase();
       const finalUniversity = formData.university === 'Other' ? formData.otherUniversity : formData.university;
       
@@ -199,8 +233,15 @@ export default function Onboarding() {
         }
       }
       
-      // Kill auto-created session on signup
+      // Kill auto-created session on signup just in case
       await supabase.auth.signOut();
+
+      // Supabase returns a user but session is null if email confirmation is required
+      if (data?.user && !data?.session && !isPhone) {
+        setIsVerificationRequired(true);
+        setLoading(false);
+        return;
+      }
 
       setMessage({ type: 'success', text: 'Account created successfully! Please sign in.' });
       
@@ -218,15 +259,40 @@ export default function Onboarding() {
     <div className="min-h-screen bg-neutral-background flex flex-col items-center justify-center py-10 px-4 relative font-inter">
       
       {/* Back to Landing Page Button */}
-      <button 
-        onClick={() => navigate('/')}
-        className="absolute top-6 left-6 text-gray-500 hover:text-primary-navy flex items-center gap-2 transition font-medium"
-      >
-        <ArrowLeft size={20} /> Back
-      </button>
+      {!isVerificationRequired && (
+        <button 
+          onClick={() => navigate('/')}
+          className="absolute top-6 left-6 text-gray-500 hover:text-primary-navy flex items-center gap-2 transition font-medium"
+        >
+          <ArrowLeft size={20} /> Back
+        </button>
+      )}
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6">
-        <div className="text-center space-y-2">
+        {isVerificationRequired ? (
+          <div className="text-center space-y-6 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex justify-center">
+              <div className="bg-green-100 p-4 rounded-full text-green-600">
+                <Mail size={48} />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Verify Your Email</h1>
+              <p className="text-gray-600 text-sm leading-relaxed max-w-xs mx-auto">
+                We've sent a confirmation link to <span className="font-semibold text-gray-900">{formData.identifier}</span>. 
+                Please check your inbox to complete your registration.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/login')}
+              className="mt-6 bg-primary-navy hover:bg-[#112440] text-white font-semibold py-3 px-8 rounded-full transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 mx-auto"
+            >
+              Continue to Login <ArrowRight size={18} />
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="text-center space-y-2">
           <div className="flex justify-center mb-4">
             <div className="bg-primary-navy p-3 rounded-full text-white">
               <BookOpen size={32} />
@@ -266,7 +332,7 @@ export default function Onboarding() {
                 onChange={handleChange}
                 placeholder="e.g., johndoe"
                 className={`w-full px-4 py-3 rounded-lg border focus:ring-2 outline-none transition bg-gray-50 text-gray-900 pr-10
-                  ${usernameStatus === 'taken' ? 'border-red-300 focus:ring-red-200 focus:border-red-500' : 
+                  ${(usernameStatus === 'taken' || usernameStatus === 'invalid') ? 'border-red-300 focus:ring-red-200 focus:border-red-500' : 
                     usernameStatus === 'available' ? 'border-green-300 focus:ring-green-200 focus:border-green-500' : 
                     'border-gray-300 focus:ring-primary-navy focus:border-primary-navy'}`}
                 required
@@ -274,9 +340,14 @@ export default function Onboarding() {
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 {usernameStatus === 'checking' && <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />}
                 {usernameStatus === 'available' && <CheckCircle className="w-5 h-5 text-green-500" />}
-                {usernameStatus === 'taken' && <XCircle className="w-5 h-5 text-red-500" />}
+                {(usernameStatus === 'taken' || usernameStatus === 'invalid') && <XCircle className="w-5 h-5 text-red-500" />}
               </div>
             </div>
+            {usernameStatus === 'invalid' && (
+              <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <p className="text-xs text-red-600 font-medium">{usernameError}</p>
+              </div>
+            )}
             {usernameStatus === 'taken' && (
               <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
                 <p className="text-xs text-red-600 mb-2 font-medium">This username is already taken. Try one of these:</p>
@@ -435,6 +506,8 @@ export default function Onboarding() {
             Log In
           </Link>
         </p>
+          </>
+        )}
       </div>
     </div>
   );

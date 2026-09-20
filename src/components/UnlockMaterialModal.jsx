@@ -26,30 +26,21 @@ export default function UnlockMaterialModal({
     setError(null);
 
     try {
-      // Deduct coins and record unlock via backend endpoint
-      const response = await fetch('/api/unlock-material', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId,
-          materialId: material.id,
-          cost: cost
-        })
+      const { data, error: rpcError } = await supabase.rpc('unlock_material', {
+        p_material_id: material.id,
+        p_cost: cost
       });
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to unlock material');
+      if (rpcError) {
+        throw rpcError;
       }
 
       onSuccess(material.id);
       onClose();
     } catch (err) {
-      console.error(err);
-      setError('Failed to unlock material. Please try again.');
+      console.error("Supabase RPC Error:", err);
+      // Expose the raw error from Supabase
+      setError(`Failed: ${err.message || err.details || err.hint || 'Unknown database error'}`);
     } finally {
       setUnlocking(false);
     }
