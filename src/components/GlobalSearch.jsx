@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Loader2, User, FileText } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Search, Loader2, User, FileText, ArrowLeft, Clock, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { Avatar } from "./Avatar";
+import { useSearchHistory } from "../hooks/useSearchHistory";
 
 export default function GlobalSearch() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -13,8 +15,21 @@ export default function GlobalSearch() {
   const [userResults, setUserResults] = useState([]);
   const [postResults, setPostResults] = useState([]);
   
-  const searchRef = useRef(null);
+  const inputRef = useRef(null);
   const navigate = useNavigate();
+  const { history, addSearchTerm, removeSearchTerm, clearHistory } = useSearchHistory();
+
+  // Auto-focus when opened
+  useEffect(() => {
+    if (isSearchOpen) {
+      // Small delay to allow the portal to render and animation to start
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+    }
+  }, [isSearchOpen]);
 
   // Debounce the input
   useEffect(() => {
@@ -62,114 +77,202 @@ export default function GlobalSearch() {
     fetchSearchResults();
   }, [debouncedQuery]);
 
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsSearchOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleUserClick = (userId) => {
+  const handleClose = () => {
     setIsSearchOpen(false);
     setSearchQuery("");
+  };
+
+  const handleUserClick = (userId) => {
+    if (searchQuery.trim()) addSearchTerm(searchQuery);
+    handleClose();
     navigate(`/profile/${userId}`);
   };
 
   const handlePostClick = (postId) => {
-    // Currently no dedicated post view, but we can close search and go to dashboard
-    setIsSearchOpen(false);
-    setSearchQuery("");
+    if (searchQuery.trim()) addSearchTerm(searchQuery);
+    handleClose();
     navigate("/");
+  };
+  
+  const handleHistoryItemClick = (term) => {
+    setSearchQuery(term);
+  };
+  
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      addSearchTerm(searchQuery);
+    }
   };
 
   return (
-    <div className="flex-1 max-w-sm mx-4 relative" ref={searchRef}>
-      <div
-        className={`flex items-center bg-surface-container-low border border-outline-variant/30 rounded-full px-3 py-1.5 transition-all focus-within:ring-2 focus-within:ring-primary/20 ${
-          isSearchOpen ? "ring-2 ring-primary/20 bg-surface-container" : ""
-        }`}
-      >
-        <Search className="w-4 h-4 text-outline" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onFocus={() => setIsSearchOpen(true)}
-          placeholder="Search users, posts..."
-          className="w-full bg-transparent border-none outline-none text-[13px] px-2 text-on-surface placeholder-outline"
-        />
-        {isSearching && <Loader2 className="w-3 h-3 text-outline animate-spin mr-1" />}
+    <>
+      {/* Trigger Button (Fake Input) */}
+      <div className="flex-1 max-w-sm mx-4">
+        <button
+          onClick={() => setIsSearchOpen(true)}
+          className="w-full flex items-center bg-surface-container-low border border-outline-variant/30 rounded-full px-3 py-2 text-outline hover:bg-surface-container transition-colors focus:ring-2 focus:ring-primary/20 outline-none"
+        >
+          <Search className="w-4 h-4 mr-2" />
+          <span className="text-[13px] font-medium">Search users, posts...</span>
+        </button>
       </div>
 
-      {isSearchOpen && searchQuery.trim() && (
-        <div className="absolute top-full mt-2 w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-xl overflow-hidden z-50 max-h-[70vh] flex flex-col">
-          <div className="overflow-y-auto p-2">
+      {/* Full-Screen Search Modal Overlay */}
+      {isSearchOpen && createPortal(
+        <div className="fixed inset-0 z-[100] flex justify-center bg-black/60 md:p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-surface w-full h-full md:h-auto md:max-h-[90vh] max-w-md md:max-w-3xl lg:max-w-4xl md:rounded-3xl flex flex-col animate-in slide-in-from-bottom-full md:slide-in-from-bottom-0 md:zoom-in-95 duration-300 overflow-hidden shadow-2xl relative">
             
-            {/* Users Section */}
-            {userResults.length > 0 && (
-              <div className="mb-2">
-                <div className="text-xs font-semibold text-outline tracking-wider uppercase px-2 mb-1 flex items-center gap-1">
-                  <User className="w-3 h-3" /> Users
-                </div>
-                {userResults.map((user) => (
-                  <button
-                    key={`user-${user.id}`}
-                    onClick={() => handleUserClick(user.id)}
-                    className="w-full text-left px-2 py-2 hover:bg-surface-container-low transition-colors flex items-center gap-3 rounded-lg"
+            {/* Header & Search Bar */}
+            <div className="flex items-center px-4 py-3 border-b border-outline-variant/30 bg-surface">
+              <button 
+                onClick={handleClose}
+                className="p-2 mr-2 -ml-2 rounded-full text-on-surface hover:bg-surface-container-low transition-colors active:scale-95"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+              <form onSubmit={handleSearchSubmit} className="flex-1 relative">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search..."
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-full pl-4 pr-10 py-2.5 text-on-surface placeholder-outline focus:outline-none focus:ring-2 focus:ring-primary/20 text-[15px]"
+                />
+                {searchQuery && (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      inputRef.current?.focus();
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-outline hover:text-on-surface bg-surface-container-high rounded-full"
                   >
-                    <Avatar url={user.avatar_url} name={user.username || user.full_name} size="sm" />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[13px] font-bold text-on-surface truncate">
-                        {user.full_name || user.username}
-                      </span>
-                      <span className="text-[11px] text-outline truncate">
-                        @{user.username || "student"}
-                      </span>
-                    </div>
+                    <X className="w-4 h-4" />
                   </button>
-                ))}
-              </div>
-            )}
+                )}
+              </form>
+            </div>
 
-            {/* Posts Section */}
-            {postResults.length > 0 && (
-              <div>
-                <div className="text-xs font-semibold text-outline tracking-wider uppercase px-2 mb-1 flex items-center gap-1">
-                  <FileText className="w-3 h-3" /> Posts
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto bg-surface">
+              {/* Idle State: Recent Searches */}
+              {!searchQuery.trim() ? (
+                <div className="p-2">
+                  {history.length > 0 ? (
+                    <>
+                      <h3 className="text-[13px] font-bold text-outline uppercase tracking-wider mb-2 mt-2 px-3">Recent</h3>
+                      <div className="space-y-0.5">
+                        {history.map((term, index) => (
+                          <div key={index} className="flex items-center justify-between group rounded-xl hover:bg-surface-container-low px-3 py-2 transition-colors">
+                            <button 
+                              className="flex items-center gap-3 flex-1 text-left"
+                              onClick={() => handleHistoryItemClick(term)}
+                            >
+                              <Clock className="w-5 h-5 text-outline" />
+                              <span className="text-on-surface text-[15px] font-medium">{term}</span>
+                            </button>
+                            <button 
+                              onClick={() => removeSearchTerm(term)}
+                              className="p-2 -mr-2 text-outline hover:text-error transition-colors rounded-full hover:bg-error/10"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-2 flex justify-center pb-4">
+                        <button 
+                          onClick={clearHistory}
+                          className="text-[13px] font-semibold text-outline hover:text-error transition-colors px-4 py-2 rounded-full hover:bg-error/5"
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center pt-20 text-outline">
+                      <Search className="w-12 h-12 mb-4 opacity-20" />
+                      <p className="text-sm font-medium">Search for users and posts</p>
+                    </div>
+                  )}
                 </div>
-                {postResults.map((post) => (
-                  <button
-                    key={`post-${post.id}`}
-                    onClick={() => handlePostClick(post.id)}
-                    className="w-full text-left px-2 py-2 hover:bg-surface-container-low transition-colors flex flex-col gap-1 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Avatar url={post.profiles?.avatar_url} name={post.profiles?.username} size="xs" />
-                      <span className="text-[11px] font-bold text-on-surface">
-                        @{post.profiles?.username || "student"}
-                      </span>
+              ) : (
+                /* Active State: Live Results */
+                <div className="p-2">
+                  {isSearching ? (
+                    <div className="flex justify-center py-10">
+                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
                     </div>
-                    <p className="text-[12px] text-on-surface-variant line-clamp-2 leading-relaxed">
-                      {post.content}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
+                  ) : (
+                    <>
+                      {/* Users Section */}
+                      {userResults.length > 0 && (
+                        <div className="mb-4">
+                          <div className="text-[12px] font-bold text-outline tracking-wider uppercase px-3 mb-2 flex items-center gap-1.5">
+                            <User className="w-3.5 h-3.5" /> Users
+                          </div>
+                          {userResults.map((user) => (
+                            <button
+                              key={`user-${user.id}`}
+                              onClick={() => handleUserClick(user.id)}
+                              className="w-full text-left px-3 py-3 hover:bg-surface-container-low transition-colors flex items-center gap-3 rounded-xl"
+                            >
+                              <Avatar url={user.avatar_url} name={user.username || user.full_name} size="md" />
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[15px] font-bold text-on-surface truncate">
+                                  {user.full_name || user.username}
+                                </span>
+                                <span className="text-[13px] text-outline truncate">
+                                  @{user.username || "student"}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
 
-            {!isSearching && userResults.length === 0 && postResults.length === 0 && (
-              <div className="p-4 text-center text-sm text-outline">
-                No results found for "{searchQuery}"
-              </div>
-            )}
+                      {/* Posts Section */}
+                      {postResults.length > 0 && (
+                        <div>
+                          <div className="text-[12px] font-bold text-outline tracking-wider uppercase px-3 mb-2 flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5" /> Posts
+                          </div>
+                          {postResults.map((post) => (
+                            <button
+                              key={`post-${post.id}`}
+                              onClick={() => handlePostClick(post.id)}
+                              className="w-full text-left px-3 py-3 hover:bg-surface-container-low transition-colors flex flex-col gap-2 rounded-xl"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Avatar url={post.profiles?.avatar_url} name={post.profiles?.username} size="sm" />
+                                <span className="text-[13px] font-bold text-on-surface">
+                                  @{post.profiles?.username || "student"}
+                                </span>
+                              </div>
+                              <p className="text-[14px] text-on-surface-variant line-clamp-3 leading-relaxed pl-9">
+                                {post.content}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
 
+                      {!isSearching && userResults.length === 0 && postResults.length === 0 && debouncedQuery && (
+                        <div className="flex flex-col items-center justify-center pt-20 text-outline">
+                          <p className="text-[15px] font-medium">No results found for "{searchQuery}"</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
