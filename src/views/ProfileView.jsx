@@ -46,6 +46,8 @@ export default function ProfileView() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
   const [editForm, setEditForm] = useState({
     username: "",
     department: "",
@@ -221,7 +223,16 @@ export default function ProfileView() {
   }
 
   return (
-    <div className="px-5 py-6 flex flex-col gap-6 pb-24">
+    <div className="px-5 py-6 flex flex-col gap-6 pb-24 relative">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-medium shadow-lg transition-all animate-fade-in ${
+          toastMessage.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+        }`}>
+          {toastMessage.text}
+        </div>
+      )}
+
       {/* Header Card */}
       <div className="bg-surface-container-low rounded-3xl p-6 border border-outline-variant/30 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
         {/* Decorative background glow */}
@@ -523,18 +534,42 @@ export default function ProfileView() {
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
-                const {
-                  data: { user },
-                } = await supabase.auth.getUser();
-                if (user) {
-                  await supabase
+                setIsSavingProfile(true);
+                
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  
+                  if (!user) throw new Error("No authenticated user found.");
+                  
+                  const { error } = await supabase
                     .from("profiles")
-                    .update(editForm)
+                    .update({
+                      username: editForm.username,
+                      department: editForm.department,
+                      university: editForm.university,
+                      full_name: editForm.full_name
+                    })
                     .eq("id", user.id);
+                    
+                  if (error) throw error;
+                  
+                  // Update local state only on success
                   setDepartment(editForm.department);
                   setFullName(editForm.full_name);
                   setUsername(editForm.username);
-                  setIsEditModalOpen(false);
+                  
+                  setToastMessage({ type: 'success', text: 'Profile updated successfully!' });
+                  setTimeout(() => {
+                    setToastMessage(null);
+                    setIsEditModalOpen(false);
+                  }, 1500);
+                  
+                } catch (error) {
+                  console.error("Error updating profile:", error);
+                  setToastMessage({ type: 'error', text: `Failed to update profile: ${error.message || 'Unknown error'}` });
+                  setTimeout(() => setToastMessage(null), 3000);
+                } finally {
+                  setIsSavingProfile(false);
                 }
               }}
               className="flex flex-col pb-8"
@@ -648,9 +683,14 @@ export default function ProfileView() {
               <div className="px-4 mt-8">
                 <button
                   type="submit"
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 rounded-full transition-all shadow-md shadow-primary/20 active:scale-[0.98]"
+                  disabled={isSavingProfile}
+                  className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 rounded-full transition-all shadow-md shadow-primary/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  Save Changes
+                  {isSavingProfile ? (
+                    <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Saving...</>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </button>
               </div>
             </form>
