@@ -20,6 +20,8 @@ const TasksHub = lazy(() => import('./views/TasksHub'));
 const AdminGateway = lazy(() => import('./views/AdminGateway'));
 const ProfileView = lazy(() => import('./views/ProfileView'));
 const AITutorView = lazy(() => import('./views/AITutorView'));
+const Inbox = lazy(() => import('./views/Inbox'));
+const ChatRoom = lazy(() => import('./views/ChatRoom'));
 
 // Unified loading fallback
 const PageLoader = () => (
@@ -81,6 +83,8 @@ function App() {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/live" element={<LiveStudyRoom />} />
                     <Route path="/samuel" element={<AITutorView />} />
+                    <Route path="/inbox" element={<Inbox />} />
+                    <Route path="/chat/:conversationId" element={<ChatRoom />} />
                     <Route path="/profile" element={<ProfileView />} />
                     <Route path="/profile/:id" element={<ProfileView />} />
                     <Route path="/library" element={<Library />} />

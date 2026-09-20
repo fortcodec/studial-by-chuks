@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Bell, Search, Coins, Megaphone, Check, CheckCircle2 } from "lucide-react";
+import { Bell, Coins, Megaphone, Check, CheckCircle2, MessageSquare } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { supabase } from "../supabaseClient";
 import { X, Loader2 } from "lucide-react";
 import { Avatar } from "./Avatar";
 import CCoinBadge from "./CCoinBadge";
+import GlobalSearch from "./GlobalSearch";
 
 const CreatePost = lazy(() => import("./CreatePost"));
 const CoinRewardModal = lazy(() => import("./CoinRewardModal"));
@@ -36,42 +37,8 @@ export default function Layout() {
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const searchRef = useRef(null);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchSearchResults = async () => {
-      if (!searchQuery.trim()) {
-        setSearchResults([]);
-        return;
-      }
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, avatar_url')
-        .ilike('username', `%${searchQuery}%`)
-        .limit(5);
-      
-      if (!error && data) {
-        setSearchResults(data);
-      }
-    };
-    
-    const timeoutId = setTimeout(fetchSearchResults, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsSearchOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     const hasSeen = localStorage.getItem('hasSeenOnboarding');
@@ -232,6 +199,27 @@ export default function Layout() {
     return () => { isMounted = false; };
   }, []);
 
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    
+    const channel = supabase
+      .channel('public:messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          if (payload.new.sender_id !== currentUser.id) {
+            setUnreadMessagesCount((prev) => prev + 1);
+          }
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.id]);
+
   // Dedicated Coin Drops Check (Weekly or Admin Gift)
   useEffect(() => {
     if (!currentUser?.id) return;
@@ -288,47 +276,9 @@ export default function Layout() {
           <h1 className="text-xl font-extrabold text-on-surface tracking-tight hidden md:block">Studial.</h1>
         </div>
 
-        <div className="flex-1 max-w-sm mx-4 relative" ref={searchRef}>
-          <div className={`flex items-center bg-surface-container-low border border-outline-variant/30 rounded-full px-3 py-1.5 transition-all focus-within:ring-2 focus-within:ring-primary/20 ${isSearchOpen ? 'ring-2 ring-primary/20 bg-surface-container' : ''}`}>
-            <Search className="w-4 h-4 text-outline" />
-            <input 
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsSearchOpen(true)}
-              placeholder="Search users..."
-              className="w-full bg-transparent border-none outline-none text-[13px] px-2 text-on-surface placeholder-outline"
-            />
-          </div>
-          
-          {isSearchOpen && searchQuery.trim() && (
-            <div className="absolute top-full mt-2 w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-xl overflow-hidden z-50">
-              {searchResults.length > 0 ? (
-                searchResults.map(user => (
-                  <button
-                    key={user.id}
-                    onClick={() => {
-                      setIsSearchOpen(false);
-                      setSearchQuery("");
-                      navigate(`/profile/${user.id}`);
-                    }}
-                    className="w-full text-left px-4 py-2 hover:bg-surface-container-low transition-colors flex items-center gap-3 border-b border-outline-variant/10 last:border-b-0"
-                  >
-                    <Avatar url={user.avatar_url} name={user.username || user.full_name} size="sm" />
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-bold text-[13px] text-on-surface truncate">{user.username || user.full_name}</span>
-                      {user.full_name && user.username && <span className="text-[11px] text-outline truncate">@{user.username}</span>}
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <div className="px-4 py-3 text-[13px] text-outline text-center">No users found</div>
-              )}
-            </div>
-          )}
-        </div>
+        <GlobalSearch />
 
-        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+        <div className="flex items-center gap-2 md:gap-4 ml-auto">
           <button 
             onClick={() => {
               const isDark = document.documentElement.classList.toggle('dark');
@@ -344,7 +294,22 @@ export default function Layout() {
             )}
           </button>
           
-          <CCoinBadge balance={currentUser.c_coins} className="shadow-sm" />
+          <CCoinBadge balance={currentUser.c_coins} className="shadow-sm hidden md:flex" />
+
+          <button
+            onClick={() => {
+              setUnreadMessagesCount(0);
+              navigate('/inbox');
+            }}
+            className="relative p-1.5 rounded-full bg-surface-container-low border border-outline-variant/30 text-outline hover:text-on-surface shadow-sm active:scale-95 transition-all"
+          >
+            <MessageSquare className="w-5 h-5" />
+            {unreadMessagesCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-surface shadow-sm animate-in fade-in zoom-in">
+                {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+              </span>
+            )}
+          </button>
           
           <div className="relative" ref={notificationRef}>
             <button 

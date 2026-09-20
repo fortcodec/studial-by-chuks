@@ -16,9 +16,9 @@ import {
   ArrowLeft,
   Camera,
   Pencil,
+  MessageSquare,
 } from "lucide-react";
 import { PostCard } from "../components/PostCard";
-import ChatModal from "../components/ChatModal";
 
 export default function ProfileView() {
   const { currentUser } = useOutletContext();
@@ -45,7 +45,7 @@ export default function ProfileView() {
   // Modals state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
-  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [isStartingChat, setIsStartingChat] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -211,6 +211,48 @@ export default function ProfileView() {
     } catch (error) {
       console.error("Error logging out:", error);
       alert("Failed to log out.");
+    }
+  };
+
+  const handleStartConversation = async () => {
+    if (!currentUser?.id || !profileId) return;
+    setIsStartingChat(true);
+    
+    try {
+      // Check if conversation already exists
+      const { data: existingConvs, error: existingError } = await supabase
+        .from("conversations")
+        .select("id")
+        .or(`and(user1_id.eq.${currentUser.id},user2_id.eq.${profileId}),and(user1_id.eq.${profileId},user2_id.eq.${currentUser.id})`)
+        .limit(1);
+        
+      if (existingError) throw existingError;
+      
+      if (existingConvs && existingConvs.length > 0) {
+        // Navigate to existing chat
+        navigate(`/chat/${existingConvs[0].id}`);
+      } else {
+        // Create new conversation
+        const { data: newConv, error: newError } = await supabase
+          .from("conversations")
+          .insert({
+            user1_id: currentUser.id,
+            user2_id: profileId
+          })
+          .select("id")
+          .single();
+          
+        if (newError) throw newError;
+        if (newConv) {
+          navigate(`/chat/${newConv.id}`);
+        }
+      }
+    } catch (err) {
+      console.error("Error starting conversation:", err);
+      setToastMessage({ type: 'error', text: 'Failed to start conversation. Please try again.' });
+      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
+      setIsStartingChat(false);
     }
   };
 
@@ -498,9 +540,11 @@ export default function ProfileView() {
         </div>
       ) : (
         <button
-          onClick={() => setIsChatModalOpen(true)}
-          className="w-full bg-primary text-white font-bold py-3.5 rounded-full hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 flex justify-center items-center gap-2"
+          onClick={handleStartConversation}
+          disabled={isStartingChat}
+          className="w-full bg-primary text-white font-bold py-3.5 rounded-full hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 flex justify-center items-center gap-2 disabled:opacity-70"
         >
+          {isStartingChat ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageSquare className="w-5 h-5" />}
           Message
         </button>
       )}
@@ -747,19 +791,6 @@ export default function ProfileView() {
             </div>
           </div>
         </div>
-      )}
-      {/* Chat Modal */}
-      {isChatModalOpen && !isOwnProfile && (
-        <ChatModal
-          currentUser={currentUser}
-          targetUser={{
-            id: profileId,
-            username,
-            full_name: fullName,
-            avatar_url: targetAvatarUrl,
-          }}
-          onClose={() => setIsChatModalOpen(false)}
-        />
       )}
     </div>
   );
