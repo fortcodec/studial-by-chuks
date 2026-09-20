@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-export function PostCard({ postId, type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, onOpenQuiz, onDelete, ...props }) {
+export const PostCard = React.memo(function PostCard({ postId, type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, onOpenQuiz, onDelete, ...props }) {
   const [isTipping, setIsTipping] = useState(false);
   const [tipStatus, setTipStatus] = useState(null);
 
@@ -83,7 +83,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
         setIsLoadingComments(true);
         const { data, error } = await supabase
           .from('post_comments')
-          .select('*, profiles!author_id(*)')
+          .select('id, content, created_at, is_ai_response, profiles!author_id(id, username, full_name, avatar_url, department)')
           .eq('post_id', postId)
           .order('created_at', { ascending: true });
         
@@ -263,7 +263,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
       post_id: postId,
       author_id: currentUser.id,
       content: text
-    }]).select('*, profiles!author_id(*)').single();
+    }]).select('id, content, created_at, is_ai_response, profiles!author_id(id, username, full_name, avatar_url, department)').single();
 
     if (error) {
       console.error("Error posting comment:", error);
@@ -293,7 +293,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                 content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
               };
               
-              const { data: insertedAiComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!author_id(*)').single();
+              const { data: insertedAiComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('id, content, created_at, is_ai_response, profiles!author_id(id, username, full_name, avatar_url, department)').single();
               
               if (aiError) {
                 console.error("Database error saving Samuel's comment:", aiError);
@@ -430,7 +430,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
                   content: `[AI_SAMUEL_RESPONSE] ${aiResponse}`
                 };
                 
-                const { data: insertedAiComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('*, profiles!author_id(*)').single();
+                const { data: insertedAiComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('id, content, created_at, is_ai_response, profiles!author_id(id, username, full_name, avatar_url, department)').single();
                 
                 if (aiError) {
                   console.error("Error posting AI comment:", aiError);
@@ -578,7 +578,7 @@ export function PostCard({ postId, type, author, course, topic, timeAgo, content
       )}
     </div>
   );
-}
+});
 
 export function LiveRoomCard() {
   return (

@@ -73,7 +73,7 @@ export default function Dashboard() {
       try {
         const { data, error } = await supabase
           .from('posts')
-          .select('*, profiles!user_id(*), post_likes(count), post_comments(count)')
+          .select('*, profiles!user_id(id, username, full_name, avatar_url, department, is_shadow_banned), post_likes(count), post_comments(count)')
           .order('created_at', { ascending: false });
           
         if (error) {
