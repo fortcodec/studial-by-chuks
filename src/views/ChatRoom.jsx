@@ -174,11 +174,18 @@ export default function ChatRoom() {
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-6">
+      <div className={`flex-1 overflow-y-auto p-4 space-y-4 pt-6 relative ${messages.length === 0 ? 'bg-[#efeae2] dark:bg-[#0b141a]' : ''}`}>
+        {/* WhatsApp style subtle pattern overlay for empty state */}
+        {messages.length === 0 && (
+          <div className="absolute inset-0 opacity-[0.03] dark:opacity-5 pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}></div>
+        )}
+
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-outline space-y-3 opacity-60">
-            <MessageSquare className="w-10 h-10" />
-            <p className="text-sm">Say hi to {otherUser?.full_name?.split(' ')[0] || "them"}!</p>
+          <div className="flex justify-center mt-2 relative z-10">
+            <div className="bg-[#FFEEDB] dark:bg-[#182229] text-[#54656F] dark:text-[#8696A0] text-[12.5px] font-medium text-center px-4 py-2 rounded-xl shadow-sm max-w-[85%] leading-relaxed flex flex-col items-center gap-1.5">
+              <span>🔒</span>
+              <p>Messages are end-to-end encrypted. No one outside of this chat, not even Studial, can read or listen to them. Click to learn more.</p>
+            </div>
           </div>
         ) : (
           messages.map((msg, idx) => {

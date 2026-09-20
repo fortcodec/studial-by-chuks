@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FileText, Radio, Bot, User, BookOpen } from "lucide-react";
+import { FileText, MessageSquare, Bot, User, BookOpen } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
 import { Plus } from "lucide-react";
 
-export function BottomNav({ onNewPost }) {
+export function BottomNav({ onNewPost, unreadMessagesCount }) {
   const location = useLocation();
   const currentView = location.pathname.substring(1);
   const [liveCount, setLiveCount] = useState(0);
@@ -30,7 +30,7 @@ export function BottomNav({ onNewPost }) {
 
   const leftNavItems = [
     { name: "Feed", href: "", icon: FileText, badge: null },
-    { name: "Live", href: "live", icon: Radio, badge: liveCount > 0 ? liveCount : null },
+    { name: "Inbox", href: "inbox", icon: MessageSquare, badge: unreadMessagesCount > 0 ? (unreadMessagesCount > 9 ? '9+' : unreadMessagesCount) : null },
   ];
   const rightNavItems = [
     { name: "Library", href: "library", icon: BookOpen, badge: null },

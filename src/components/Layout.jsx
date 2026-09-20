@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Bell, Coins, Megaphone, Check, CheckCircle2, MessageSquare } from "lucide-react";
+import { Bell, Coins, Megaphone, Check, CheckCircle2, MessageSquare, Radio } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { supabase } from "../supabaseClient";
 import { X, Loader2 } from "lucide-react";
 import { Avatar } from "./Avatar";
 import CCoinBadge from "./CCoinBadge";
 import GlobalSearch from "./GlobalSearch";
+import NewsTicker from "./NewsTicker";
 
 const CreatePost = lazy(() => import("./CreatePost"));
 const CoinRewardModal = lazy(() => import("./CoinRewardModal"));
@@ -264,6 +265,9 @@ export default function Layout() {
         </div>
       )}
 
+      {/* News Ticker Global Banner */}
+      <NewsTicker />
+
       {/* Sticky Header */}
       <div className="sticky top-0 z-40 bg-surface/90 backdrop-blur-xl px-5 py-4 flex justify-between items-center border-b border-outline-variant/30">
         <div className="flex items-center gap-2">
@@ -297,18 +301,10 @@ export default function Layout() {
           <CCoinBadge balance={currentUser.c_coins} className="shadow-sm hidden md:flex" />
 
           <button
-            onClick={() => {
-              setUnreadMessagesCount(0);
-              navigate('/inbox');
-            }}
+            onClick={() => navigate('/live')}
             className="relative p-1.5 rounded-full bg-surface-container-low border border-outline-variant/30 text-outline hover:text-on-surface shadow-sm active:scale-95 transition-all"
           >
-            <MessageSquare className="w-5 h-5" />
-            {unreadMessagesCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-surface shadow-sm animate-in fade-in zoom-in">
-                {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
-              </span>
-            )}
+            <Radio className="w-5 h-5 text-red-500" />
           </button>
           
           <div className="relative" ref={notificationRef}>
@@ -478,7 +474,7 @@ export default function Layout() {
       </div>
 
       <div className="shrink-0 bg-surface z-40 fixed bottom-0 w-full max-w-md md:max-w-3xl lg:max-w-4xl border-x border-outline-variant/30 pb-safe">
-        <BottomNav onNewPost={() => setIsCreatePostOpen(true)} />
+        <BottomNav onNewPost={() => setIsCreatePostOpen(true)} unreadMessagesCount={unreadMessagesCount} />
       </div>
 
       {/* Coin Reward Modal */}
