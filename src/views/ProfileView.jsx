@@ -265,7 +265,7 @@ export default function ProfileView() {
   }
 
   return (
-    <div className="px-5 py-6 flex flex-col gap-6 pb-24 relative">
+    <div className="px-5 pt-[100px] pb-[90px] flex flex-col gap-6 relative bg-[#f8fafc] dark:bg-slate-900 min-h-screen">
       {/* Toast Notification */}
       {toastMessage && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-medium shadow-lg transition-all animate-fade-in ${
@@ -276,7 +276,7 @@ export default function ProfileView() {
       )}
 
       {/* Header Card */}
-      <div className="bg-surface-container-low rounded-3xl p-6 border border-outline-variant/30 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
+      <div className="bg-surface-container-low rounded-3xl p-6 border border-outline-variant/20 flex flex-col items-center text-center shadow-tactile relative overflow-hidden">
         {/* Decorative background glow */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
 
@@ -338,7 +338,7 @@ export default function ProfileView() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-sm">
+        <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-tactile">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
             <FileText className="w-4 h-4 text-primary" />
           </div>
@@ -352,7 +352,7 @@ export default function ProfileView() {
           </div>
         </div>
 
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-sm">
+        <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-tactile">
           <div className="w-8 h-8 rounded-full bg-secondary-green/10 flex items-center justify-center">
             <Brain className="w-4 h-4 text-secondary-green" />
           </div>
@@ -366,7 +366,7 @@ export default function ProfileView() {
           </div>
         </div>
 
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-sm">
+        <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-tactile">
           <div className="w-8 h-8 rounded-full bg-tertiary-orange/10 flex items-center justify-center">
             <GraduationCap className="w-4 h-4 text-tertiary-orange" />
           </div>
@@ -388,7 +388,7 @@ export default function ProfileView() {
             <Clock className="w-4 h-4 text-warning" />
             Recent Transactions
           </h3>
-          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl overflow-hidden shadow-tactile">
             {transactions.length === 0 ? (
               <div className="p-6 text-center text-outline text-sm">
                 No transactions yet. Complete quizzes or post answers to earn

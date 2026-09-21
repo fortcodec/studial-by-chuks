@@ -147,9 +147,9 @@ export default function Library() {
   }) : [];
 
   return (
-    <div className="flex flex-col h-full relative bg-background overflow-hidden">
+    <div className="flex flex-col h-full relative bg-[#f8fafc] dark:bg-slate-900 overflow-hidden pt-[100px] pb-[90px]">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-surface/95 backdrop-blur-xl px-5 pt-4 pb-2 border-b border-outline-variant/30 shadow-sm">
+      <div className="sticky top-0 z-40 bg-[#f8fafc]/95 dark:bg-slate-900/95 backdrop-blur-xl px-5 pt-4 pb-3 border-b border-outline-variant/20 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => navigate('/')} className="text-outline hover:text-on-surface transition-colors">
             <ArrowLeft size={20} />
@@ -193,12 +193,12 @@ export default function Library() {
       </div>
 
       {/* Resource List */}
-      <div className="flex-1 overflow-y-auto p-5 bg-background pb-24">
+      <div className="flex-1 overflow-y-auto p-5">
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white rounded-2xl p-4 shadow-surface-1 border border-outline-variant/30 flex items-start gap-4 animate-pulse">
-                <div className="w-12 h-14 rounded-xl bg-gray-200 flex-shrink-0"></div>
+              <div key={i} className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-tactile border border-outline-variant/20 flex items-start gap-4 animate-pulse">
+                <div className="w-12 h-14 rounded-2xl bg-gray-200 dark:bg-slate-700 flex-shrink-0"></div>
                 <div className="flex-grow min-w-0">
                   <div className="h-4 bg-gray-200 rounded w-16 mb-2"></div>
                   <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
@@ -231,8 +231,8 @@ export default function Library() {
         ) : (
           <div className="flex flex-col gap-4">
             {filteredResources.map(resource => (
-              <div key={resource?.id} className="bg-white rounded-2xl p-4 shadow-surface-1 border border-outline-variant/30 flex items-start gap-4 transition-transform active:scale-[0.98]">
-                <div className="w-12 h-14 rounded-xl bg-error/10 border border-error/20 flex flex-col items-center justify-center flex-shrink-0">
+              <div key={resource?.id} className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-tactile border border-outline-variant/20 flex items-start gap-4 transition-transform active:scale-[0.98]">
+                <div className="w-12 h-14 rounded-2xl bg-error/10 border border-error/20 flex flex-col items-center justify-center flex-shrink-0">
                   <FileText className="w-6 h-6 text-error mb-0.5" />
                   <span className="text-[9px] font-bold text-error uppercase">DOC</span>
                 </div>

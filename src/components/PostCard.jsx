@@ -320,7 +320,7 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
   };
 
   return (
-    <div className="h-[85vh] w-full snap-center relative bg-surface-container-lowest overflow-hidden flex flex-col justify-end border-b border-outline-variant/30">
+    <div className="h-[100dvh] w-full snap-start relative bg-black overflow-hidden flex flex-col justify-end border-b border-white/10">
       
       {/* Background Media */}
       {props.attachmentImage ? (
@@ -379,8 +379,8 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
           </div>
         </div>
       ) : (
-        <div className="absolute inset-0 z-0 flex items-center justify-center p-8 pb-32 bg-gradient-to-br from-indigo-900 to-slate-800">
-          <div className="text-white text-2xl md:text-3xl font-bold text-center drop-shadow-md pr-12 overflow-y-auto max-h-[60vh] scrollbar-hide leading-relaxed markdown-body">
+        <div className="absolute inset-0 z-0 flex items-center justify-center p-6 pb-32 bg-gradient-to-br from-slate-900 via-indigo-950 to-black">
+          <div className="text-white text-3xl font-extrabold text-center drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)] pr-16 overflow-y-auto max-h-[70vh] scrollbar-hide leading-snug markdown-body w-full max-w-2xl">
             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
               {content || ''}
             </ReactMarkdown>
@@ -389,33 +389,33 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
       )}
 
       {/* Right-Side Interaction Stack */}
-      <div className="absolute right-4 bottom-24 flex flex-col items-center gap-5 z-20">
+      <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5 z-20">
         <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
-          <div className={`p-3 rounded-full bg-black/40 backdrop-blur-md transition-transform active:scale-90 ${isLiked ? 'text-primary' : 'text-white'}`}>
-            <ThumbsUp className={`w-6 h-6 ${isLiked ? 'fill-current text-primary' : ''}`} />
+          <div className={`p-3.5 rounded-full bg-black/40 backdrop-blur-md transition-transform duration-200 active:scale-90 ${isLiked ? 'text-pink-500' : 'text-white'}`}>
+            <ThumbsUp className={`w-7 h-7 transition-colors ${isLiked ? 'fill-pink-500 animate-heart-pop text-pink-500' : 'text-white'}`} />
           </div>
-          <span className="text-white text-[12px] font-bold drop-shadow-md">{likeCount || 0}</span>
+          <span className="text-white text-[13px] font-bold drop-shadow-md">{likeCount || 0}</span>
         </button>
 
         <button onClick={() => setIsCommentsOpen(true)} className="flex flex-col items-center gap-1 group">
-          <div className="p-3 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 transition-colors">
-            <MessageSquare className="w-6 h-6 text-white" />
+          <div className="p-3.5 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 transition-transform duration-200 active:scale-90">
+            <MessageSquare className="w-7 h-7 text-white" />
           </div>
-          <span className="text-white text-[12px] font-bold drop-shadow-md">{commentCount || 0}</span>
+          <span className="text-white text-[13px] font-bold drop-shadow-md">{commentCount || 0}</span>
         </button>
 
         <button onClick={handleSave} className="flex flex-col items-center gap-1 group">
-          <div className={`p-3 rounded-full bg-black/40 backdrop-blur-md transition-transform active:scale-90 ${isSaved ? 'text-primary' : 'text-white'}`}>
-            <Bookmark className={`w-6 h-6 ${isSaved ? 'fill-current' : ''}`} />
+          <div className={`p-3.5 rounded-full bg-black/40 backdrop-blur-md transition-transform duration-200 active:scale-90 ${isSaved ? 'text-primary' : 'text-white'}`}>
+            <Bookmark className={`w-7 h-7 ${isSaved ? 'fill-current' : ''}`} />
           </div>
-          <span className="text-white text-[12px] font-bold drop-shadow-md">{isSaved ? 'Saved' : 'Save'}</span>
+          <span className="text-white text-[13px] font-bold drop-shadow-md">{isSaved ? 'Saved' : 'Save'}</span>
         </button>
 
         <button onClick={handleShare} className="flex flex-col items-center gap-1 group">
-          <div className="p-3 rounded-full bg-black/40 backdrop-blur-md text-white transition-transform active:scale-90">
-            <Share2 className="w-6 h-6" />
+          <div className="p-3.5 rounded-full bg-black/40 backdrop-blur-md text-white transition-transform duration-200 active:scale-90">
+            <Share2 className="w-7 h-7" />
           </div>
-          <span className="text-white text-[12px] font-bold drop-shadow-md">Share</span>
+          <span className="text-white text-[13px] font-bold drop-shadow-md">Share</span>
         </button>
 
         <button onClick={async () => {
@@ -590,7 +590,7 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
 
 export function LiveRoomCard() {
   return (
-    <div className="h-[85vh] w-full snap-center relative bg-gradient-to-b from-indigo-900 to-black overflow-hidden flex flex-col justify-center items-center px-6 border-b border-white/10">
+    <div className="h-[100dvh] w-full snap-start relative bg-gradient-to-b from-indigo-900 to-black overflow-hidden flex flex-col justify-center items-center px-6 border-b border-white/10">
       <div className="absolute top-0 inset-x-0 h-1/2 bg-primary/20 blur-3xl rounded-full translate-y-[-50%]"></div>
       
       <div className="bg-black/40 backdrop-blur-md border border-white/20 p-6 rounded-3xl w-full max-w-sm text-center shadow-2xl relative z-10">

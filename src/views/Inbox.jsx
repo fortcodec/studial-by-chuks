@@ -74,8 +74,8 @@ export default function Inbox() {
   }, [currentUser?.id]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] md:h-screen w-full max-w-2xl mx-auto bg-background md:border-x border-outline-variant/30">
-      <div className="sticky top-0 z-10 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 px-4 py-3 flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-64px)] md:h-screen w-full max-w-2xl mx-auto bg-[#f8fafc] dark:bg-slate-900 md:border-x border-outline-variant/30 pt-[100px] pb-[90px]">
+      <div className="sticky top-0 z-10 bg-[#f8fafc]/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-outline-variant/20 px-4 py-3 flex items-center justify-between shadow-sm">
         <h1 className="text-xl font-bold text-on-surface flex items-center gap-2">
           <MessageSquare className="w-5 h-5 text-primary" /> Inbox
         </h1>

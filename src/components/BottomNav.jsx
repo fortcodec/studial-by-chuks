@@ -38,7 +38,7 @@ export function BottomNav({ onNewPost, unreadMessagesCount }) {
   ];
 
   return (
-    <nav className="w-full glass-panel-heavy border-t border-outline-variant px-6 py-2 flex justify-between items-center z-50 relative pb-safe mt-auto">
+    <nav className="w-full bg-white/80 dark:bg-black/60 backdrop-blur-md border-t border-white/10 dark:border-white/5 px-6 py-2 flex justify-between items-center z-50 relative mt-auto shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
       {leftNavItems.map((item) => {
         const isActive = currentView === item.href;
         const Icon = item.icon;
@@ -47,8 +47,8 @@ export function BottomNav({ onNewPost, unreadMessagesCount }) {
           <Link
             key={item.name}
             to={`/${item.href}`}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active:scale-95 ${
-              isActive ? "text-primary font-bold" : "text-outline hover:text-primary hover:bg-surface-container"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-transform duration-200 active:scale-90 ${
+              isActive ? "text-primary font-bold" : "text-outline hover:text-primary hover:bg-surface-container/50"
             }`}
           >
             <div className="relative mb-1">
@@ -66,10 +66,9 @@ export function BottomNav({ onNewPost, unreadMessagesCount }) {
         );
       })}
 
-      {/* Center Create Button */}
       <button 
         onClick={onNewPost}
-        className="flex items-center justify-center -translate-y-4 shadow-lg shadow-primary/30 w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 text-white transition-transform active:scale-90 mx-2"
+        className="flex items-center justify-center -translate-y-4 shadow-[0_8px_25px_rgba(79,70,229,0.4)] w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 text-white transition-transform duration-200 active:scale-90 mx-2"
       >
         <Plus className="w-7 h-7 stroke-[3]" />
       </button>
@@ -82,8 +81,8 @@ export function BottomNav({ onNewPost, unreadMessagesCount }) {
           <Link
             key={item.name}
             to={`/${item.href}`}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active:scale-95 ${
-              isActive ? "text-primary font-bold" : "text-outline hover:text-primary hover:bg-surface-container"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-transform duration-200 active:scale-90 ${
+              isActive ? "text-primary font-bold" : "text-outline hover:text-primary hover:bg-surface-container/50"
             }`}
           >
             <div className="relative mb-1">

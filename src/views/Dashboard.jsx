@@ -141,9 +141,9 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full relative overflow-hidden bg-surface-container-highest">
+    <div className="flex flex-col h-full w-full relative overflow-hidden bg-black">
       {/* Main Feed (Snap Scrolling) */}
-      <div className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide scroll-momentum">
+      <div className="flex-1 h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide scroll-momentum">
 
 
 
