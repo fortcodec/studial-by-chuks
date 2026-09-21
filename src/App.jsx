@@ -22,6 +22,7 @@ const ProfileView = lazy(() => import('./views/ProfileView'));
 const AITutorView = lazy(() => import('./views/AITutorView'));
 const Inbox = lazy(() => import('./views/Inbox'));
 const ChatRoom = lazy(() => import('./views/ChatRoom'));
+const Settings = lazy(() => import('./views/Settings'));
 
 // Unified loading fallback
 const PageLoader = () => (
@@ -90,6 +91,7 @@ function App() {
                     <Route path="/library" element={<Library />} />
                     <Route path="/studyRoom" element={<StudyRoom />} />
                     <Route path="/tasksHub" element={<TasksHub />} />
+                    <Route path="/settings" element={<Settings />} />
                   </Route>
                 </Route>
                 

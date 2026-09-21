@@ -271,7 +271,7 @@ export default function Layout() {
         <NewsTicker />
 
         {/* Glass Header */}
-        <div className="bg-surface/60 dark:bg-black/40 backdrop-blur-xl px-5 py-3 md:py-4 flex justify-between items-center border-b border-white/20 dark:border-white/10">
+        <div className="bg-surface/60 dark:bg-black/60 backdrop-blur-md px-5 py-3 md:py-4 flex justify-between items-center border-b border-white/20 dark:border-white/10">
           <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-surface-1">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-on-primary">
@@ -285,22 +285,10 @@ export default function Layout() {
         <GlobalSearch />
 
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
-          <button 
-            onClick={() => {
-              const isDark = document.documentElement.classList.toggle('dark');
-              localStorage.setItem('theme', isDark ? 'dark' : 'light');
-              setIsDarkMode(isDark);
-            }}
-            className="p-1.5 rounded-full bg-surface-container-low border border-outline-variant/30 text-outline hover:text-on-surface shadow-sm active:scale-95 transition-all"
-          >
-            {!isDarkMode ? (
-              <span className="flex items-center justify-center w-5 h-5">🌙</span>
-            ) : (
-              <span className="flex items-center justify-center w-5 h-5">☀️</span>
-            )}
-          </button>
-          
-          <CCoinBadge balance={currentUser.c_coins} className="shadow-sm hidden md:flex" />
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full font-bold text-[13px] shadow-sm backdrop-blur-sm cursor-default active:scale-95 transition-all">
+            <span>🪙</span>
+            <span>{currentUser.c_coins || 0} C</span>
+          </div>
 
           <button
             onClick={() => navigate('/live')}
@@ -477,7 +465,7 @@ export default function Layout() {
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 z-40 w-full pb-safe">
-        <BottomNav onNewPost={() => setIsCreatePostOpen(true)} unreadMessagesCount={unreadMessagesCount} />
+        <BottomNav onNewPost={() => setIsCreatePostOpen(true)} unreadMessagesCount={(unreadCount || 0) + (unreadMessagesCount || 0)} />
       </div>
 
       {/* Coin Reward Modal */}

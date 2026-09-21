@@ -310,8 +310,11 @@ export default function ProfileView() {
             </div>
           )}
           {isOwnProfile && (
-            <div className="absolute bottom-0 right-0 bg-surface rounded-full p-1.5 border border-outline-variant/30 shadow-sm hover:bg-surface-container">
-              <Settings className="w-4 h-4 text-outline" />
+            <div 
+              onClick={(e) => { e.stopPropagation(); navigate('/settings'); }}
+              className="absolute bottom-0 right-0 bg-surface rounded-full p-1.5 border border-outline-variant/30 shadow-sm hover:bg-surface-container transition-colors z-10 hover:bg-surface-container-high"
+            >
+              <Settings className="w-4 h-4 text-on-surface" />
             </div>
           )}
         </div>
