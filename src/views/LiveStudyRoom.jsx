@@ -262,7 +262,7 @@ export default function LiveStudyRoom() {
                 {/* Avatar */}
                 <div className="shrink-0 mt-auto mb-1">
                   {msg.profiles?.avatar_url ? (
-                    <img src={msg.profiles.avatar_url} alt="avatar" className="w-7 h-7 rounded-full object-cover shadow-sm border border-outline-variant/20" />
+                    <img src={msg?.profiles?.avatar_url} alt="avatar" className="w-7 h-7 rounded-full object-cover shadow-sm border border-outline-variant/20" />
                   ) : (
                     <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-[10px] shadow-sm border border-indigo-200">
                       {(msg.profiles?.username || msg.profiles?.full_name || 'A').charAt(0).toUpperCase()}

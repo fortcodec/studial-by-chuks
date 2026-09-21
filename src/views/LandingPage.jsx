@@ -141,8 +141,8 @@ export default function LandingPage() {
             <div className="flex gap-4 animate-marquee whitespace-nowrap w-max">
               {[...recentPosts, ...recentPosts].map((post, idx) => (
                 <div key={`${post.id}-${idx}`} className="inline-flex items-start gap-3 bg-white/80 backdrop-blur border border-white/50 p-4 rounded-2xl shadow-sm shadow-indigo-100/50 min-w-[280px] max-w-[280px] whitespace-normal text-left transition-transform hover:-translate-y-1">
-                  {post.profiles?.avatar_url ? (
-                    <img src={post.profiles.avatar_url} alt="avatar" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-gray-100" />
+                  {post?.profiles?.avatar_url ? (
+                    <img src={post?.profiles?.avatar_url} alt="avatar" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-gray-100" />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-bold flex-shrink-0 border border-indigo-200">
                       {(post.profiles?.username || 'U')[0].toUpperCase()}
