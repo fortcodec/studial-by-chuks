@@ -389,31 +389,31 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
       )}
 
       {/* Right-Side Interaction Stack */}
-      <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5 z-20">
+      <div className="absolute bottom-24 right-4 z-10 flex flex-col items-center gap-6">
         <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
-          <div className={`p-3.5 rounded-full bg-black/40 backdrop-blur-md transition-transform duration-200 active:scale-90 ${isLiked ? 'text-pink-500' : 'text-white'}`}>
-            <ThumbsUp className={`w-7 h-7 transition-colors ${isLiked ? 'fill-pink-500 animate-heart-pop text-pink-500' : 'text-white'}`} />
+          <div className={`p-3.5 rounded-full bg-black/40 backdrop-blur-md transition-transform duration-200 active:scale-90 shadow-md ${isLiked ? 'text-pink-500' : 'text-white'}`}>
+            <ThumbsUp className={`w-7 h-7 drop-shadow-md transition-colors ${isLiked ? 'fill-pink-500 animate-heart-pop text-pink-500' : 'text-white'}`} />
           </div>
           <span className="text-white text-[13px] font-bold drop-shadow-md">{likeCount || 0}</span>
         </button>
 
         <button onClick={() => setIsCommentsOpen(true)} className="flex flex-col items-center gap-1 group">
-          <div className="p-3.5 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 transition-transform duration-200 active:scale-90">
-            <MessageSquare className="w-7 h-7 text-white" />
+          <div className="p-3.5 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 transition-transform duration-200 active:scale-90 shadow-md">
+            <MessageSquare className="w-7 h-7 text-white drop-shadow-md" />
           </div>
           <span className="text-white text-[13px] font-bold drop-shadow-md">{commentCount || 0}</span>
         </button>
 
         <button onClick={handleSave} className="flex flex-col items-center gap-1 group">
-          <div className={`p-3.5 rounded-full bg-black/40 backdrop-blur-md transition-transform duration-200 active:scale-90 ${isSaved ? 'text-primary' : 'text-white'}`}>
-            <Bookmark className={`w-7 h-7 ${isSaved ? 'fill-current' : ''}`} />
+          <div className={`p-3.5 rounded-full bg-black/40 backdrop-blur-md transition-transform duration-200 active:scale-90 shadow-md ${isSaved ? 'text-primary' : 'text-white'}`}>
+            <Bookmark className={`w-7 h-7 drop-shadow-md ${isSaved ? 'fill-current' : ''}`} />
           </div>
           <span className="text-white text-[13px] font-bold drop-shadow-md">{isSaved ? 'Saved' : 'Save'}</span>
         </button>
 
         <button onClick={handleShare} className="flex flex-col items-center gap-1 group">
-          <div className="p-3.5 rounded-full bg-black/40 backdrop-blur-md text-white transition-transform duration-200 active:scale-90">
-            <Share2 className="w-7 h-7" />
+          <div className="p-3.5 rounded-full bg-black/40 backdrop-blur-md text-white transition-transform duration-200 active:scale-90 shadow-md">
+            <Share2 className="w-7 h-7 drop-shadow-md" />
           </div>
           <span className="text-white text-[13px] font-bold drop-shadow-md">Share</span>
         </button>
@@ -452,7 +452,7 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
           className="flex flex-col items-center gap-1 group mt-2"
         >
           <div className="p-3 rounded-full bg-indigo-500 text-white shadow-lg shadow-indigo-500/40 transition-transform active:scale-90 animate-pulse">
-            <Bot className="w-6 h-6" />
+            <Bot className="w-6 h-6 drop-shadow-md" />
           </div>
           <span className="text-white text-[12px] font-bold drop-shadow-md">Ask AI</span>
         </button>
@@ -476,7 +476,7 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
         </div>
 
         {props.attachmentImage && (
-          <p className="text-[14px] text-white font-medium leading-relaxed drop-shadow-md line-clamp-4">
+          <p className="text-[14px] text-white font-medium leading-relaxed drop-shadow-md line-clamp-4 pr-16">
             {content || ''}
           </p>
         )}
