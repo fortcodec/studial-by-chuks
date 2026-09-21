@@ -6,7 +6,7 @@ import { useOutletContext, useNavigate } from 'react-router-dom';
 const UnlockMaterialModal = lazy(() => import('../components/UnlockMaterialModal'));
 
 export default function Library() {
-  const { currentUser } = useOutletContext();
+  const { currentUser, setCurrentUser } = useOutletContext();
   const navigate = useNavigate();
   const [resources, setResources] = useState([]);
   const [savedMaterials, setSavedMaterials] = useState(new Set());
@@ -134,9 +134,7 @@ export default function Library() {
 
   const handleUnlockSuccess = (materialId) => {
     setUnlockedMaterials(prev => new Set(prev).add(materialId));
-    // Optionally auto-open the document after unlock
-    const unlockedDoc = resources.find(r => r.id === materialId);
-    if (unlockedDoc) setActiveDocument(unlockedDoc);
+    // The modal itself will now show a 'Read Now' button instead of auto-opening
   };
 
   const filteredResources = Array.isArray(resources) ? resources.filter(res => {
@@ -349,6 +347,11 @@ export default function Library() {
             userId={currentUser?.id}
             onSuccess={handleUnlockSuccess}
             navigateTo={navigate}
+            setCurrentUser={setCurrentUser}
+            onOpenMaterial={() => {
+              setUnlockModalOpen(false);
+              setActiveDocument(selectedMaterialForUnlock);
+            }}
           />
         </Suspense>
       )}

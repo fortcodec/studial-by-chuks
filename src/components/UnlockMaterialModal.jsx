@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Lock, AlertCircle } from 'lucide-react';
+import { Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import CCoinBadge from './CCoinBadge';
 
 export default function UnlockMaterialModal({ 
@@ -10,10 +10,13 @@ export default function UnlockMaterialModal({
   userCoins, 
   userId, 
   onSuccess,
-  navigateTo 
+  navigateTo,
+  setCurrentUser,
+  onOpenMaterial
 }) {
   const [unlocking, setUnlocking] = useState(false);
   const [error, setError] = useState(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   if (!isOpen || !material) return null;
 
@@ -35,8 +38,32 @@ export default function UnlockMaterialModal({
         throw rpcError;
       }
 
+      // 1. Re-fetch user profile to sync C-Coins balance globally
+      if (userId && setCurrentUser) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+          
+        if (!profileError && profileData) {
+          setCurrentUser(profileData);
+        }
+      }
+
+      // 2. Insert automated Inbox Receipt
+      if (userId) {
+        await supabase.from('notifications').insert({
+          user_id: userId,
+          type: 'transaction',
+          title: 'Material Unlocked',
+          content: `You spent ${cost} C-Coins to unlock ${material.title}.`
+        });
+      }
+
+      // 3. Mark success and trigger animation
       onSuccess(material.id);
-      onClose();
+      setIsSuccess(true);
     } catch (err) {
       console.error("Supabase RPC Error:", err);
       // Expose the raw error from Supabase
@@ -46,29 +73,56 @@ export default function UnlockMaterialModal({
     }
   };
 
+  // Render the Success State
+  if (isSuccess) {
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
+        <div className="bg-white dark:bg-surface-container rounded-3xl p-8 w-full max-w-sm shadow-2xl relative text-center animate-in zoom-in duration-300 border border-outline-variant/20">
+          <div className="mx-auto w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-inner">
+            <CheckCircle className="w-12 h-12 text-green-500 drop-shadow-md" />
+          </div>
+          <h3 className="text-2xl font-extrabold mb-2 text-on-surface">Success!</h3>
+          <p className="text-outline mb-8 font-medium text-[15px]">
+            You've unlocked <strong className="text-on-surface">{material.title}</strong>.
+          </p>
+          <button 
+            onClick={() => {
+              if (onOpenMaterial) onOpenMaterial();
+              else onClose();
+            }}
+            className="w-full py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/30 active:scale-95 text-[15px]"
+          >
+            Read Now
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Render the Default Unlock State
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative text-center">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
+      <div className="bg-white dark:bg-surface-container rounded-3xl p-6 w-full max-w-sm shadow-2xl relative text-center border border-outline-variant/20 animate-in fade-in zoom-in-95 duration-200">
         
-        <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Lock size={28} className="text-yellow-600" />
+        <div className="bg-amber-500/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+          <Lock size={32} className="text-amber-500 drop-shadow-sm" />
         </div>
         
-        <h3 className="text-xl font-bold mb-2">Unlock Required</h3>
-        <p className="text-gray-600 mb-6 text-sm">
-          You need to spend C Coins to access <strong>{material.title}</strong>.
+        <h3 className="text-xl font-bold mb-2 text-on-surface">Unlock Required</h3>
+        <p className="text-outline mb-6 text-sm">
+          You need to spend C-Coins to access <strong className="text-on-surface">{material.title}</strong>.
         </p>
 
-        <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center mb-6 border border-gray-100">
-          <span className="text-sm font-medium text-gray-500">Required:</span>
+        <div className="bg-surface-container-lowest dark:bg-black/20 rounded-2xl p-4 flex justify-between items-center mb-6 border border-outline-variant/30 shadow-inner">
+          <span className="text-sm font-semibold text-outline">Required:</span>
           <div className="flex items-center gap-1 font-bold text-lg">
             <CCoinBadge balance={cost} className="shadow-none border-none bg-transparent px-0" />
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm flex items-center justify-center gap-2">
-            <AlertCircle size={16} /> {error}
+          <div className="mb-5 p-3 bg-error/10 text-error rounded-xl text-sm flex items-center justify-center gap-2 font-medium">
+            <AlertCircle size={18} /> {error}
           </div>
         )}
 
@@ -77,35 +131,40 @@ export default function UnlockMaterialModal({
             <button 
               onClick={handleUnlock}
               disabled={unlocking}
-              className="w-full py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-xl font-bold hover:from-amber-600 hover:to-yellow-600 transition shadow-lg shadow-amber-500/30 active:scale-95 disabled:opacity-70"
+              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-2xl font-bold hover:from-amber-600 hover:to-yellow-600 transition shadow-lg shadow-amber-500/30 active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
             >
-              {unlocking ? 'Unlocking...' : `Unlock for ${cost} Coins`}
+              {unlocking ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Unlocking...
+                </>
+              ) : `Unlock for ${cost} Coins`}
             </button>
             <button 
               onClick={onClose}
               disabled={unlocking}
-              className="w-full py-2 text-gray-500 font-medium hover:bg-gray-100 rounded-xl transition"
+              className="w-full py-3 text-outline font-bold hover:bg-surface-container-lowest rounded-2xl transition active:scale-95"
             >
               Cancel
             </button>
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-red-500 text-sm font-bold bg-red-50 p-3 rounded-lg border border-red-100">
+            <p className="text-error text-sm font-bold bg-error/10 p-3 rounded-xl border border-error/20">
               Insufficient Balance! You need {cost - userCoins} more C-Coins to unlock this material.
             </p>
             <button 
               onClick={() => {
                 onClose();
-                navigateTo('tasksHub');
+                navigateTo('/tasksHub');
               }}
-              className="w-full py-3 bg-primary-navy text-white rounded-xl font-bold hover:bg-[#112440] transition shadow-lg active:scale-95"
+              className="w-full py-3.5 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition shadow-lg active:scale-95"
             >
               Earn Coins (Weekly Tasks)
             </button>
             <button 
               onClick={onClose}
-              className="w-full py-2 text-gray-500 font-medium hover:bg-gray-100 rounded-xl transition"
+              className="w-full py-3 text-outline font-bold hover:bg-surface-container-lowest rounded-2xl transition active:scale-95"
             >
               Maybe Later
             </button>
