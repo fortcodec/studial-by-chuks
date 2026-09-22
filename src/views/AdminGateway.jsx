@@ -187,13 +187,25 @@ export default function AdminGateway() {
     if (!currentUser || !editingUser) return;
     setIsSubmitting(true);
     try {
+      const newCoins = parseInt(editForm.c_coins, 10);
+      const diff = newCoins - (editingUser.c_coins || 0);
+      
       const { error } = await supabase.rpc('admin_update_profile', {
         admin_id: currentUser.id,
         target_user_id: editingUser.id,
         new_role: editForm.role,
-        new_coins: parseInt(editForm.c_coins, 10)
+        new_coins: newCoins
       });
       if (error) throw error;
+      
+      // Log Transaction if coins changed
+      if (diff !== 0) {
+        await supabase.from('c_coin_transactions').insert({
+          user_id: editingUser.id,
+          amount: diff > 0 ? `+${diff} C` : `${diff} C`,
+          description: diff > 0 ? 'Admin Transfer (Credit)' : 'Admin Transfer (Debit)'
+        });
+      }
       
       alert('User updated successfully!');
       setEditingUser(null);

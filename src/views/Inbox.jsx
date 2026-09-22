@@ -230,7 +230,7 @@ export default function Inbox() {
                       <Bell className="w-4 h-4" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[13px] font-medium text-on-surface">{n.content}</span>
+                      <span className="text-[13px] font-medium text-slate-800 dark:text-slate-200">{n.message || n.content}</span>
                       <span className="text-[11px] text-outline mt-1">{new Date(n.created_at).toLocaleString()}</span>
                     </div>
                   </div>
