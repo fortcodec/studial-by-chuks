@@ -525,10 +525,10 @@ class CommentErrorBoundary extends React.Component {
                 ) : !comments || comments.length === 0 ? (
                   <div className="text-center py-4 text-outline text-sm font-medium">No answers yet. Be the first to help!</div>
                 ) : (
-                  comments.map((comment) => {
-                    if (!comment || !comment.content) return null;
-                    const isSamuel = comment.content.startsWith('[AI_SAMUEL_RESPONSE]');
-                    const cleanContent = isSamuel ? comment.content.replace('[AI_SAMUEL_RESPONSE]', '').trim() : comment.content;
+                  comments?.map?.((comment) => {
+                    if (!comment || !comment?.content) return null;
+                    const isSamuel = comment?.content?.startsWith('[AI_SAMUEL_RESPONSE]');
+                    const cleanContent = isSamuel ? comment?.content?.replace('[AI_SAMUEL_RESPONSE]', '').trim() : comment?.content;
                     return (
                       <div key={comment?.id || Math.random()} className="flex gap-3">
                         {isSamuel ? (
