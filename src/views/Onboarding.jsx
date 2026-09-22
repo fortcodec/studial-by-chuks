@@ -256,13 +256,13 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-background flex flex-col items-center justify-center py-10 px-4 relative font-inter">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-indigo-950/20 to-slate-950 flex flex-col items-center justify-center py-10 px-4 relative font-inter">
       
       {/* Back to Landing Page Button */}
       {!isVerificationRequired && (
         <button 
           onClick={() => navigate('/')}
-          className="absolute top-6 left-6 text-gray-500 hover:text-primary-navy flex items-center gap-2 transition font-medium"
+          className="absolute top-6 left-6 text-slate-400 hover:text-white flex items-center gap-2 transition font-medium"
         >
           <ArrowLeft size={20} /> Back
         </button>
