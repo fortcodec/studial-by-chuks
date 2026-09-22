@@ -175,6 +175,13 @@ export default function Layout() {
               description: 'Daily Login Bonus'
             });
             
+            // Insert Inbox Receipt
+            await supabase.from('notifications').insert({
+              user_id: user.id,
+              type: 'reward',
+              content: 'You received 2 C-Coins for logging in today!'
+            });
+            
             // 3. Show UI Banner
             if (isMounted) {
               setShowLoginReward(true);

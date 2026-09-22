@@ -114,7 +114,7 @@ class CommentErrorBoundary extends React.Component {
         } else {
           // Shadow Ban Logic: Filter out shadow-banned users' comments, unless it belongs to the current user
           const filteredComments = (data || []).filter(comment => 
-            !comment.profiles?.is_shadow_banned || comment.author_id === currentUser?.id
+            !comment?.profiles?.is_shadow_banned || comment?.author_id === currentUser?.id
           );
           setComments(filteredComments);
         }

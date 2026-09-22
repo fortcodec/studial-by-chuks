@@ -78,10 +78,10 @@ export default function Dashboard() {
           
         if (error) {
           console.error("Error fetching posts:", error);
-        } else if (data && isMounted) {
+        } else if (isMounted) {
           // Shadow Ban Logic: Filter out shadow-banned users' posts, unless it belongs to the current user
-          const filteredPosts = data.filter(post => 
-            !post.profiles?.is_shadow_banned || post.user_id === currentUser?.id
+          const filteredPosts = (data || []).filter(post => 
+            !post?.profiles?.is_shadow_banned || post?.user_id === currentUser?.id
           );
           
           setPosts(filteredPosts);
