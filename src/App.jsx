@@ -31,21 +31,13 @@ const PageLoader = () => (
   </div>
 );
 
-function App() {
-  const [darkMode, setDarkMode] = useState(false);
+import { ThemeProvider } from './components/ThemeProvider';
+
+function AppContent() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check localStorage for theme
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-      setDarkMode(true);
-    } else {
-      document.documentElement.classList.remove('dark');
-      setDarkMode(false);
-    }
-    
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
@@ -66,7 +58,7 @@ function App() {
   }
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+    <div className="min-h-screen bg-background text-on-surface transition-colors duration-200">
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -110,4 +102,10 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}

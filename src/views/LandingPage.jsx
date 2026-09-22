@@ -86,7 +86,7 @@ export default function LandingPage() {
 
       {/* Mobile Dropdown Menu */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-20 left-0 w-full bg-white shadow-lg border-b border-gray-100 z-20 origin-top animate-in fade-in slide-in-from-top-5 duration-200">
+        <div className="md:hidden absolute top-20 left-0 w-full bg-white dark:bg-slate-800 shadow-lg border-b border-gray-100 z-20 origin-top animate-in fade-in slide-in-from-top-5 duration-200">
           <div className="flex flex-col p-4 text-center font-medium text-gray-600 space-y-2">
             <a 
               href="#" 
@@ -126,12 +126,13 @@ export default function LandingPage() {
           <BookOpen size={48} />
         </div>
         
-        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-6 tracking-tight max-w-4xl mx-auto leading-tight">
-          Your free campus study library <br className="hidden md:block" />
-          <span className="text-emerald-500">and social hub.</span>
+        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-slate-100 dark:text-slate-100 mb-6 tracking-tight max-w-4xl mx-auto leading-tight">
+          Your Campus, 
+          <span className="bg-gradient-to-r from-primary to-primary-container bg-clip-text text-transparent block md:inline md:ml-4 drop-shadow-sm">
+            Connected.
+          </span>
         </h1>
-        
-        <p className="text-lg md:text-xl text-slate-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 dark:text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed">
           Access past questions, lecture notes, and collaborate with course mates across your university in one centralized platform.
         </p>
 
@@ -140,7 +141,7 @@ export default function LandingPage() {
           <div className="w-full max-w-5xl mx-auto mt-4 mb-14 overflow-hidden relative" style={{ maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)' }}>
             <div className="flex gap-4 animate-marquee whitespace-nowrap w-max">
               {[...recentPosts, ...recentPosts].map((post, idx) => (
-                <div key={`${post.id}-${idx}`} className="inline-flex items-start gap-3 bg-white/80 backdrop-blur border border-white/50 p-4 rounded-2xl shadow-sm shadow-indigo-100/50 min-w-[280px] max-w-[280px] whitespace-normal text-left transition-transform hover:-translate-y-1">
+                <div key={`${post.id}-${idx}`} className="inline-flex items-start gap-3 bg-white dark:bg-slate-800/80 backdrop-blur border border-white/50 p-4 rounded-2xl shadow-sm shadow-indigo-100/50 min-w-[280px] max-w-[280px] whitespace-normal text-left transition-transform hover:-translate-y-1">
                   {post?.profiles?.avatar_url ? (
                     <img src={post?.profiles?.avatar_url} alt="avatar" className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-gray-100" />
                   ) : (
@@ -150,7 +151,7 @@ export default function LandingPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-bold text-slate-700 mb-1 truncate">@{post.profiles?.username || 'student'}</p>
-                    <p className="text-[13px] text-slate-600 line-clamp-2 leading-snug">{post.content}</p>
+                    <p className="text-[13px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-snug">{post.content}</p>
                   </div>
                 </div>
               ))}
@@ -168,7 +169,7 @@ export default function LandingPage() {
           
           <button 
             onClick={() => navigate('/login')}
-            className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 px-10 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+            className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-900 dark:text-slate-100 border border-slate-200 px-10 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
           >
             <LogIn size={20} /> Log In
           </button>
@@ -176,7 +177,7 @@ export default function LandingPage() {
       </main>
 
       {/* About Section */}
-      <section id="about" className="bg-white py-24 px-4 border-t border-gray-100">
+      <section id="about" className="bg-white dark:bg-slate-800 py-24 px-4 border-t border-gray-100">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 items-center">
           
           {/* Left Column: Image */}

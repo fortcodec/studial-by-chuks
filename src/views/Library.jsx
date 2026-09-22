@@ -81,26 +81,38 @@ export default function Library() {
     
     try {
       if (isSaved) {
-        const { error } = await supabase.from('saved_materials').delete().eq('user_id', currentUser.id).eq('material_id', materialId);
-        if (error) throw error;
-        
+        // Optimistic update
         const newSaved = new Set(savedMaterials);
         newSaved.delete(materialId);
         setSavedMaterials(newSaved);
+        
+        const { error } = await supabase.from('saved_materials')
+          .delete()
+          .match({ user_id: currentUser.id, material_id: materialId });
+          
+        if (error) throw error;
+        
         setToastMessage({ type: 'success', text: 'Material removed from your profile' });
         setTimeout(() => setToastMessage(null), 3000);
       } else {
-        const { error } = await supabase.from('saved_materials').insert({ user_id: currentUser.id, material_id: materialId });
-        if (error) throw error;
-        
+        // Optimistic update
         const newSaved = new Set(savedMaterials);
         newSaved.add(materialId);
         setSavedMaterials(newSaved);
+        
+        // Upsert to avoid unique constraint violations if it already exists in DB but not state
+        const { error } = await supabase.from('saved_materials')
+          .upsert({ user_id: currentUser.id, material_id: materialId }, { onConflict: 'user_id,material_id' });
+          
+        if (error) throw error;
+        
         setToastMessage({ type: 'success', text: 'Material saved to your profile!' });
         setTimeout(() => setToastMessage(null), 3000);
       }
     } catch (err) {
       console.error("Error toggling save", err);
+      // Revert optimistic update on failure
+      setSavedMaterials(new Set(savedMaterials));
       setToastMessage({ type: 'error', text: `Failed to save: ${err.message}` });
       setTimeout(() => setToastMessage(null), 5000);
     }

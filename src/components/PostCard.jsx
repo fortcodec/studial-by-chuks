@@ -11,6 +11,25 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
   const [isTipping, setIsTipping] = useState(false);
   const [tipStatus, setTipStatus] = useState(null);
 
+class CommentErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("Comment error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return <div className="p-4 text-error text-sm text-center">Failed to load comments.</div>;
+    }
+    return this.props.children;
+  }
+}
+
   // Interactivity States
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(stats?.upvotes || 0);
@@ -92,9 +111,9 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
         if (error) {
           console.error("Error fetching comments:", error);
           setCommentsError(error.message);
-        } else if (data) {
+        } else {
           // Shadow Ban Logic: Filter out shadow-banned users' comments, unless it belongs to the current user
-          const filteredComments = data.filter(comment => 
+          const filteredComments = (data || []).filter(comment => 
             !comment.profiles?.is_shadow_banned || comment.author_id === currentUser?.id
           );
           setComments(filteredComments);
@@ -484,105 +503,107 @@ export const PostCard = React.memo(function PostCard({ postId, type, author, cou
 
       {/* Comments Drawer / Modal */}
       {isCommentsOpen && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-surface w-full h-[65%] rounded-t-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300">
-            <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low rounded-t-3xl">
-              <h3 className="font-bold text-on-surface">{commentCount || 0} Answers</h3>
-              <button onClick={() => setIsCommentsOpen(false)} className="text-outline hover:text-on-surface p-1.5 rounded-full hover:bg-surface-container transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-safe">
-              {isLoadingComments ? (
-                <div className="text-center py-4 text-outline text-sm flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Loading answers...
-                </div>
-              ) : commentsError ? (
-                <div className="text-center py-4 text-red-500 text-sm bg-red-50 rounded-lg border border-red-100">
-                  <span className="font-semibold">Error:</span> {commentsError}
-                </div>
-              ) : !comments || comments.length === 0 ? (
-                <div className="text-center py-4 text-outline text-sm font-medium">No answers yet. Be the first to help!</div>
-              ) : (
-                comments.map((comment) => {
-                  if (!comment || !comment.content) return null;
-                  const isSamuel = comment.content.startsWith('[AI_SAMUEL_RESPONSE]');
-                  const cleanContent = isSamuel ? comment.content.replace('[AI_SAMUEL_RESPONSE]', '').trim() : comment.content;
-                  return (
-                    <div key={comment?.id || Math.random()} className="flex gap-3">
-                      {isSamuel ? (
-                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-600">
-                          <Bot className="w-4 h-4" />
-                        </div>
-                      ) : (
-                        <Avatar url={comment?.profiles?.avatar_url} name={comment?.profiles?.username || comment?.profiles?.full_name} size="sm" />
-                      )}
-                      <div className={`border rounded-2xl rounded-tl-sm px-4 py-2 flex-grow ${isSamuel ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 border-indigo-200 shadow-md' : 'bg-surface-container-lowest border-outline-variant/30'}`}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[13px] font-bold ${isSamuel ? 'text-indigo-700' : 'text-on-surface'}`}>
-                            {isSamuel ? 'Samuel' : (comment?.profiles?.full_name || comment?.profiles?.username || 'Anonymous')}
-                          </span>
-                          {isSamuel && (
-                            <span className="bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-1 border border-indigo-200 dark:border-indigo-700 uppercase tracking-wider">
-                              ✨ AI Assistant
+        <CommentErrorBoundary>
+          <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-surface w-full h-[65%] rounded-t-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300">
+              <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low rounded-t-3xl">
+                <h3 className="font-bold text-on-surface">{commentCount || 0} Answers</h3>
+                <button onClick={() => setIsCommentsOpen(false)} className="text-outline hover:text-on-surface p-1.5 rounded-full hover:bg-surface-container transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-safe">
+                {isLoadingComments ? (
+                  <div className="text-center py-4 text-outline text-sm flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading answers...
+                  </div>
+                ) : commentsError ? (
+                  <div className="text-center py-4 text-red-500 text-sm bg-red-50 rounded-lg border border-red-100">
+                    <span className="font-semibold">Error:</span> {commentsError}
+                  </div>
+                ) : !comments || comments.length === 0 ? (
+                  <div className="text-center py-4 text-outline text-sm font-medium">No answers yet. Be the first to help!</div>
+                ) : (
+                  comments.map((comment) => {
+                    if (!comment || !comment.content) return null;
+                    const isSamuel = comment.content.startsWith('[AI_SAMUEL_RESPONSE]');
+                    const cleanContent = isSamuel ? comment.content.replace('[AI_SAMUEL_RESPONSE]', '').trim() : comment.content;
+                    return (
+                      <div key={comment?.id || Math.random()} className="flex gap-3">
+                        {isSamuel ? (
+                          <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-600">
+                            <Bot className="w-4 h-4" />
+                          </div>
+                        ) : (
+                          <Avatar url={comment?.profiles?.avatar_url} name={comment?.profiles?.username || comment?.profiles?.full_name} size="sm" />
+                        )}
+                        <div className={`border rounded-2xl rounded-tl-sm px-4 py-2 flex-grow ${isSamuel ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 border-indigo-200 shadow-md' : 'bg-surface-container-lowest border-outline-variant/30'}`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-[13px] font-bold ${isSamuel ? 'text-indigo-700' : 'text-on-surface'}`}>
+                              {isSamuel ? 'Samuel' : (comment?.profiles?.full_name || comment?.profiles?.username || 'Anonymous')}
                             </span>
-                          )}
-                          <span className="text-[11px] text-outline ml-1">
-                            {comment?.created_at ? new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                          </span>
-                        </div>
-                        <div className={`text-sm markdown-body ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>
-                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                            {cleanContent || ''}
-                          </ReactMarkdown>
+                            {isSamuel && (
+                              <span className="bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-1 border border-indigo-200 dark:border-indigo-700 uppercase tracking-wider">
+                                ✨ AI Assistant
+                              </span>
+                            )}
+                            <span className="text-[11px] text-outline ml-1">
+                              {comment?.created_at ? new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </span>
+                          </div>
+                          <div className={`text-sm markdown-body ${isSamuel ? 'text-indigo-900 leading-relaxed font-medium' : 'text-on-surface-variant'}`}>
+                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                              {cleanContent || ''}
+                            </ReactMarkdown>
+                          </div>
                         </div>
                       </div>
+                    );
+                  })
+                )}
+                {isAITyping && (
+                  <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-400">
+                      <Bot className="w-4 h-4 animate-pulse" />
                     </div>
-                  );
-                })
-              )}
-              {isAITyping && (
-                <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm border border-indigo-400">
-                    <Bot className="w-4 h-4 animate-pulse" />
+                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 border border-indigo-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-md flex items-center">
+                      <p className="text-sm text-indigo-900 dark:text-indigo-200 font-medium flex items-center gap-1">
+                        Samuel is typing
+                        <span className="flex space-x-1 ml-1">
+                          <span className="animate-bounce delay-75">.</span>
+                          <span className="animate-bounce delay-150">.</span>
+                          <span className="animate-bounce delay-300">.</span>
+                        </span>
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 border border-indigo-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-md flex items-center">
-                    <p className="text-sm text-indigo-900 dark:text-indigo-200 font-medium flex items-center gap-1">
-                      Samuel is typing
-                      <span className="flex space-x-1 ml-1">
-                        <span className="animate-bounce delay-75">.</span>
-                        <span className="animate-bounce delay-150">.</span>
-                        <span className="animate-bounce delay-300">.</span>
-                      </span>
-                    </p>
+                )}
+              </div>
+  
+              <div className="p-4 border-t border-outline-variant/30 bg-surface">
+                <form onSubmit={handleSubmitComment} className="flex gap-3">
+                  <div className="flex-grow flex items-center bg-surface-container-low border border-outline-variant/40 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                    <input
+                      type="text"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Write an answer, or tag @Samuel for help..."
+                      className="w-full bg-transparent border-none outline-none text-sm text-on-surface placeholder-outline"
+                    />
+                    <button 
+                      type="submit"
+                      disabled={!newComment.trim()}
+                      className="ml-2 text-primary hover:text-primary-container disabled:opacity-40 transition-colors"
+                    >
+                      <Send className="w-5 h-5" />
+                    </button>
                   </div>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 border-t border-outline-variant/30 bg-surface">
-              <form onSubmit={handleSubmitComment} className="flex gap-3">
-                <div className="flex-grow flex items-center bg-surface-container-low border border-outline-variant/40 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write an answer, or tag @Samuel for help..."
-                    className="w-full bg-transparent border-none outline-none text-sm text-on-surface placeholder-outline"
-                  />
-                  <button 
-                    type="submit"
-                    disabled={!newComment.trim()}
-                    className="ml-2 text-primary hover:text-primary-container disabled:opacity-40 transition-colors"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </div>
-              </form>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
+        </CommentErrorBoundary>
       )}
     </div>
   );
