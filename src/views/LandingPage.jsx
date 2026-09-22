@@ -193,15 +193,15 @@ export default function LandingPage() {
           {/* Right Column: Text Content */}
           <div className="text-left space-y-6">
             <div className="space-y-2">
-              <h2 className="text-3xl md:text-4xl font-bold text-primary-navy tracking-tight">
+              <h2 className="text-3xl md:text-4xl font-bold text-primary-navy dark:text-slate-100 tracking-tight">
                 Digital Empowerment: Our Vision.
               </h2>
-              <h3 className="text-xl font-semibold text-secondary-green">
+              <h3 className="text-xl font-semibold text-secondary-green dark:text-emerald-400">
                 Built by Students, For Students.
               </h3>
             </div>
             
-            <p className="text-gray-600 leading-relaxed text-lg">
+            <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
               Studial isn't just a website; it's an answer to a challenge faced by every student in Nigerian tertiary institutions. We understand the frustration of hunts for past questions and study materials. That's why we built this unified platform. Our vision is to empower students by providing a filtered, free, and accessible library of academic materials tailored exactly to your department.
             </p>
 
