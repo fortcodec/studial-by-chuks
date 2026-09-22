@@ -522,10 +522,11 @@ class CommentErrorBoundary extends React.Component {
                   <div className="text-center py-4 text-red-500 text-sm bg-red-50 rounded-lg border border-red-100">
                     <span className="font-semibold">Error:</span> {commentsError}
                   </div>
-                ) : !comments || comments.length === 0 ? (
-                  <div className="text-center py-4 text-outline text-sm font-medium">No answers yet. Be the first to help!</div>
                 ) : (
-                  comments?.map?.((comment) => {
+                  (() => {
+                    const safeComments = Array.isArray(comments) ? comments : [];
+                    if (safeComments.length === 0) return <div className="text-center py-4 text-outline text-sm font-medium">No answers yet. Be the first to help!</div>;
+                    return safeComments.map((comment) => {
                     if (!comment || !comment?.content) return null;
                     const isSamuel = comment?.content?.startsWith('[AI_SAMUEL_RESPONSE]');
                     const cleanContent = isSamuel ? comment?.content?.replace('[AI_SAMUEL_RESPONSE]', '').trim() : comment?.content;
@@ -561,6 +562,7 @@ class CommentErrorBoundary extends React.Component {
                       </div>
                     );
                   })
+                  })()
                 )}
                 {isAITyping && (
                   <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2">
