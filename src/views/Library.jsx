@@ -19,6 +19,9 @@ export default function Library() {
   const [unlockModalOpen, setUnlockModalOpen] = useState(false);
   const [selectedMaterialForUnlock, setSelectedMaterialForUnlock] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  // In-flight lock: tracks which materialIds currently have a save/unsave in progress
+  // Using a ref (not state) so it doesn't trigger re-renders
+  const savingInFlight = React.useRef(new Set());
 
   // Check if admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
@@ -76,51 +79,67 @@ export default function Library() {
   }, [currentUser]);
 
   const handleToggleSave = async (materialId) => {
-    if (!currentUser) return;
-    
+    if (!currentUser?.id) return;
+
+    // ── Race-condition guard ──────────────────────────────────────────────────
+    // If a save/unsave for this exact material is already in flight, bail out.
+    // This prevents double-click from firing two INSERT calls that both see
+    // existingSave = null and then both try to INSERT → duplicate key error.
+    if (savingInFlight.current.has(materialId)) return;
+    savingInFlight.current.add(materialId);
+
+    // ── Dismiss any stale toast first ─────────────────────────────────────────
+    setToastMessage(null);
+
+    // ── Determine intended action from current local state ───────────────────
+    const alreadySaved = savedMaterials.has(materialId);
+
+    // ── Optimistic UI update (instant feedback) ───────────────────────────────
+    setSavedMaterials(prev => {
+      const next = new Set(prev);
+      if (alreadySaved) next.delete(materialId);
+      else next.add(materialId);
+      return next;
+    });
+
     try {
-      // 1. Run a select to check if the user already saved the material
-      const { data: existingSave, error: fetchError } = await supabase
-        .from('saved_materials')
-        .select('id')
-        .eq('user_id', currentUser.id)
-        .eq('material_id', materialId)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      if (existingSave) {
-        // 2. If true, run a delete query to unsave it
+      if (alreadySaved) {
+        // ── UNSAVE: delete by composite key ─────────────────────────────────
         const { error: deleteError } = await supabase
           .from('saved_materials')
           .delete()
           .eq('user_id', currentUser.id)
           .eq('material_id', materialId);
-          
+
         if (deleteError) throw deleteError;
-        
-        const newSaved = new Set(savedMaterials);
-        newSaved.delete(materialId);
-        setSavedMaterials(newSaved);
-        setToastMessage({ type: 'success', text: 'Material removed from your profile' });
+        setToastMessage({ type: 'success', text: 'Removed from your saved materials.' });
       } else {
-        // 3. If false, run the insert query
+        // ── SAVE: upsert so a race still only produces one row ───────────────
         const { error: insertError } = await supabase
           .from('saved_materials')
-          .insert({ user_id: currentUser.id, material_id: materialId });
-          
+          .upsert(
+            { user_id: currentUser.id, material_id: materialId },
+            { onConflict: 'user_id,material_id', ignoreDuplicates: true }
+          );
+
         if (insertError) throw insertError;
-        
-        const newSaved = new Set(savedMaterials);
-        newSaved.add(materialId);
-        setSavedMaterials(newSaved);
         setToastMessage({ type: 'success', text: 'Material saved to your profile!' });
       }
       setTimeout(() => setToastMessage(null), 3000);
     } catch (err) {
-      console.error("Error toggling save", err);
-      setToastMessage({ type: 'error', text: `Failed to save: ${err.message}` });
+      console.error('Error toggling save:', err);
+      // ── Roll back the optimistic update on failure ────────────────────────
+      setSavedMaterials(prev => {
+        const rollback = new Set(prev);
+        if (alreadySaved) rollback.add(materialId);    // restore saved state
+        else rollback.delete(materialId);               // restore unsaved state
+        return rollback;
+      });
+      setToastMessage({ type: 'error', text: `Failed: ${err.message}` });
       setTimeout(() => setToastMessage(null), 5000);
+    } finally {
+      // Always release the lock when done
+      savingInFlight.current.delete(materialId);
     }
   };
 
