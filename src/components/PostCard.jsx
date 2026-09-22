@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ThumbsUp, MessageSquare, Bookmark, Share2, Radio, Send, Bot, X } from 'lucide-react';
+import { ThumbsUp, MessageSquare, Bookmark, Share2, Radio, Send, Bot, X, Loader2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { askSamuel, getSamuelProfileId } from '../utils/gemini';
 import { Avatar } from './Avatar';
@@ -7,20 +7,18 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-export const PostCard = React.memo(function PostCard({ postId, type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, onOpenQuiz, onDelete, ...props }) {
-  const [isTipping, setIsTipping] = useState(false);
-  const [tipStatus, setTipStatus] = useState(null);
 
+// ─── CommentErrorBoundary must live at module scope, NOT inside PostCard ───
 class CommentErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false };
   }
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
   componentDidCatch(error, errorInfo) {
-    console.error("Comment error:", error, errorInfo);
+    console.error('Comment error:', error, errorInfo);
   }
   render() {
     if (this.state.hasError) {
@@ -29,6 +27,10 @@ class CommentErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+export const PostCard = React.memo(function PostCard({ postId, type, author, course, topic, timeAgo, content, stats, currentUser, authorId, onTipSuccess, onOpenQuiz, onDelete, ...props }) {
+  const [isTipping, setIsTipping] = useState(false);
+  const [tipStatus, setTipStatus] = useState(null);
 
   // Interactivity States
   const [isLiked, setIsLiked] = useState(false);
@@ -89,7 +91,7 @@ class CommentErrorBoundary extends React.Component {
           }
         }
       } catch (err) {
-        console.error("Error fetching interactions", err);
+        console.error('Error fetching interactions', err);
       }
     };
     fetchInteractions();
@@ -109,7 +111,7 @@ class CommentErrorBoundary extends React.Component {
           .order('created_at', { ascending: true });
         
         if (error) {
-          console.error("Error fetching comments:", error);
+          console.error('Error fetching comments:', error);
           setCommentsError(error.message);
         } else {
           // Shadow Ban Logic: Filter out shadow-banned users' comments, unless it belongs to the current user
@@ -156,8 +158,8 @@ class CommentErrorBoundary extends React.Component {
       });
       setUserVote(optionIndex);
     } catch (err) {
-      console.error("Voting error", err);
-      alert("Failed to record vote: " + err.message);
+      console.error('Voting error', err);
+      alert('Failed to record vote: ' + err.message);
     } finally {
       setIsVoting(false);
     }
@@ -183,7 +185,7 @@ class CommentErrorBoundary extends React.Component {
       setIsLiked(newStatus);
       setLikeCount(newCount);
     } catch (err) {
-      console.error("Error toggling like:", err);
+      console.error('Error toggling like:', err);
       alert(`Failed to toggle like: ${err.message}`);
     }
   };
@@ -202,7 +204,7 @@ class CommentErrorBoundary extends React.Component {
       }
       setIsSaved(newStatus);
     } catch (err) {
-      console.error("Error toggling save:", err);
+      console.error('Error toggling save:', err);
       alert(`Failed to toggle save: ${err.message}`);
     }
   };
@@ -222,12 +224,12 @@ class CommentErrorBoundary extends React.Component {
   };
 
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this post?")) {
+    if (window.confirm('Are you sure you want to delete this post?')) {
       const { error } = await supabase.from('posts').delete().eq('id', postId);
       if (!error && onDelete) {
         onDelete(postId);
       } else if (error) {
-        alert("Failed to delete post: " + error.message);
+        alert('Failed to delete post: ' + error.message);
       }
     }
     setIsMenuOpen(false);
@@ -235,11 +237,11 @@ class CommentErrorBoundary extends React.Component {
 
   const handleTip = async () => {
     if (!currentUser || !authorId) {
-      alert("Unable to process tip at this moment.");
+      alert('Unable to process tip at this moment.');
       return;
     }
     if (currentUser.id === authorId) {
-      alert("You cannot tip yourself!");
+      alert('You cannot tip yourself!');
       return;
     }
     
@@ -266,7 +268,7 @@ class CommentErrorBoundary extends React.Component {
       setTimeout(() => setTipStatus(null), 3000);
       
     } catch (err) {
-      alert(err.message || "Failed to tip. Insufficient C Coins?");
+      alert(err.message || 'Failed to tip. Insufficient C Coins?');
     } finally {
       setIsTipping(false);
     }
@@ -287,7 +289,7 @@ class CommentErrorBoundary extends React.Component {
     }]).select('id, content, created_at, is_ai_response, profiles!author_id(id, username, full_name, avatar_url, department)').single();
 
     if (error) {
-      console.error("Error posting comment:", error);
+      console.error('Error posting comment:', error);
       alert(`Failed to post comment: ${error.message}`);
       setNewComment(text); // Restore text on failure
     } else if (insertedComment) {
@@ -318,16 +320,14 @@ class CommentErrorBoundary extends React.Component {
               
               if (aiError) {
                 console.error("Database error saving Samuel's comment:", aiError);
-                alert(`Failed to save AI comment: ${aiError.message}`);
               } else if (insertedAiComment) {
                 setComments(prev => [...prev, insertedAiComment]);
                 setCommentCount(prev => prev + 1);
-                await supabase.from('posts').update({ comments: commentCount + 2 }).eq('id', postId); // +2 because user comment + AI comment
+                await supabase.from('posts').update({ comments: commentCount + 2 }).eq('id', postId);
               }
             }
           } catch (err) {
-            console.error("Samuel failed to respond:", err);
-            alert(`Samuel failed to respond: ${err.message || 'Check console'}`);
+            console.error('Samuel failed to respond:', err);
           } finally {
             setIsAITyping(false);
           }
@@ -454,8 +454,7 @@ class CommentErrorBoundary extends React.Component {
                 const { data: insertedAiComment, error: aiError } = await supabase.from('post_comments').insert([aiComment]).select('id, content, created_at, is_ai_response, profiles!author_id(id, username, full_name, avatar_url, department)').single();
                 
                 if (aiError) {
-                  console.error("Error posting AI comment:", aiError);
-                  alert(`Failed to post AI comment: ${aiError.message}`);
+                  console.error('Error posting AI comment:', aiError);
                 } else if (insertedAiComment) {
                   setComments(prev => [...prev, insertedAiComment]);
                   setCommentCount(prev => prev + 1);
@@ -463,7 +462,7 @@ class CommentErrorBoundary extends React.Component {
                 }
               }
             } catch (err) {
-              console.error("AI Error:", err);
+              console.error('AI Error:', err);
             } finally {
               setIsAITyping(false);
             }

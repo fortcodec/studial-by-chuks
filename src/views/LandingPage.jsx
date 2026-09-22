@@ -28,7 +28,6 @@ export default function LandingPage() {
       const { data, error } = await supabase
         .from('posts')
         .select('id, content, profiles!user_id(username, avatar_url)')
-        .eq('is_shadow_banned', false)
         .order('created_at', { ascending: false })
         .limit(6);
 
