@@ -81,6 +81,7 @@ function AppContent() {
                     <Route path="/chat/:conversationId" element={<ChatRoom />} />
                     <Route path="/profile" element={<ProfileView />} />
                     <Route path="/profile/:id" element={<ProfileView />} />
+                    <Route path="/user/:username" element={<ProfileView />} />
                     <Route path="/library" element={<Library />} />
                     <Route path="/studyRoom" element={<StudyRoom />} />
                     <Route path="/tasksHub" element={<TasksHub />} />

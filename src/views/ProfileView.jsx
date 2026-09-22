@@ -24,9 +24,10 @@ import { PostCard } from "../components/PostCard";
 export default function ProfileView() {
   const { currentUser } = useOutletContext();
   const navigate = useNavigate();
-  const { id: profileId } = useParams();
+  const { id: profileId, username: profileUsername } = useParams();
 
   const [isOwnProfile, setIsOwnProfile] = useState(true);
+  const [resolvedUserId, setResolvedUserId] = useState(null);
 
   const [email, setEmail] = useState("");
   const [department, setDepartment] = useState("");
@@ -106,36 +107,64 @@ export default function ProfileView() {
       setIsLoading(true);
       try {
         const {
-          data: { user },
+          data: { user: authUser },
         } = await supabase.auth.getUser();
 
-        const targetId = profileId || user?.id;
-        const isCurrent = !profileId || profileId === user?.id;
-        setIsOwnProfile(isCurrent);
+        const param = profileId || profileUsername;
+        let targetId = null;
+        let targetProfile = null;
+
+        if (param) {
+          // Check if param is a valid UUID
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
+          let query = supabase.from("profiles").select("*");
+          if (isUuid) {
+            query = query.eq("id", param);
+          } else {
+            query = query.ilike("username", param);
+          }
+          const { data, error } = await query.maybeSingle();
+          if (error) {
+            console.error("Error fetching target profile:", error);
+          }
+          if (data) {
+            targetProfile = data;
+            targetId = data.id;
+          } else {
+            // Fallback if not found: check if UUID
+            targetId = param;
+          }
+        } else {
+          // No URL param: view own profile from authenticated user
+          targetId = authUser?.id || currentUser?.id;
+          if (targetId) {
+            const { data } = await supabase.from("profiles").select("*").eq("id", targetId).maybeSingle();
+            targetProfile = data;
+          }
+        }
+
+        const isCurrent = !param || targetId === authUser?.id || targetId === currentUser?.id;
+        if (isMounted) {
+          setIsOwnProfile(isCurrent);
+          setResolvedUserId(targetId);
+        }
 
         if (targetId && isMounted) {
-          if (isCurrent && user) {
-            setEmail(user.email);
+          if (isCurrent && authUser) {
+            setEmail(authUser.email);
           }
 
-          // Fetch additional profile data
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("department, username, university, full_name, avatar_url")
-            .eq("id", targetId)
-            .single();
-
-          if (profile && isMounted) {
-            setDepartment(profile.department || "Computer Science");
-            setFullName(profile.full_name || "");
-            setUsername(profile.username || "");
-            setTargetAvatarUrl(profile.avatar_url || "");
+          if (targetProfile) {
+            setDepartment(targetProfile.department || "Computer Science");
+            setFullName(targetProfile.full_name || "");
+            setUsername(targetProfile.username || "");
+            setTargetAvatarUrl(targetProfile.avatar_url || "");
             setEditForm({
-              username: profile.username || "",
-              department: profile.department || "",
-              university: profile.university || "",
-              full_name: profile.full_name || "",
-              bio: profile.bio || "",
+              username: targetProfile.username || "",
+              department: targetProfile.department || "",
+              university: targetProfile.university || "",
+              full_name: targetProfile.full_name || "",
+              bio: targetProfile.bio || "",
             });
           }
 
@@ -156,7 +185,7 @@ export default function ProfileView() {
             transactionData = data || [];
           }
 
-          // Fetch My Posts
+          // Fetch target user's Posts
           setIsMyPostsLoading(true);
           const { data: postsData } = await supabase
             .from("posts")
@@ -169,14 +198,13 @@ export default function ProfileView() {
           if (isMounted) {
             setStats({
               posts: postsCount || 0,
-              quizzes: 0, // Default to 0
-              studyHours: 0, // Default to 0
+              quizzes: 0,
+              studyHours: 0,
             });
 
             setMyPosts(postsData || []);
             setIsMyPostsLoading(false);
 
-            // Map the DB format to the UI format
             if (transactionData) {
               setTransactions(
                 transactionData.map((tx) => ({
@@ -203,7 +231,7 @@ export default function ProfileView() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [profileId, profileUsername, currentUser?.id]);
 
   const handleLogout = async () => {
     try {
@@ -216,7 +244,8 @@ export default function ProfileView() {
   };
 
   const handleStartConversation = async () => {
-    if (!currentUser?.id || !profileId) return;
+    const peerId = resolvedUserId || profileId;
+    if (!currentUser?.id || !peerId) return;
     setIsStartingChat(true);
     
     try {
@@ -224,7 +253,7 @@ export default function ProfileView() {
       const { data: existingConvs, error: existingError } = await supabase
         .from("conversations")
         .select("id")
-        .or(`and(user1_id.eq.${currentUser.id},user2_id.eq.${profileId}),and(user1_id.eq.${profileId},user2_id.eq.${currentUser.id})`)
+        .or(`and(user1_id.eq.${currentUser.id},user2_id.eq.${peerId}),and(user1_id.eq.${peerId},user2_id.eq.${currentUser.id})`)
         .limit(1);
         
       if (existingError) throw existingError;
@@ -238,7 +267,7 @@ export default function ProfileView() {
           .from("conversations")
           .insert({
             user1_id: currentUser.id,
-            user2_id: profileId
+            user2_id: peerId
           })
           .select("id")
           .single();

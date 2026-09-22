@@ -136,14 +136,14 @@ export default function ChatRoom() {
 
   if (isLoading && !otherUser) {
     return (
-      <div className="flex h-[calc(100vh-64px)] md:h-screen w-full items-center justify-center bg-background md:border-x border-outline-variant/30">
+      <div className="flex h-[100dvh] w-full items-center justify-center bg-background md:border-x border-outline-variant/30">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] md:h-screen w-full max-w-2xl mx-auto bg-background md:border-x border-outline-variant/30">
+    <div className="flex flex-col h-[100dvh] w-full max-w-2xl mx-auto bg-background md:border-x border-outline-variant/30">
       
       {/* TikTok-Style Chat Header */}
       <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 px-4 py-2.5 flex items-center gap-3 shadow-sm">

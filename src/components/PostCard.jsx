@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ThumbsUp, MessageSquare, Bookmark, Share2, Send, Bot, X, Loader2, MoreVertical, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { askSamuel, getSamuelProfileId } from '../utils/gemini';
@@ -30,6 +31,7 @@ export const PostCard = React.memo(function PostCard({
   postId, type, author, course, timeAgo, content, stats,
   currentUser, authorId, onTipSuccess, onOpenQuiz, onDelete, ...props
 }) {
+  const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(stats?.upvotes || 0);
   const [commentCount, setCommentCount] = useState(stats?.answers || 0);
@@ -236,10 +238,17 @@ export const PostCard = React.memo(function PostCard({
 
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <Avatar url={author?.avatar} name={author?.name} size="md" className="border border-slate-700 shrink-0" />
+        <div 
+          onClick={() => {
+            if (authorId && author?.name !== 'Anonymous Student' && author?.name !== 'Anonymous') {
+              navigate(`/profile/${authorId}`);
+            }
+          }}
+          className={`flex items-center gap-3 ${authorId && author?.name !== 'Anonymous Student' ? 'cursor-pointer hover:opacity-90 group' : ''}`}
+        >
+          <Avatar url={author?.avatar} name={author?.name} size="md" className="border border-slate-700 shrink-0 group-hover:border-indigo-500 transition-colors" />
           <div>
-            <h3 className="font-bold text-slate-100 text-[15px] leading-tight">{author?.name || 'Anonymous'}</h3>
+            <h3 className="font-bold text-slate-100 text-[15px] leading-tight group-hover:text-indigo-400 transition-colors">{author?.name || 'Anonymous'}</h3>
             <p className="text-slate-500 text-[12px] font-medium">{course || 'General'} · {timeAgo || 'Just now'}</p>
           </div>
         </div>
