@@ -957,7 +957,8 @@ export default function AdminGateway() {
                 </div>
               )}
             </div>
-          )}
+          </div>
+        )}
 
           {activeTab === 'Gift Users' && (
             <GiftUsers users={users} fetchDashboardStats={fetchDashboardStats} />
