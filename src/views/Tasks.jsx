@@ -25,7 +25,7 @@ export default function Tasks() {
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
-        .eq('active', true)
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (tasksError) throw tasksError;
