@@ -102,6 +102,12 @@ export default function LandingPage() {
       {/* Mobile Dropdown Menu (Glassmorphic Slide-in) */}
       <div className={`md:hidden fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-xl transition-all duration-300 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
         <div className={`absolute right-0 top-0 bottom-0 w-64 bg-slate-900/90 border-l border-white/10 shadow-2xl p-6 flex flex-col pt-24 space-y-6 transition-transform duration-300 ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <button 
+            onClick={() => setIsMenuOpen(false)}
+            className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors p-2"
+          >
+            <X size={24} />
+          </button>
           <a href="#" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-slate-300 hover:text-white transition">Home</a>
           <a href="#features" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-slate-300 hover:text-white transition">Features</a>
           <a href="#gist" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-slate-300 hover:text-white transition">Campus Gist</a>
@@ -272,6 +278,10 @@ export default function LandingPage() {
         )}
       </section>
 
+      {/* FortCodec Footer */}
+      <footer className="w-full text-center text-sm text-slate-500 py-8 mt-12 border-t border-white/5">
+        &copy; {new Date().getFullYear()} FortCodec. All rights reserved.
+      </footer>
     </div>
   );
 }
