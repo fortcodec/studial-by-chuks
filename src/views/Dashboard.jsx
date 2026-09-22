@@ -175,7 +175,7 @@ export default function Dashboard() {
             <p className="text-sm mt-1">Be the first to share something!</p>
           </div>
         ) : (
-          posts.map((post, index) => {
+          posts?.map((post, index) => {
             if (!post) return null;
             return (
               <ErrorBoundary key={post?.id || index}>

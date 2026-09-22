@@ -521,7 +521,7 @@ export default function ProfileView() {
                 try {
                   const { data, error } = await supabase
                     .from("saved_materials")
-                    .select(`id, study_materials (*)`)
+                    .select('*, study_materials(*)')
                     .eq("user_id", currentUser.id)
                     .order("created_at", { ascending: false });
 
