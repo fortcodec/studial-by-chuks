@@ -86,13 +86,15 @@ export default async function handler(req) {
     }
 
     // 2. Prepare Gemini Client
-    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'AI API Key not configured' }), { 
+      console.error('[Samuel] FATAL: No Gemini API key found. Set GEMINI_API_KEY in Vercel environment variables.');
+      return new Response(JSON.stringify({ error: 'AI API Key not configured on server' }), { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
+    console.log('[Samuel] API key found, length:', apiKey.length);
 
     const ai = new GoogleGenAI({ apiKey });
     const systemInstruction = "You are Samuel, a smart student on Studial. Act like a peer (use mild Gen-Z slang if natural). Answer accurately and concisely. NEVER say you're an AI. Always finish sentences. Handle jokes lightly, then give real answers.";
@@ -100,7 +102,7 @@ export default async function handler(req) {
     // 3. Initiate Gemini Stream with Backoff
     const streamResponse = await fetchWithBackoff(async () => {
       return await ai.models.generateContentStream({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-2.0-flash',
         contents: prompt,
         config: {
           systemInstruction,
@@ -148,8 +150,21 @@ export default async function handler(req) {
     });
 
   } catch (error) {
-    console.error("Ask Samuel API Error:", error);
-    return new Response(JSON.stringify({ error: 'Internal server error', details: error.message }), { 
+    // ── Detailed error classification for Vercel logs ────────────────────────
+    const status = error?.status || error?.code || 'unknown';
+    const message = error?.message || String(error);
+
+    if (status === 401 || message.includes('API_KEY') || message.includes('INVALID_ARGUMENT')) {
+      console.error('[Samuel] AUTH ERROR (401/Invalid Key):', message);
+    } else if (status === 429 || message.includes('RESOURCE_EXHAUSTED') || message.includes('quota')) {
+      console.error('[Samuel] RATE LIMIT (429):', message);
+    } else if (message.toLowerCase().includes('timeout') || message.includes('DEADLINE_EXCEEDED')) {
+      console.error('[Samuel] TIMEOUT:', message);
+    } else {
+      console.error('[Samuel] UNEXPECTED ERROR:', status, message, error);
+    }
+
+    return new Response(JSON.stringify({ error: 'Internal server error', details: message, status }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

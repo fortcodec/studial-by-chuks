@@ -75,7 +75,15 @@ export default function AITutorView() {
       });
 
       if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
+        let errorDetail = `HTTP ${response.status}`;
+        try {
+          const errJson = await response.clone().json();
+          errorDetail = errJson?.error || errorDetail;
+          console.error(`[Samuel API Error] Status ${response.status}:`, errJson);
+        } catch (_) {
+          console.error(`[Samuel API Error] Status ${response.status} (non-JSON body)`);
+        }
+        throw new Error(errorDetail);
       }
 
       // Read the stream
@@ -115,15 +123,27 @@ export default function AITutorView() {
       }
       
     } catch (error) {
-      console.error("AI Streaming Error:", error);
+      console.error('[Samuel] Chat error:', error.message, error);
       setIsTyping(false);
+
+      // Build a user-facing message based on the error type
+      let userMessage = "Sorry, I couldn't connect to Samuel right now. Please try again in a moment!";
+      if (error.message?.includes('403') || error.message?.toLowerCase().includes('insufficient')) {
+        userMessage = "You don't have enough C-Coins for this query. Earn more by logging in daily!";
+      } else if (error.message?.includes('401') || error.message?.toLowerCase().includes('unauthorized')) {
+        userMessage = "Authentication error with the AI service. Please contact support.";
+      } else if (error.message?.includes('429') || error.message?.toLowerCase().includes('rate')) {
+        userMessage = "Samuel is getting too many requests right now. Please wait a moment and try again.";
+      } else if (error.message?.toLowerCase().includes('timeout') || error.message?.includes('408')) {
+        userMessage = "Samuel took too long to respond. Try a shorter or simpler question!";
+      }
       
       if (!startedStreaming) {
-         setMessages(prev => 
-           prev.map(msg => 
-             msg.id === aiMsgId ? { ...msg, text: "Sorry, I'm having trouble connecting right now or there was a timeout. Please try again!" } : msg
-           )
-         );
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === aiMsgId ? { ...msg, text: userMessage } : msg
+          )
+        );
       }
     }
   };
@@ -131,19 +151,19 @@ export default function AITutorView() {
   return (
     <div className="flex flex-col min-h-full pb-32">
       {/* Header Info Banner */}
-      <div className="bg-indigo-50/80 backdrop-blur-md border-b border-indigo-100 px-5 py-3 flex items-center justify-between sticky top-0 z-10">
+      <div className="bg-indigo-50/80 dark:bg-indigo-950/60 backdrop-blur-md border-b border-indigo-100 dark:border-indigo-900/50 px-5 py-3 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-sm">
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-indigo-900 leading-tight">Samuel</h3>
-            <p className="text-[10px] font-semibold text-indigo-500 uppercase tracking-wider">Always Online</p>
+            <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-100 leading-tight">Samuel</h3>
+            <p className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">Always Online</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-indigo-100">
+        <div className="flex items-center gap-1.5 bg-white dark:bg-indigo-900/50 px-3 py-1.5 rounded-full shadow-sm border border-indigo-100 dark:border-indigo-700">
           <Sparkles className="w-3.5 h-3.5 text-warning" />
-          <span className="text-xs font-bold text-indigo-900">Cost: {QUERY_COST} C</span>
+          <span className="text-xs font-bold text-indigo-900 dark:text-indigo-100">Cost: {QUERY_COST} C</span>
         </div>
       </div>
 
@@ -151,12 +171,19 @@ export default function AITutorView() {
       <div className="flex-1 px-5 py-6 space-y-6">
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${
-              msg.role === 'user' 
-                ? 'bg-primary text-white rounded-br-none' 
-                : 'bg-surface-container-low border border-outline-variant/30 text-on-surface rounded-bl-none'
+            {msg.role === 'ai' && (
+              <div className="w-7 h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0 mr-2 mt-1 shadow-sm">
+                <Bot className="w-4 h-4" />
+              </div>
+            )}
+            <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
+              msg.role === 'user'
+                ? 'bg-primary text-white rounded-br-none'
+                : 'bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-100 dark:border-indigo-800 rounded-bl-none'
             }`}>
-              <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+              <p className={`text-[15px] leading-relaxed whitespace-pre-wrap ${
+                msg.role === 'user' ? 'text-white' : 'text-slate-800 dark:text-slate-100'
+              }`}>{msg.text}</p>
             </div>
           </div>
         ))}

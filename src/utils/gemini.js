@@ -21,20 +21,21 @@ export async function askSamuel(prompt) {
     });
 
     const aiPromise = ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: 'gemini-2.0-flash',
       contents: prompt,
       config: {
         systemInstruction,
-        maxOutputTokens: 2048, // Increased from 800 to prevent truncation
+        maxOutputTokens: 2048,
       }
     });
 
     const response = await Promise.race([aiPromise, timeoutPromise]);
     return response.text;
   } catch (error) {
-    console.error("Error communicating with Samuel (Gemini API):", error);
-    // Return clean fallback instead of silently crashing
-    return "Samuel is currently overwhelmed with assignments and taking longer than usual to respond. Please try again in a moment!";
+    // Log the specific error so it's visible in browser DevTools
+    const errMsg = error?.message || String(error);
+    console.error('[Samuel/gemini.js] Error:', errMsg, error);
+    return `Samuel hit an error (${errMsg}). Please try again!`;
   }
 }
 
