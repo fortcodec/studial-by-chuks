@@ -27,6 +27,10 @@ export default function AdminGateway() {
   const [isDeletingId, setIsDeletingId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [contentSearchQuery, setContentSearchQuery] = useState('');
+  
+  // Reports State
+  const [postReports, setPostReports] = useState([]);
+  const [isReportsLoading, setIsReportsLoading] = useState(false);
 
   // Tasks State
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
@@ -48,6 +52,8 @@ export default function AdminGateway() {
   // Economy State
   const [weeklyCoinAmount, setWeeklyCoinAmount] = useState(500);
   const [isDistributingCoins, setIsDistributingCoins] = useState(false);
+  const [pendingDeposits, setPendingDeposits] = useState([]);
+  const [isDepositsLoading, setIsDepositsLoading] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -69,10 +75,13 @@ export default function AdminGateway() {
       fetchDashboardStats();
     } else if (activeTab === 'Users') {
       fetchUsers();
-    } else if (activeTab === 'Content Moderation') {
+    } else if (activeTab === 'Reports & Moderation') {
       fetchPosts();
+      fetchReports();
     } else if (activeTab === 'Tasks Manager') {
       fetchPendingSubmissions();
+    } else if (activeTab === 'Economy') {
+      fetchPendingDeposits();
     }
     
     // Set up Realtime subscriptions for Admin Live Data
@@ -84,10 +93,16 @@ export default function AdminGateway() {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
         if (activeTab === 'Dashboard') fetchDashboardStats();
-        if (activeTab === 'Content Moderation') fetchPosts();
+        if (activeTab === 'Reports & Moderation') fetchPosts();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'post_reports' }, () => {
+        if (activeTab === 'Reports & Moderation') fetchReports();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'task_submissions' }, () => {
         if (activeTab === 'Tasks Manager') fetchPendingSubmissions();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'c_coin_deposits' }, () => {
+        if (activeTab === 'Economy') fetchPendingDeposits();
       })
       .subscribe();
 
@@ -144,13 +159,33 @@ export default function AdminGateway() {
       if (error) {
         console.error("Error fetching posts:", error);
         alert("Failed to fetch posts for moderation.");
-      } else if (data) {
-        setPosts(data);
+      }      if (data) {
+        setPosts(data)
       }
     } catch (err) {
       console.error("Unexpected error in fetchPosts:", err);
     } finally {
       setIsPostsLoading(false);
+    }
+  };
+
+  const fetchReports = async () => {
+    setIsReportsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('post_reports')
+        .select(`*, reporter:profiles!reporter_id(full_name, username), post:posts(*)`)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error("Error fetching reports:", error);
+      }
+      setPostReports(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsReportsLoading(false);
     }
   };
 
@@ -260,14 +295,94 @@ export default function AdminGateway() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to distribute coins');
       
-      setToastMessage({ type: 'success', text: `Successfully distributed ${weeklyCoinAmount} C-Coins to all students!` });
-      setWeeklyCoinAmount(''); // Clear the input field after completion
-      setTimeout(() => setToastMessage(null), 5000);
+      setToastMessage({ type: 'success', text: `Successfully distributed ${weeklyCoinAmount} C-Coins to all users.` });
+      setTimeout(() => setToastMessage(null), 3000);
+      fetchDashboardStats();
     } catch (err) {
       setToastMessage({ type: 'error', text: err.message });
       setTimeout(() => setToastMessage(null), 5000);
     } finally {
       setIsDistributingCoins(false);
+    }
+  };
+
+  const fetchPendingDeposits = async () => {
+    setIsDepositsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('c_coin_deposits')
+        .select(`*, profiles!inner(full_name, username)`)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error("Error fetching deposits:", error);
+      }
+      setPendingDeposits(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsDepositsLoading(false);
+    }
+  };
+
+  const handleVerifyDeposit = async (depositId, userId, requestedCoins) => {
+    if (!window.confirm(`Are you sure you want to approve this deposit of ${requestedCoins} C-Coins?`)) return;
+    try {
+      // Approve deposit
+      const { error: updateError } = await supabase
+        .from('c_coin_deposits')
+        .update({ status: 'verified' })
+        .eq('id', depositId);
+      if (updateError) throw updateError;
+
+      // Update user coins
+      const { data: userData, error: fetchError } = await supabase
+        .from('profiles')
+        .select('c_coins')
+        .eq('id', userId)
+        .single();
+      if (fetchError) throw fetchError;
+
+      const { error: userError } = await supabase
+        .from('profiles')
+        .update({ c_coins: (userData.c_coins || 0) + requestedCoins })
+        .eq('id', userId);
+      if (userError) throw userError;
+
+      // Log transaction
+      await supabase.from('c_coin_transactions').insert({
+        user_id: userId,
+        amount: `+${requestedCoins} C`,
+        description: 'Fiat Deposit Verified'
+      });
+
+      setToastMessage({ type: 'success', text: 'Deposit verified and coins credited!' });
+      setTimeout(() => setToastMessage(null), 3000);
+      setPendingDeposits(prev => prev.filter(d => d.id !== depositId));
+    } catch (err) {
+      console.error(err);
+      setToastMessage({ type: 'error', text: 'Failed to verify deposit.' });
+      setTimeout(() => setToastMessage(null), 5000);
+    }
+  };
+
+  const handleRejectDeposit = async (depositId) => {
+    if (!window.confirm(`Are you sure you want to reject this deposit?`)) return;
+    try {
+      const { error } = await supabase
+        .from('c_coin_deposits')
+        .update({ status: 'rejected' })
+        .eq('id', depositId);
+      if (error) throw error;
+
+      setToastMessage({ type: 'success', text: 'Deposit rejected.' });
+      setTimeout(() => setToastMessage(null), 3000);
+      setPendingDeposits(prev => prev.filter(d => d.id !== depositId));
+    } catch (err) {
+      console.error(err);
+      setToastMessage({ type: 'error', text: 'Failed to reject deposit.' });
+      setTimeout(() => setToastMessage(null), 5000);
     }
   };
 
@@ -294,6 +409,49 @@ export default function AdminGateway() {
       setTimeout(() => setToastMessage(null), 5000);
     } finally {
       setIsDeletingId(null);
+    }
+  };
+
+  const handleVerifyReport = async (reportId, postId, reporterId) => {
+    if (!window.confirm("Verify report, delete post, and reward reporter with 10 C-Coins?")) return;
+    try {
+      // Update report status
+      await supabase.from('post_reports').update({ status: 'verified' }).eq('id', reportId);
+      
+      // Delete post
+      if (postId) {
+        await supabase.from('posts').delete().eq('id', postId);
+      }
+      
+      // Reward reporter
+      const { data: userData } = await supabase.from('profiles').select('c_coins').eq('id', reporterId).single();
+      if (userData) {
+        await supabase.from('profiles').update({ c_coins: (userData.c_coins || 0) + 10 }).eq('id', reporterId);
+        await supabase.from('c_coin_transactions').insert({ 
+          user_id: reporterId, 
+          amount: '+10 C', 
+          description: 'Report Verified Bounty' 
+        });
+      }
+      
+      setToastMessage({ type: 'success', text: 'Report verified and reporter rewarded!' });
+      setTimeout(() => setToastMessage(null), 3000);
+      setPostReports(prev => prev.filter(r => r.id !== reportId));
+      fetchPosts();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRejectReport = async (reportId) => {
+    if (!window.confirm("Reject this report?")) return;
+    try {
+      await supabase.from('post_reports').update({ status: 'rejected' }).eq('id', reportId);
+      setPostReports(prev => prev.filter(r => r.id !== reportId));
+      setToastMessage({ type: 'success', text: 'Report rejected.' });
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch(err) {
+      console.error(err);
     }
   };
 
@@ -393,7 +551,7 @@ export default function AdminGateway() {
     { name: 'Tasks Manager', icon: ListTodo },
     { name: 'Study Materials', icon: BookOpen },
     { name: 'Users', icon: Users },
-    { name: 'Content Moderation', icon: ShieldAlert },
+    { name: 'Reports & Moderation', icon: ShieldAlert },
     { name: 'Gift Users', icon: Gift },
     { name: 'Economy', icon: Coins },
   ];
@@ -684,8 +842,61 @@ export default function AdminGateway() {
             </div>
           )}
 
-          {activeTab === 'Content Moderation' && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          {activeTab === 'Reports & Moderation' && (
+            <div className="space-y-8 max-w-5xl mx-auto">
+              {/* Reports Section */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2"><ShieldAlert className="text-red-500" /> Pending Reports</h3>
+                </div>
+                {isReportsLoading ? (
+                  <div className="p-12 flex justify-center"><Loader2 className="w-8 h-8 text-indigo-600 animate-spin" /></div>
+                ) : postReports.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500 font-medium">No pending reports.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50 text-gray-500 text-sm border-b border-gray-200">
+                          <th className="p-4 font-semibold">Reporter</th>
+                          <th className="p-4 font-semibold">Reason</th>
+                          <th className="p-4 font-semibold">Post Preview</th>
+                          <th className="p-4 font-semibold text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {postReports.map(rep => (
+                          <tr key={rep.id} className="hover:bg-gray-50">
+                            <td className="p-4 font-bold text-gray-900">
+                              {rep.reporter?.full_name || rep.reporter?.username || 'Unknown'}
+                            </td>
+                            <td className="p-4 text-red-600 font-medium">
+                              {rep.reason}
+                            </td>
+                            <td className="p-4 max-w-xs truncate text-gray-600">
+                              {rep.post?.content || '[Media Post / Deleted]'}
+                            </td>
+                            <td className="p-4 text-right flex justify-end gap-2">
+                              <button onClick={() => handleVerifyReport(rep.id, rep.post_id, rep.reporter_id)} className="px-3 py-1.5 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200 text-sm">
+                                Verify & Delete Post
+                              </button>
+                              <button onClick={() => handleRejectReport(rep.id)} className="px-3 py-1.5 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 text-sm">
+                                Reject Report
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* All Posts Section */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <h3 className="text-lg font-bold text-gray-900">All Posts</h3>
+                </div>
               {isPostsLoading ? (
                 <div className="p-12 flex justify-center"><Loader2 className="w-8 h-8 text-indigo-600 animate-spin" /></div>
               ) : (
@@ -753,37 +964,90 @@ export default function AdminGateway() {
           )}
 
           {activeTab === 'Economy' && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-2xl mx-auto">
-              <div className="text-center mb-8">
-                <Coins className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Economy Management</h3>
-                <p className="text-gray-500">Trigger weekly distributions or manage the campus economy.</p>
+            <div className="space-y-8 max-w-5xl mx-auto">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <div className="text-center mb-8">
+                  <Coins className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Economy Management</h3>
+                  <p className="text-gray-500">Trigger weekly distributions or manage the campus economy.</p>
+                </div>
+
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6">
+                  <h4 className="font-bold text-indigo-900 mb-2">Weekly C-Coin Drop</h4>
+                  <p className="text-sm text-indigo-700 mb-4">
+                    Send a batch distribution of C-Coins to all active student profiles. This will automatically notify them and update their balances.
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-indigo-900 mb-1">Coin Amount</label>
+                      <input 
+                        type="number" 
+                        value={weeklyCoinAmount} 
+                        onChange={(e) => setWeeklyCoinAmount(Number(e.target.value))} 
+                        className="border border-indigo-200 rounded-lg p-2.5 outline-none focus:border-indigo-500 w-32"
+                      />
+                    </div>
+                    <button 
+                      onClick={handleDistributeCoins}
+                      disabled={isDistributingCoins || weeklyCoinAmount <= 0}
+                      className="mt-5 px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 transition-all"
+                    >
+                      {isDistributingCoins ? <Loader2 className="w-5 h-5 animate-spin" /> : <Coins className="w-5 h-5" />}
+                      {isDistributingCoins ? 'Distributing...' : 'Distribute Coins'}
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6">
-                <h4 className="font-bold text-indigo-900 mb-2">Weekly C-Coin Drop</h4>
-                <p className="text-sm text-indigo-700 mb-4">
-                  Send a batch distribution of C-Coins to all active student profiles. This will automatically notify them and update their balances.
-                </p>
-                <div className="flex items-center gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-indigo-900 mb-1">Coin Amount</label>
-                    <input 
-                      type="number" 
-                      value={weeklyCoinAmount} 
-                      onChange={(e) => setWeeklyCoinAmount(Number(e.target.value))} 
-                      className="border border-indigo-200 rounded-lg p-2.5 outline-none focus:border-indigo-500 w-32"
-                    />
-                  </div>
-                  <button 
-                    onClick={handleDistributeCoins}
-                    disabled={isDistributingCoins || weeklyCoinAmount <= 0}
-                    className="mt-5 px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 transition-all"
-                  >
-                    {isDistributingCoins ? <Loader2 className="w-5 h-5 animate-spin" /> : <Coins className="w-5 h-5" />}
-                    {isDistributingCoins ? 'Distributing...' : 'Distribute Coins'}
-                  </button>
+              {/* Fiat Deposits Section */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2"><CheckCircle className="text-green-500" /> Pending Fiat Deposits</h3>
                 </div>
+                {isDepositsLoading ? (
+                  <div className="p-12 flex justify-center"><Loader2 className="w-8 h-8 text-indigo-600 animate-spin" /></div>
+                ) : pendingDeposits.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500 font-medium">No pending deposits.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50 text-gray-500 text-sm border-b border-gray-200">
+                          <th className="p-4 font-semibold">Student</th>
+                          <th className="p-4 font-semibold">Amount requested</th>
+                          <th className="p-4 font-semibold">Proof</th>
+                          <th className="p-4 font-semibold text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {pendingDeposits.map(dep => (
+                          <tr key={dep.id} className="hover:bg-gray-50">
+                            <td className="p-4 font-bold text-gray-900">
+                              {dep.profiles?.full_name || dep.profiles?.username || 'Unknown'}
+                            </td>
+                            <td className="p-4">
+                              <p className="font-bold text-gray-900 text-sm">{dep.requested_coins} C-Coins</p>
+                              <p className="text-xs text-gray-500">₦{dep.amount_ngn}</p>
+                            </td>
+                            <td className="p-4">
+                              <a href={dep.proof_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-sm font-semibold flex items-center gap-1">
+                                <FileText className="w-4 h-4" /> View Receipt
+                              </a>
+                            </td>
+                            <td className="p-4 text-right flex justify-end gap-2">
+                              <button onClick={() => handleVerifyDeposit(dep.id, dep.user_id, dep.requested_coins)} className="px-3 py-1.5 bg-green-100 text-green-700 font-bold rounded-lg hover:bg-green-200 text-sm">
+                                Verify & Credit
+                              </button>
+                              <button onClick={() => handleRejectDeposit(dep.id)} className="px-3 py-1.5 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200 text-sm">
+                                Reject
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}

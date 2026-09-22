@@ -106,6 +106,26 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
 
     setIsSubmitting(true);
 
+    // AI Pre-Screening for text content
+    if (content.trim()) {
+      try {
+        const modRes = await fetch('/api/moderate-post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: content.trim() })
+        });
+        const modData = await modRes.json();
+        
+        if (modData.status === 'REJECTED') {
+          alert('Post rejected: Must be related to education, university life, tech, studying, or careers.');
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Moderation failed, proceeding anyway", err);
+      }
+    }
+
     try {
       let finalMediaUrl = mediaUrl.trim() || null;
 

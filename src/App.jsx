@@ -17,6 +17,7 @@ const LiveStudyRoom = lazy(() => import('./views/LiveStudyRoom'));
 const Library = lazy(() => import('./views/Library'));
 const StudyRoom = lazy(() => import('./views/StudyRoom'));
 const TasksHub = lazy(() => import('./views/TasksHub'));
+const Tasks = lazy(() => import('./views/Tasks'));
 const AdminGateway = lazy(() => import('./views/AdminGateway'));
 const ProfileView = lazy(() => import('./views/ProfileView'));
 const AITutorView = lazy(() => import('./views/AITutorView'));
@@ -83,6 +84,7 @@ function AppContent() {
                     <Route path="/library" element={<Library />} />
                     <Route path="/studyRoom" element={<StudyRoom />} />
                     <Route path="/tasksHub" element={<TasksHub />} />
+                    <Route path="/tasks" element={<Tasks />} />
                     <Route path="/settings" element={<Settings />} />
                   </Route>
                 </Route>

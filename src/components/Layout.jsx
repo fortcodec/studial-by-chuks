@@ -8,6 +8,7 @@ import { Avatar } from "./Avatar";
 import CCoinBadge from "./CCoinBadge";
 import GlobalSearch from "./GlobalSearch";
 import NewsTicker from "./NewsTicker";
+import BuyCoinsModal from "./BuyCoinsModal";
 
 const CreatePost = lazy(() => import("./CreatePost"));
 const CoinRewardModal = lazy(() => import("./CoinRewardModal"));
@@ -31,6 +32,8 @@ export default function Layout() {
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
   const notificationRef = useRef(null);
+  const [isDailyRewardOpen, setIsDailyRewardOpen] = useState(false);
+  const [isBuyCoinsOpen, setIsBuyCoinsOpen] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showCoinRewardModal, setShowCoinRewardModal] = useState(false);
@@ -292,10 +295,13 @@ export default function Layout() {
         <GlobalSearch />
 
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full font-bold text-[13px] shadow-sm backdrop-blur-sm cursor-default active:scale-95 transition-all">
+          <button 
+            onClick={() => setIsBuyCoinsOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full font-bold text-[13px] shadow-sm backdrop-blur-sm hover:bg-amber-500/20 active:scale-95 transition-all"
+          >
             <span>🪙</span>
             <span>{currentUser.c_coins || 0} C</span>
-          </div>
+          </button>
 
           <button
             onClick={() => navigate('/live')}
@@ -315,6 +321,14 @@ export default function Layout() {
         </div>
       </div>
     </div>
+
+      {/* Buy Coins Modal */}
+      {isBuyCoinsOpen && (
+        <BuyCoinsModal 
+          currentUser={currentUser} 
+          onClose={() => setIsBuyCoinsOpen(false)} 
+        />
+      )}
 
       {/* Create Post Modal */}
       {isCreatePostOpen && (

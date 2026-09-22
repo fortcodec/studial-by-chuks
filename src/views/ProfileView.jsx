@@ -17,6 +17,7 @@ import {
   Camera,
   Pencil,
   MessageSquare,
+  Award,
 } from "lucide-react";
 import { PostCard } from "../components/PostCard";
 
@@ -489,7 +490,7 @@ export default function ProfileView() {
             className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full"
           >
             <div className="flex items-center gap-3">
-              <div className="bg-slate-500/10 p-2 rounded-lg text-slate-600 dark:text-slate-300 dark:text-slate-400 group-hover:bg-slate-500 group-hover:text-white transition-colors">
+               <div className="bg-slate-500/10 p-2 rounded-lg text-slate-600 dark:text-slate-300 dark:text-slate-400 group-hover:bg-slate-500 group-hover:text-white transition-colors">
                 <Settings className="w-5 h-5" />
               </div>
               <span className="text-[15px] font-semibold text-on-surface">
@@ -497,6 +498,21 @@ export default function ProfileView() {
               </span>
             </div>
             <ChevronRight className="w-5 h-5 text-outline group-hover:text-slate-500 dark:text-slate-400 transition-colors" />
+          </button>
+          
+          <button
+            onClick={() => navigate('/tasks')}
+            className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full"
+          >
+            <div className="flex items-center gap-3">
+              <div className="bg-orange-500/10 p-2 rounded-lg text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                <Award className="w-5 h-5" />
+              </div>
+              <span className="text-[15px] font-semibold text-on-surface">
+                Campus Bounties
+              </span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-outline group-hover:text-orange-500 transition-colors" />
           </button>
           
           <button
