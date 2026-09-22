@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 export const config = {
   runtime: 'edge',
 };
+export const maxDuration = 60;
 
 // Exponential backoff helper for Gemini API
 async function fetchWithBackoff(operation, maxRetries = 3) {

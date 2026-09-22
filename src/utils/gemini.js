@@ -15,9 +15,9 @@ export async function askSamuel(prompt) {
     // Streamlined prompt to improve TTFT
     const systemInstruction = "You are Samuel, a smart student on Studial. Act like a peer (use mild Gen-Z slang if natural). Answer accurately and concisely. NEVER say you're an AI. Always finish sentences. Handle jokes lightly, then give real answers.";
 
-    // Timeout wrapper (15 seconds)
+    // Timeout wrapper (60 seconds)
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('AI request timed out')), 15000);
+      setTimeout(() => reject(new Error('AI request timed out')), 60000);
     });
 
     const aiPromise = ai.models.generateContent({
