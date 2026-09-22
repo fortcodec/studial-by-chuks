@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 export const config = {
   runtime: 'edge',
 };
+export const runtime = 'edge'; // explicit Vercel Edge runtime declaration
 export const maxDuration = 60;
 
 // Exponential backoff helper for Gemini API
@@ -126,18 +127,20 @@ export default async function handler(req) {
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       async start(controller) {
-        try {
-          for await (const chunk of streamResponse) {
-            if (chunk.text) {
-              controller.enqueue(encoder.encode(chunk.text));
+          try {
+            for await (const chunk of streamResponse) {
+              if (chunk.text) {
+                controller.enqueue(encoder.encode(chunk.text));
+              }
             }
+            controller.close();
+          } catch (err) {
+            // ── Raw error dump so Vercel logs show the exact Gemini failure ──
+            console.error('[Samuel] Gemini streaming chunk error (raw):', err);
+            console.error('[Samuel] Error status:', err?.status, 'message:', err?.message);
+            controller.error(err);
           }
-          controller.close();
-        } catch (err) {
-          console.error("Streaming error:", err);
-          controller.error(err);
         }
-      }
     });
 
     return new Response(readable, {

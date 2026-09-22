@@ -330,18 +330,18 @@ export default function Layout() {
         />
       )}
 
-      {/* Create Post Modal */}
+      {/* Create Post Modal — centered dialog */}
       {isCreatePostOpen && (
-        <Suspense fallback={<div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center"><Loader2 className="w-8 h-8 text-white animate-spin" /></div>}>
-          <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-in fade-in duration-200">
-            <div className="bg-surface w-full max-w-md md:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full duration-300 relative">
-              <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low">
-                <h2 className="font-bold text-on-surface">Create Post</h2>
-                <button onClick={() => setIsCreatePostOpen(false)} className="p-1.5 rounded-full bg-surface-container hover:bg-outline-variant/30 transition-colors text-outline hover:text-on-surface">
+        <Suspense fallback={<div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center"><Loader2 className="w-8 h-8 text-white animate-spin" /></div>}>
+          <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 relative">
+              <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+                <h2 className="font-bold text-slate-100 text-lg">Create Post</h2>
+                <button onClick={() => setIsCreatePostOpen(false)} className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors text-slate-400 hover:text-slate-100">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="max-h-[80vh] overflow-y-auto p-4 scrollbar-hide">
+              <div className="max-h-[75vh] overflow-y-auto p-4 scrollbar-hide">
                 <CreatePost currentUser={currentUser} onPostCreated={() => setIsCreatePostOpen(false)} />
               </div>
             </div>

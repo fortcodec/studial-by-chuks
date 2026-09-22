@@ -260,65 +260,65 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
   };
 
   return (
-    <div className="bg-surface-container-lowest rounded-[24px] shadow-surface-1 p-3 mb-4 border border-outline-variant/30">
+    <div className="flex flex-col gap-4">
       <div className="flex gap-3">
-        {/* Avatar Placeholder */}
-        <div className="flex-shrink-0 relative">
-          <Avatar 
-            url={currentUser?.avatar_url || currentUser?.avatar} 
-            name={currentUser?.full_name || currentUser?.name || currentUser?.username || currentUser?.email || 'Student'} 
-            size="md" 
-            className="border border-outline-variant/30"
+        {/* Avatar */}
+        <div className="flex-shrink-0">
+          <Avatar
+            url={currentUser?.avatar_url || currentUser?.avatar}
+            name={currentUser?.full_name || currentUser?.name || currentUser?.username || 'Student'}
+            size="md"
+            className="border border-slate-700"
           />
-          <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-container border-2 border-white rounded-full"></div>
         </div>
 
-        {/* Form Area */}
-        <div className="flex-grow flex flex-col gap-3">
-          <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-3 py-2 flex items-center transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
+        {/* Textarea */}
+        <div className="flex-grow">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 focus-within:border-indigo-600 focus-within:ring-1 focus-within:ring-indigo-600/30 transition-all">
             <textarea
               ref={textareaRef}
               value={content}
               onChange={handleInput}
               placeholder={selectedImage || mediaUrl ? "Add a caption..." : "Share notes, ask doubts, or tag @Samuel for an explanation..."}
-              className="w-full resize-none border-none focus:ring-0 p-1 text-on-surface placeholder-outline bg-transparent min-h-[24px] text-sm leading-relaxed overflow-hidden outline-none font-medium"
-              rows={1}
+              className="w-full resize-none border-none focus:ring-0 text-slate-200 placeholder-slate-500 bg-transparent min-h-[150px] text-[15px] leading-relaxed outline-none"
+              rows={5}
               disabled={isSubmitting}
             />
-            <Edit3 className="w-5 h-5 text-primary ml-2 flex-shrink-0 opacity-50" />
           </div>
+        </div>
+      </div>
 
-          {/* Image Preview */}
-          {imagePreview && (
-            <div className="relative w-max animate-slide-up">
-              <img 
-                src={imagePreview} 
-                alt="Upload preview" 
-                className="max-h-32 rounded-xl object-cover border border-outline-variant/30"
-              />
-              <button 
-                onClick={clearImage}
-                disabled={isSubmitting}
-                className="absolute -top-2 -right-2 bg-surface-container-lowest text-error rounded-full p-1 shadow-md border border-outline-variant/30 hover:bg-error/10 transition-colors"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          )}
+      {/* Image Preview */}
+      {imagePreview && (
+        <div className="relative w-max animate-slide-up ml-12">
+          <img
+            src={imagePreview}
+            alt="Upload preview"
+            className="max-h-48 rounded-xl object-cover border border-slate-700"
+          />
+          <button
+            onClick={clearImage}
+            disabled={isSubmitting}
+            className="absolute -top-2 -right-2 bg-slate-800 text-red-400 rounded-full p-1 shadow-md border border-slate-700 hover:bg-red-500/10 transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
           {/* Media Input */}
           {showMediaInput && !selectedImage && (
-            <div className="flex items-center gap-2 bg-surface-container-low rounded-xl px-3 py-2 animate-slide-up">
-              <LinkIcon size={16} className="text-outline" />
+            <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 animate-slide-up">
+              <LinkIcon size={16} className="text-slate-400 shrink-0" />
               <input 
                 type="url"
                 value={mediaUrl}
                 onChange={(e) => setMediaUrl(e.target.value)}
                 placeholder="Paste video or image URL here..."
-                className="bg-transparent border-none outline-none flex-grow text-[13px] text-on-surface font-medium placeholder:text-outline"
+                className="bg-transparent border-none outline-none flex-grow text-[13px] text-slate-200 font-medium placeholder:text-slate-500"
                 disabled={isSubmitting}
               />
-              <button onClick={() => { setMediaUrl(''); setShowMediaInput(false); }} className="text-error hover:text-red-700 active:scale-95 transition-transform p-1">
+              <button onClick={() => { setMediaUrl(''); setShowMediaInput(false); }} className="text-slate-400 hover:text-red-400 active:scale-95 transition-transform p-1">
                 <X size={16} />
               </button>
             </div>
@@ -326,18 +326,18 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
 
           {/* Bounty Input */}
           {showBountyInput && !selectedImage && (
-            <div className="flex items-center gap-2 bg-warning/10 border border-warning/30 rounded-xl px-3 py-2 animate-slide-up">
-              <span className="text-warning text-lg drop-shadow-sm">🪙</span>
+            <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 animate-slide-up">
+              <span className="text-lg drop-shadow-sm shrink-0">🪙</span>
               <input 
                 type="number"
                 value={bountyAmount}
                 onChange={(e) => setBountyAmount(e.target.value)}
                 placeholder="Attach C-Coin Bounty amount..."
-                className="bg-transparent border-none outline-none flex-grow text-[13px] text-warning font-bold placeholder:text-warning/60 placeholder:font-medium"
+                className="bg-transparent border-none outline-none flex-grow text-[13px] text-amber-300 font-bold placeholder:text-amber-500/60 placeholder:font-medium"
                 disabled={isSubmitting}
                 min="1"
               />
-              <button onClick={() => { setBountyAmount(''); setShowBountyInput(false); }} className="text-warning hover:text-orange-700 active:scale-95 transition-transform p-1">
+              <button onClick={() => { setBountyAmount(''); setShowBountyInput(false); }} className="text-amber-400 hover:text-amber-300 active:scale-95 transition-transform p-1">
                 <X size={16} />
               </button>
             </div>
@@ -345,10 +345,10 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
 
           {/* Poll Input */}
           {showPollInput && !selectedImage && (
-            <div className="flex flex-col gap-2 bg-surface-container-low rounded-xl p-3 animate-slide-up">
+            <div className="flex flex-col gap-2 bg-slate-800/80 border border-slate-700 rounded-xl p-3 animate-slide-up">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-bold text-outline uppercase tracking-wider">Poll Options</span>
-                <button onClick={() => { setPollOptions([]); setShowPollInput(false); }} className="text-error hover:text-red-700 active:scale-95 transition-transform p-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Poll Options</span>
+                <button onClick={() => { setPollOptions([]); setShowPollInput(false); }} className="text-slate-400 hover:text-red-400 active:scale-95 transition-transform p-1">
                   <X size={16} />
                 </button>
               </div>
@@ -359,10 +359,10 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
                     value={opt}
                     onChange={(e) => handlePollOptionChange(index, e.target.value)}
                     placeholder={`Option ${index + 1}`}
-                    className="bg-surface-container-lowest border border-outline-variant/40 rounded-lg px-3 py-1.5 text-[13px] font-medium flex-grow outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all text-on-surface"
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-[13px] font-medium flex-grow outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all text-slate-200 placeholder:text-slate-500"
                     disabled={isSubmitting}
                   />
-                  <button onClick={() => handleRemovePollOption(index)} className="text-outline hover:text-error transition-colors p-1">
+                  <button onClick={() => handleRemovePollOption(index)} className="text-slate-400 hover:text-red-400 transition-colors p-1">
                     <X size={16} />
                   </button>
                 </div>
@@ -371,7 +371,7 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
                 <button 
                   type="button" 
                   onClick={handleAddPollOption}
-                  className="text-[12px] font-bold text-primary mt-1 self-start hover:underline opacity-90 hover:opacity-100 transition-opacity"
+                  className="text-[12px] font-bold text-indigo-400 mt-1 self-start hover:underline opacity-90 hover:opacity-100 transition-opacity"
                   disabled={isSubmitting}
                 >
                   + Add Option
@@ -379,92 +379,90 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
               )}
             </div>
           )}
-        </div>
-      </div>
 
       {/* Hidden File Input */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        hidden 
-        accept="image/*" 
-        onChange={handleImageChange} 
+      <input
+        type="file"
+        ref={fileInputRef}
+        hidden
+        accept="image/*"
+        onChange={handleImageChange}
       />
 
-      {/* Bottom Bar: Action Chips */}
-      <div className="flex items-center justify-between mt-4 border-t border-outline-variant/20 pt-3">
+      {/* Bottom Bar */}
+      <div className="flex items-center justify-between mt-4 border-t border-slate-800 pt-3">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low border border-outline-variant/30 rounded-full whitespace-nowrap hover:bg-surface-container transition-colors active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-full whitespace-nowrap hover:bg-slate-700 transition-colors active:scale-95 disabled:opacity-50 text-slate-300 text-[13px] font-semibold"
             disabled={isSubmitting || !!selectedImage}
           >
-            <ImageIcon className="w-4 h-4 text-secondary-green" />
-            <span className="text-[13px] font-semibold text-on-surface">Image</span>
+            <ImageIcon className="w-4 h-4 text-emerald-400" />
+            Image
           </button>
 
           <button
             type="button"
             onClick={() => { setShowMediaInput(true); setShowPollInput(false); clearImage(); }}
-            className="flex items-center justify-center p-2 bg-surface-container-low border border-outline-variant/30 rounded-full hover:bg-surface-container transition-colors active:scale-95 disabled:opacity-50"
+            className="flex items-center justify-center p-2 bg-slate-800 border border-slate-700 rounded-full hover:bg-slate-700 transition-colors active:scale-95 disabled:opacity-50 text-slate-300"
             disabled={isSubmitting || !!selectedImage}
           >
-            <LinkIcon className="w-4 h-4 text-primary" />
+            <LinkIcon className="w-4 h-4" />
           </button>
 
           <button
             type="button"
-            onClick={() => { 
-              setShowPollInput(true); 
+            onClick={() => {
+              setShowPollInput(true);
               setShowMediaInput(false);
               setShowBountyInput(false);
               clearImage();
-              if (pollOptions.length === 0) setPollOptions(['', '']); 
+              if (pollOptions.length === 0) setPollOptions(['', '']);
             }}
-            className="flex items-center justify-center p-2 bg-surface-container-low border border-outline-variant/30 rounded-full hover:bg-surface-container transition-colors active:scale-95 disabled:opacity-50"
+            className="flex items-center justify-center p-2 bg-slate-800 border border-slate-700 rounded-full hover:bg-slate-700 transition-colors active:scale-95 disabled:opacity-50 text-slate-300"
             disabled={isSubmitting || !!selectedImage}
           >
-            <BarChart2 className="w-4 h-4 text-primary" />
+            <BarChart2 className="w-4 h-4" />
           </button>
 
           <button
             type="button"
-            onClick={() => { 
-              setShowBountyInput(true); 
-              setShowPollInput(false); 
+            onClick={() => {
+              setShowBountyInput(true);
+              setShowPollInput(false);
               setShowMediaInput(false);
               clearImage();
             }}
-            className="flex items-center gap-1 p-2 bg-warning/10 border border-warning/30 rounded-full hover:bg-warning/20 transition-colors active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1 px-2 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full hover:bg-amber-500/20 transition-colors active:scale-95 disabled:opacity-50"
             disabled={isSubmitting || !!selectedImage}
           >
-            <span className="text-[12px] font-bold text-warning leading-none px-1">🪙 Bounty</span>
+            <span className="text-[12px] font-bold text-amber-400">🪙 Bounty</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsAnonymous(!isAnonymous)}
-            className={`flex items-center gap-1 p-2 rounded-full transition-colors active:scale-95 disabled:opacity-50 ${
-              isAnonymous 
-                ? 'bg-primary border border-primary text-white' 
-                : 'bg-surface-container-low border border-outline-variant/30 hover:bg-surface-container'
+            className={`flex items-center gap-1 px-2 py-1.5 rounded-full transition-colors active:scale-95 disabled:opacity-50 ${
+              isAnonymous
+                ? 'bg-indigo-500/20 border border-indigo-500/40 text-indigo-300'
+                : 'bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700'
             }`}
             disabled={isSubmitting}
           >
-            <Users className={`w-4 h-4 ${isAnonymous ? 'text-white' : 'text-primary'}`} />
-            <span className={`text-[12px] font-bold leading-none px-1 ${isAnonymous ? 'text-white' : 'text-primary'}`}>Anon</span>
+            <Users className={`w-4 h-4`} />
+            <span className="text-[12px] font-bold">Anon</span>
           </button>
         </div>
-        
+
         <button
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting || (!content.trim() && !mediaUrl.trim() && !selectedImage && pollOptions.filter(o => o.trim()).length === 0)}
-          className="flex items-center gap-1.5 px-5 py-2 bg-primary text-white rounded-full font-bold text-[13px] shadow-md shadow-primary/20 hover:bg-primary-container transition-all active:scale-95 disabled:opacity-50 disabled:shadow-none ml-2 flex-shrink-0"
+          className="flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold text-[13px] shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:shadow-none ml-2 flex-shrink-0"
         >
-          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 mr-0.5" />}
-          {isSubmitting ? 'Posting...' : 'Post'}
+          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          {isSubmitting ? 'Posting…' : 'Post'}
         </button>
       </div>
     </div>
