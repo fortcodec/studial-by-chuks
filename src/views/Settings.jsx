@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Moon, Sun, Settings as SettingsIcon } from "lucide-react";
+import { useTheme } from "../components/ThemeProvider";
 
 export default function Settings() {
   const navigate = useNavigate();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
-  useEffect(() => {
-    // Check current theme on mount
-    setIsDarkMode(document.documentElement.classList.contains("dark"));
-  }, []);
+  // Determine if dark mode is active based on the selected theme
+  const isDarkMode = (() => {
+    if (theme === 'dark') return true;
+    if (theme === 'light') return false;
+    // system
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  })();
 
-  const toggleTheme = () => {
-    const isDark = document.documentElement.classList.toggle("dark");
-    localStorage.setItem("theme", isDark ? "dark" : "light");
-    setIsDarkMode(isDark);
-  };
+  // UI helper to display current selection
+  const currentLabel = theme === 'system' ? 'System' : theme.charAt(0).toUpperCase() + theme.slice(1);
 
   return (
     <div className="flex flex-col min-h-screen w-full max-w-2xl mx-auto bg-[#f8fafc] dark:bg-slate-900 md:border-x border-outline-variant/30 pt-[100px] pb-[90px]">
@@ -42,20 +44,57 @@ export default function Settings() {
                   {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
                 </div>
                 <div>
-                  <p className="font-semibold text-on-surface">Dark Mode</p>
-                  <p className="text-xs text-outline">Switch between light and dark themes</p>
+                  <p className="font-semibold text-on-surface">Theme</p>
+                  <p className="text-xs text-outline">Current: {currentLabel}</p>
                 </div>
               </div>
-              
-              <button 
-                onClick={toggleTheme}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${isDarkMode ? 'bg-primary' : 'bg-outline-variant'}`}
+              <button
+                onClick={() => setShowThemeModal(true)}
+                className="px-3 py-1 text-sm font-medium bg-primary text-white rounded-full hover:bg-primary/90 transition"
               >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isDarkMode ? 'translate-x-6' : 'translate-x-1'}`} />
+                Change
               </button>
             </div>
           </div>
         </section>
+
+        {/* Theme Selection Modal */}
+        {showThemeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-surface dark:bg-slate-800 rounded-xl shadow-xl p-6 w-full max-w-sm">
+              <h3 className="text-lg font-semibold mb-4 text-on-surface">Select Theme</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => { setTheme('system'); setShowThemeModal(false); }}
+                  className="w-full flex justify-between items-center px-4 py-2 border rounded hover:bg-surface-container-low"
+                >
+                  System
+                  {theme === 'system' && <span className="text-primary">✓</span>}
+                </button>
+                <button
+                  onClick={() => { setTheme('light'); setShowThemeModal(false); }}
+                  className="w-full flex justify-between items-center px-4 py-2 border rounded hover:bg-surface-container-low"
+                >
+                  Light
+                  {theme === 'light' && <span className="text-primary">✓</span>}
+                </button>
+                <button
+                  onClick={() => { setTheme('dark'); setShowThemeModal(false); }}
+                  className="w-full flex justify-between items-center px-4 py-2 border rounded hover:bg-surface-container-low"
+                >
+                  Dark
+                  {theme === 'dark' && <span className="text-primary">✓</span>}
+                </button>
+              </div>
+              <button
+                onClick={() => setShowThemeModal(false)}
+                className="mt-4 w-full text-center text-sm text-primary underline"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Account Settings Placeholder */}
         <section>

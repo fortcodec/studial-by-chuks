@@ -13,22 +13,30 @@ export function ThemeProvider({ children }) {
   });
 
   useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === 'dark') {
+    const root = document.documentElement;
+    const applied = theme === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : theme;
+    if (applied === 'dark') {
       root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
     } else {
       root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
     }
+    root.setAttribute('data-theme', applied);
   }, [theme]);
 
+  const updateTheme = (newTheme) => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    window.location.reload();
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme: updateTheme }}>
       {children}
     </ThemeContext.Provider>
   );
-}
+
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);

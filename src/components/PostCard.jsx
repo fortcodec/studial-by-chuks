@@ -117,22 +117,44 @@ export const PostCard = React.memo(function PostCard({
   }, [isCommentsOpen, postId]);
 
   const handleVote = async (optionIndex) => {
-    if (!currentUser || userVote === optionIndex) return;
+    if (!currentUser) return;
     setIsVoting(true);
     try {
-      await supabase.from('poll_votes').upsert(
-        { post_id: postId, user_id: currentUser.id, voted_option: optionIndex },
-        { onConflict: 'post_id, user_id' }
-      );
-      setPollVotes(prev => {
-        const n = { ...prev };
-        if (userVote !== null) n[userVote] = Math.max(0, (n[userVote] || 1) - 1);
-        n[optionIndex] = (n[optionIndex] || 0) + 1;
-        return n;
-      });
-      setUserVote(optionIndex);
-    } catch (err) { console.error('Vote error', err); }
-    finally { setIsVoting(false); }
+      if (userVote === optionIndex) {
+        // Toggle off: remove existing vote
+        await supabase.from('poll_votes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', currentUser.id);
+        setPollVotes(prev => {
+          const n = { ...prev };
+          n[optionIndex] = Math.max(0, (n[optionIndex] || 1) - 1);
+          return n;
+        });
+        setUserVote(null);
+      } else {
+        // New vote or switch vote
+        await supabase.from('poll_votes').upsert(
+          { post_id: postId, user_id: currentUser.id, voted_option: optionIndex },
+          { onConflict: 'post_id, user_id' }
+        );
+        setPollVotes(prev => {
+          const n = { ...prev };
+          if (userVote !== null) {
+            // Decrement previous option count
+            n[userVote] = Math.max(0, (n[userVote] || 1) - 1);
+          }
+          // Increment new option count
+          n[optionIndex] = (n[optionIndex] || 0) + 1;
+          return n;
+        });
+        setUserVote(optionIndex);
+      }
+    } catch (err) {
+      console.error('Vote error', err);
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   const handleLike = async () => {
