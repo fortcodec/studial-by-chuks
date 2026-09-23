@@ -21,7 +21,7 @@ export async function askSamuel(prompt) {
     });
 
     const aiPromise = ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3.6-flash',
       contents: prompt,
       config: {
         systemInstruction,
