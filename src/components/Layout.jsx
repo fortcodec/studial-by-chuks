@@ -371,7 +371,8 @@ export default function Layout() {
       )}
 
       {/* Main Content Area (Scrollable) */}
-      <div className="absolute inset-0 z-0 h-[100dvh] w-full overflow-y-auto scrollbar-hide bg-[#f8fafc] dark:bg-black pt-[88px]">
+      <div className="absolute inset-0 z-0 h-[100dvh] w-full overflow-y-auto scrollbar-hide bg-[#f8fafc] dark:bg-black pt-[120px]">
+        
         <Outlet context={{ currentUser, setCurrentUser }} />
       </div>
 
