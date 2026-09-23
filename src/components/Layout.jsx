@@ -281,7 +281,7 @@ export default function Layout() {
         <NewsTicker />
 
         {/* Glass Header */}
-        <div className="bg-surface/60 dark:bg-black/60 backdrop-blur-md px-5 py-3 md:py-4 flex justify-between items-center border-b border-white/20 dark:border-white/10">
+        <div className="bg-white/80 dark:bg-black/60 backdrop-blur-md px-5 py-3 md:py-4 flex justify-between items-center border-b border-white/20 dark:border-white/10">
           <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-surface-1">
             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-on-primary">
