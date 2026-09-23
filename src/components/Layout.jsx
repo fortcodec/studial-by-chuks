@@ -289,7 +289,7 @@ export default function Layout() {
               <path d="M2 13l10 5 10-5M2 18l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h1 className="text-xl font-extrabold text-on-surface tracking-tight hidden md:block">Studial.</h1>
+          <h1 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight hidden md:block">Studial.</h1>
         </div>
 
         <GlobalSearch />
@@ -371,7 +371,7 @@ export default function Layout() {
       )}
 
       {/* Main Content Area (Scrollable) */}
-      <div className="absolute inset-0 z-0 h-[100dvh] w-full overflow-y-auto scrollbar-hide bg-[#f8fafc] dark:bg-black pt-[120px]">
+      <div className="absolute inset-0 z-0 h-[100dvh] w-full overflow-y-auto scrollbar-hide bg-[#f8fafc] dark:bg-black pt-[140px]">
         
         <Outlet context={{ currentUser, setCurrentUser }} />
       </div>
