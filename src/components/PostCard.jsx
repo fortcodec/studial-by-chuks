@@ -133,6 +133,7 @@ export const PostCard = React.memo(function PostCard({
         });
         setUserVote(null);
       } else {
+        const isNewVote = userVote === null; // true = first vote, false = switching
         // New vote or switch vote
         await supabase.from('poll_votes').upsert(
           { post_id: postId, user_id: currentUser.id, voted_option: optionIndex },
@@ -149,6 +150,23 @@ export const PostCard = React.memo(function PostCard({
           return n;
         });
         setUserVote(optionIndex);
+
+        // Micro-Reward: +2 C-Coins only for a genuinely new vote (not switching)
+        if (isNewVote) {
+          try {
+            await supabase.rpc('increment_coins', { user_id_param: currentUser.id, amount_param: 2 }).catch(async () => {
+              await supabase.from('profiles').update({ c_coins: (currentUser.c_coins || 0) + 2 }).eq('id', currentUser.id);
+            });
+
+            await supabase.from('c_coin_transactions').insert({
+              user_id: currentUser.id,
+              amount: '+2 C',
+              description: 'Platform activity reward – Poll vote'
+            });
+          } catch (rewardErr) {
+            console.error("Vote micro-reward failed (non-blocking):", rewardErr);
+          }
+        }
       }
     } catch (err) {
       console.error('Vote error', err);

@@ -143,7 +143,7 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col h-full w-full relative overflow-y-auto bg-slate-950">
       {/* Main Feed */}
-      <div className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 pt-24 sm:pt-28 pb-28">
+      <div className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-28">
 
 
 

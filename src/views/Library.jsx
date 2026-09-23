@@ -182,7 +182,7 @@ export default function Library() {
   }) : [];
 
   return (
-    <div className="flex flex-col h-full relative bg-[#f8fafc] dark:bg-slate-900 overflow-hidden pt-[100px] pb-[90px]">
+    <div className="flex flex-col h-full relative bg-[#f8fafc] dark:bg-slate-900 overflow-hidden pt-4 pb-[90px]">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-[#f8fafc]/95 dark:bg-slate-900/95 backdrop-blur-xl px-5 pt-4 pb-3 border-b border-outline-variant/20 shadow-sm">
         <div className="flex items-center gap-3 mb-4">

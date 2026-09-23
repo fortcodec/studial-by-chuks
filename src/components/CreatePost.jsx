@@ -234,6 +234,28 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
         })
       }).catch(err => console.error("Failed to trigger moderation:", err));
 
+      // ── Micro-Reward: +2 C-Coins for posting ──────────────────────────
+      try {
+        await supabase.rpc('increment_coins', { user_id_param: currentUser.id, amount_param: 2 }).catch(async () => {
+          // Fallback: direct update if RPC doesn't exist
+          await supabase.from('profiles').update({ c_coins: (currentUser.c_coins || 0) + 2 }).eq('id', currentUser.id);
+        });
+
+        await supabase.from('c_coin_transactions').insert({
+          user_id: currentUser.id,
+          amount: '+2 C',
+          description: 'Platform activity reward – New post'
+        });
+
+        await supabase.from('notifications').insert({
+          user_id: currentUser.id,
+          type: 'reward',
+          content: 'You earned 2 C-Coins for creating a post!'
+        });
+      } catch (rewardErr) {
+        console.error("Micro-reward failed (non-blocking):", rewardErr);
+      }
+
       // Clear form
       setContent('');
       setMediaUrl('');

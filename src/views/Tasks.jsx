@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, ListTodo, Upload, FileText, Loader2, Award } from 'lucide-react';
+import { CheckCircle, ListTodo, Upload, FileText, Loader2, Award, ChevronLeft } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 
 export default function Tasks() {
   const { currentUser: outletUser } = useOutletContext();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [submittingTaskId, setSubmittingTaskId] = useState(null);
@@ -99,8 +100,17 @@ export default function Tasks() {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#f8fafc] dark:bg-slate-900 pt-[100px] pb-[90px] px-4">
+    <div className="flex flex-col min-h-full bg-[#f8fafc] dark:bg-slate-900 pt-4 pb-[90px] px-4">
       <div className="max-w-4xl mx-auto w-full space-y-6">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors -mb-2"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          Back
+        </button>
+
         <div className="bg-indigo-600 rounded-3xl p-8 text-white flex justify-between items-center shadow-lg">
           <div>
             <h1 className="text-3xl font-extrabold mb-2">Bounty Tasks</h1>

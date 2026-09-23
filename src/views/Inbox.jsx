@@ -113,7 +113,7 @@ export default function Inbox() {
   }, [currentUser?.id, activeTab]);
 
   return (
-    <div className="flex flex-col min-h-screen w-full max-w-2xl mx-auto bg-[#f8fafc] dark:bg-slate-900 md:border-x border-outline-variant/30 pt-[100px] pb-[90px]">
+    <div className="flex flex-col min-h-screen w-full max-w-2xl mx-auto bg-[#f8fafc] dark:bg-slate-900 md:border-x border-outline-variant/30 pt-4 pb-[90px]">
       <div className="sticky top-0 z-10 bg-[#f8fafc]/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-outline-variant/20 px-4 pt-3 flex flex-col shadow-sm">
         <h1 className="text-xl font-bold text-on-surface flex items-center gap-2 mb-3">
           <MessageSquare className="w-5 h-5 text-primary" /> Unified Inbox
