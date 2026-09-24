@@ -235,15 +235,15 @@ export default function Library() {
               <div key={i} className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-tactile border border-outline-variant/20 flex items-start gap-4 animate-pulse">
                 <div className="w-12 h-14 rounded-2xl bg-gray-200 dark:bg-slate-700 flex-shrink-0"></div>
                 <div className="flex-grow min-w-0">
-                  <div className="h-4 bg-gray-200 rounded w-16 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-full mb-3"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-16 mb-2"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-full mb-3"></div>
                   <div className="flex justify-between items-center mt-2">
-                    <div className="h-3 bg-gray-200 rounded w-24"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-24"></div>
                     <div className="flex gap-2">
-                      <div className="w-20 h-8 bg-gray-200 rounded-full"></div>
-                      <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-                      <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                      <div className="w-20 h-8 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
+                      <div className="w-8 h-8 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
+                      <div className="w-8 h-8 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
                     </div>
                   </div>
                 </div>

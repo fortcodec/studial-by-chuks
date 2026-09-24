@@ -274,7 +274,7 @@ export const PostCard = React.memo(function PostCard({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-3 relative shadow-lg hover:border-slate-700 transition-colors">
+    <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 mb-3 relative shadow-sm hover:shadow-md dark:shadow-lg hover:border-gray-300 dark:hover:border-slate-700 transition-colors">
 
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-3">
@@ -286,10 +286,10 @@ export const PostCard = React.memo(function PostCard({
           }}
           className={`flex items-center gap-3 ${authorId && author?.name !== 'Anonymous Student' ? 'cursor-pointer hover:opacity-90 group' : ''}`}
         >
-          <Avatar url={author?.avatar} name={author?.name} size="md" className="border border-slate-700 shrink-0 group-hover:border-indigo-500 transition-colors" />
+          <Avatar url={author?.avatar} name={author?.name} size="md" className="border border-gray-200 dark:border-slate-700 shrink-0 group-hover:border-indigo-500 transition-colors" />
           <div>
-            <h3 className="font-bold text-slate-100 text-[15px] leading-tight group-hover:text-indigo-400 transition-colors">{author?.name || 'Anonymous'}</h3>
-            <p className="text-slate-500 text-[12px] font-medium">{course || 'General'} · {timeAgo || 'Just now'}</p>
+            <h3 className="font-bold text-gray-900 dark:text-slate-100 text-[15px] leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{author?.name || 'Anonymous'}</h3>
+            <p className="text-gray-500 dark:text-slate-500 text-[12px] font-medium">{course || 'General'} · {timeAgo || 'Just now'}</p>
           </div>
         </div>
 
@@ -325,7 +325,7 @@ export const PostCard = React.memo(function PostCard({
       {/* ── Content ────────────────────────────────────────────────── */}
       {type === 'poll' && Array.isArray(props.options) ? (
         <div className="mb-3">
-          <p className="text-slate-100 font-semibold text-[15px] leading-snug mb-3">{content}</p>
+          <p className="text-gray-800 dark:text-slate-100 font-medium dark:font-semibold text-[15px] leading-snug mb-3">{content}</p>
           <div className="flex flex-col gap-2">
             {props.options.map((option, idx) => {
               const votesForOption = pollVotes[idx] || 0;
@@ -340,7 +340,7 @@ export const PostCard = React.memo(function PostCard({
                   className={`relative w-full overflow-hidden rounded-xl border text-left p-3 flex items-center justify-between transition-all active:scale-[0.99] ${
                     isSelected
                       ? 'border-indigo-500 bg-indigo-500/10'
-                      : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                      : 'border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 hover:border-gray-300 dark:hover:border-slate-600'
                   }`}
                 >
                   {userVote !== null && (
@@ -349,9 +349,9 @@ export const PostCard = React.memo(function PostCard({
                       style={{ width: `${percentage}%` }}
                     />
                   )}
-                  <span className={`font-semibold text-[14px] z-10 ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>{option}</span>
+                  <span className={`font-semibold text-[14px] z-10 ${isSelected ? 'text-indigo-600 dark:text-indigo-300' : 'text-gray-800 dark:text-slate-200'}`}>{option}</span>
                   {userVote !== null && (
-                    <span className={`font-bold text-sm z-10 ${isSelected ? 'text-indigo-400' : 'text-slate-500'}`}>{percentage}%</span>
+                    <span className={`font-bold text-sm z-10 ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-slate-500'}`}>{percentage}%</span>
                   )}
                 </button>
               );
@@ -370,7 +370,7 @@ export const PostCard = React.memo(function PostCard({
           )}
           {content && (
             <div>
-              <div className="text-slate-200 text-[15px] leading-relaxed text-left markdown-body">
+              <div className="text-gray-800 dark:text-slate-200 text-[15px] leading-relaxed text-left markdown-body">
                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                   {displayContent}
                 </ReactMarkdown>
@@ -394,15 +394,15 @@ export const PostCard = React.memo(function PostCard({
       )}
 
       {/* ── Action Bar ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between pt-3 border-t border-slate-800 mt-1">
+      <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-slate-800 mt-1">
         <div className="flex items-center gap-1">
           {/* Like */}
           <button
             onClick={handleLike}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all active:scale-95 ${
               isLiked
-                ? 'bg-pink-500/15 text-pink-400 border border-pink-500/20'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                ? 'bg-pink-50 text-pink-500 dark:bg-pink-500/15 dark:text-pink-400 border border-pink-200 dark:border-pink-500/20'
+                : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-200'
             }`}
           >
             <ThumbsUp className={`w-4 h-4 ${isLiked ? 'fill-pink-400' : ''}`} />
@@ -414,8 +414,8 @@ export const PostCard = React.memo(function PostCard({
             onClick={() => setIsCommentsOpen(o => !o)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all active:scale-95 ${
               isCommentsOpen
-                ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20'
+                : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-200'
             }`}
           >
             <MessageSquare className="w-4 h-4" />
@@ -427,8 +427,8 @@ export const PostCard = React.memo(function PostCard({
             onClick={handleSave}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all active:scale-95 ${
               isSaved
-                ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20'
+                : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-200'
             }`}
           >
             <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-indigo-400' : ''}`} />
@@ -449,7 +449,7 @@ export const PostCard = React.memo(function PostCard({
       {/* ── Comments Drawer (inline, below card) ───────────────────── */}
       {isCommentsOpen && (
         <CommentErrorBoundary>
-          <div className="mt-3 border-t border-slate-800 pt-3">
+          <div className="mt-3 border-t border-gray-100 dark:border-slate-800 pt-3">
             {/* Comments list */}
             <div className="space-y-3 max-h-72 overflow-y-auto scrollbar-hide mb-3">
               {isLoadingComments ? (
@@ -478,18 +478,18 @@ export const PostCard = React.memo(function PostCard({
                       )}
                       <div className={`rounded-2xl rounded-tl-sm px-3 py-2 flex-1 ${
                         isSamuel
-                          ? 'bg-indigo-950/60 border border-indigo-800/60'
-                          : 'bg-slate-800 border border-slate-700'
+                          ? 'bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60'
+                          : 'bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700'
                       }`}>
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className={`text-[12px] font-bold ${isSamuel ? 'text-indigo-300' : 'text-slate-200'}`}>
+                          <span className={`text-[12px] font-bold ${isSamuel ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-900 dark:text-slate-200'}`}>
                             {isSamuel ? 'Samuel AI' : (comment.profiles?.full_name || comment.profiles?.username || 'Anonymous')}
                           </span>
-                          <span className="text-[11px] text-slate-600">
+                          <span className="text-[11px] text-gray-500 dark:text-slate-600">
                             {comment.created_at ? new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                           </span>
                         </div>
-                        <div className={`text-sm leading-relaxed markdown-body ${isSamuel ? 'text-indigo-100' : 'text-slate-300'}`}>
+                        <div className={`text-sm leading-relaxed markdown-body ${isSamuel ? 'text-indigo-900 dark:text-indigo-100' : 'text-gray-800 dark:text-slate-300'}`}>
                           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                             {clean}
                           </ReactMarkdown>
@@ -505,8 +505,8 @@ export const PostCard = React.memo(function PostCard({
                   <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center shrink-0">
                     <Bot className="w-4 h-4 text-white animate-pulse" />
                   </div>
-                  <div className="bg-indigo-950/60 border border-indigo-800/60 rounded-2xl rounded-tl-sm px-3 py-2 flex items-center gap-1.5">
-                    <span className="text-sm text-indigo-300 font-medium">Samuel is typing</span>
+                  <div className="bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 rounded-2xl rounded-tl-sm px-3 py-2 flex items-center gap-1.5">
+                    <span className="text-sm text-indigo-700 dark:text-indigo-300 font-medium">Samuel is typing</span>
                     <span className="flex gap-0.5">
                       <span className="w-1 h-1 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '0ms' }} />
                       <span className="w-1 h-1 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -520,18 +520,18 @@ export const PostCard = React.memo(function PostCard({
             {/* Comment Input */}
             <form onSubmit={handleSubmitComment} className="flex gap-2 items-center">
               <Avatar url={currentUser?.avatar} name={currentUser?.name} size="sm" />
-              <div className="flex-1 flex items-center bg-slate-800 border border-slate-700 rounded-full px-3 py-1.5 focus-within:border-indigo-600 transition-colors">
+              <div className="flex-1 flex items-center bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-full px-3 py-1.5 focus-within:border-indigo-500 dark:focus-within:border-indigo-600 transition-colors">
                 <input
                   type="text"
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
                   placeholder="Write an answer, or tag @Samuel…"
-                  className="flex-1 bg-transparent outline-none text-sm text-slate-200 placeholder-slate-500"
+                  className="flex-1 bg-transparent outline-none text-sm text-gray-900 dark:text-slate-200 placeholder-gray-500 dark:placeholder-slate-500"
                 />
                 <button
                   type="submit"
                   disabled={!newComment.trim()}
-                  className="ml-2 text-indigo-400 hover:text-indigo-300 disabled:opacity-30 transition-colors"
+                  className="ml-2 text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-30 transition-colors"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -546,7 +546,7 @@ export const PostCard = React.memo(function PostCard({
 
 export function LiveRoomCard() {
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-3 shadow-lg">
+    <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-5 mb-3 shadow-sm hover:shadow-md dark:shadow-lg transition-shadow">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
           <span className="relative flex h-3 w-3">
@@ -555,8 +555,8 @@ export function LiveRoomCard() {
           </span>
         </div>
         <div>
-          <h3 className="font-bold text-slate-100">Quiet Pomodoro Sprint</h3>
-          <p className="text-slate-500 text-xs">Lofi soundscape · 24 studying</p>
+          <h3 className="font-bold text-gray-900 dark:text-slate-100">Quiet Pomodoro Sprint</h3>
+          <p className="text-gray-500 dark:text-slate-500 text-xs">Lofi soundscape · 24 studying</p>
         </div>
         <span className="ml-auto bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Live</span>
       </div>

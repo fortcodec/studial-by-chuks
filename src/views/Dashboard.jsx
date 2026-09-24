@@ -141,7 +141,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full w-full relative overflow-y-auto bg-slate-950">
+    <div className="flex flex-col h-full w-full relative overflow-y-auto bg-transparent">
       {/* Main Feed */}
       <div className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-28">
 
@@ -151,27 +151,27 @@ export default function Dashboard() {
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-surface-container-lowest p-5 rounded-2xl shadow-surface-1 border border-outline-variant/30 animate-pulse">
+              <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 animate-pulse">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                  <div className="w-10 h-10 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
                   <div>
-                    <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-32 mb-2"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-20"></div>
                   </div>
                 </div>
-                <div className="h-4 bg-gray-200 rounded w-full mb-3"></div>
-                <div className="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
-                <div className="h-40 bg-gray-100 rounded-xl w-full mb-4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-full mb-3"></div>
+                <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-5/6 mb-4"></div>
+                <div className="h-40 bg-gray-100 dark:bg-slate-800 rounded-xl w-full mb-4"></div>
                 <div className="flex gap-4">
-                  <div className="h-8 bg-gray-200 rounded-full w-20"></div>
-                  <div className="h-8 bg-gray-200 rounded-full w-20"></div>
+                  <div className="h-8 bg-gray-200 dark:bg-slate-700 rounded-full w-20"></div>
+                  <div className="h-8 bg-gray-200 dark:bg-slate-700 rounded-full w-20"></div>
                 </div>
               </div>
             ))}
           </div>
         ) : (!Array.isArray(posts) || posts.length === 0) ? (
-          <div className="text-center py-10 text-outline">
-            <p className="font-semibold">No posts yet.</p>
+          <div className="text-center py-10 text-gray-500 dark:text-slate-400">
+            <p className="font-semibold text-gray-900 dark:text-slate-200">No posts yet.</p>
             <p className="text-sm mt-1">Be the first to share something!</p>
           </div>
         ) : (
