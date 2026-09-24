@@ -59,7 +59,6 @@ function AppContent() {
   }
 
   return (
-  return (
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
