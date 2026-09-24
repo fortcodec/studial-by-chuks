@@ -102,13 +102,20 @@ export default function LiveStudyRoom() {
         }
         if (isMounted) setParticipantsCount(total);
       })
-      .subscribe();
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED' && currentUser) {
+          await roomChannel.track({ user: currentUser.id, username: currentUser.username });
+        }
+      });
 
     return () => {
       isMounted = false;
+      if (channelRef.current) {
+        channelRef.current.untrack();
+      }
       supabase.removeChannel(roomChannel);
     };
-  }, []);
+  }, [currentUser]);
 
   // Timer Effect
   useEffect(() => {
@@ -185,7 +192,7 @@ export default function LiveStudyRoom() {
         </div>
         <div className="flex items-center gap-1.5 bg-secondary-green/10 px-2.5 py-1 rounded-full border border-secondary-green/20">
           <Users className="w-3.5 h-3.5 text-secondary-green" />
-          <span className="text-xs font-bold text-secondary-green">{participantsCount} Active</span>
+          <span className="text-green-400 font-bold text-xs">{participantsCount} Active</span>
         </div>
       </div>
 
