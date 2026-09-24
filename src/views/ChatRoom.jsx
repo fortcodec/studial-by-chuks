@@ -181,11 +181,12 @@ export default function ChatRoom() {
         )}
 
         {messages.length === 0 ? (
-          <div className="flex justify-center mt-2 relative z-10">
-            <div className="bg-[#FFEEDB] dark:bg-[#182229] text-[#54656F] dark:text-[#8696A0] text-[12.5px] font-medium text-center px-4 py-2 rounded-xl shadow-sm max-w-[85%] leading-relaxed flex flex-col items-center gap-1.5">
+          <div className="flex flex-col items-center justify-center mt-20 text-slate-400 dark:text-slate-500">
+            <div className="bg-[#FFEEDB] dark:bg-[#182229] text-[#54656F] dark:text-[#8696A0] text-[12.5px] font-medium text-center px-4 py-2 rounded-xl shadow-sm max-w-[85%] leading-relaxed flex flex-col items-center gap-1.5 mb-6">
               <span>🔒</span>
               <p>Messages are end-to-end encrypted. No one outside of this chat, not even Studial, can read or listen to them. Click to learn more.</p>
             </div>
+            <p className="text-sm">No messages yet. Send a message to start the conversation!</p>
           </div>
         ) : (
           messages.map((msg, idx) => {

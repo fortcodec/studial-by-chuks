@@ -78,7 +78,7 @@ export default async function handler(req, res) {
           .insert({
             user_id: student.id,
             amount: `+${giftAmount} C`,
-            description: 'Admin Gift'
+            description: 'Admin Gift / Reward'
           });
           
         // 3. Create Notification for Popup
