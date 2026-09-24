@@ -23,9 +23,20 @@ export default function AdminGuard() {
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, active_session_id')
           .eq('id', user.id)
           .single();
+
+        if (profile?.role === 'admin') {
+          const localSessionId = localStorage.getItem('admin_session_id');
+          if (profile.active_session_id && profile.active_session_id !== localSessionId) {
+            await supabase.auth.signOut();
+            localStorage.removeItem('admin_session_id');
+            if (isMounted) setAuthStatus('unauthenticated');
+            navigate('/login', { state: { error: "Session expired. You logged in on another device." } });
+            return;
+          }
+        }
 
         if (isMounted) {
           setAuthStatus(profile?.role === 'admin' ? 'admin' : 'student');

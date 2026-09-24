@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Lock, BookOpen, ArrowLeft, LogIn, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,6 +13,13 @@ export default function Login() {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.error) {
+      setMessage({ type: 'error', text: location.state.error });
+    }
+  }, [location]);
 
   const handleRecoverySubmit = async (e) => {
     e.preventDefault();
@@ -71,6 +78,12 @@ export default function Login() {
           .select('role')
           .eq('id', data.user.id)
           .single();
+          
+        if (profile?.role === 'admin') {
+          const currentSessionId = crypto.randomUUID();
+          localStorage.setItem('admin_session_id', currentSessionId);
+          await supabase.from('profiles').update({ active_session_id: currentSessionId }).eq('id', data.user.id);
+        }
 
         setTimeout(() => {
           if (profile?.role === 'admin') {
