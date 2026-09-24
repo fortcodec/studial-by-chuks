@@ -28,7 +28,6 @@ export function ThemeProvider({ children }) {
   const updateTheme = (newTheme) => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    window.location.reload();
   };
 
   return (

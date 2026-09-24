@@ -212,7 +212,7 @@ export default function Inbox() {
                       <span className="text-sm font-semibold text-on-surface">{tx.description}</span>
                       <span className="text-[11px] text-outline">{new Date(tx.created_at).toLocaleDateString()}</span>
                     </div>
-                    <span className={`text-sm font-bold ${tx.amount.startsWith('+') ? 'text-secondary-green' : 'text-error'}`}>{tx.amount}</span>
+                    <span className={`text-sm font-bold ${String(tx.amount).startsWith('+') ? 'text-secondary-green' : 'text-error'}`}>{tx.amount > 0 && !String(tx.amount).startsWith('+') ? '+' : ''}{tx.amount}</span>
                   </div>
                 ))
               )}

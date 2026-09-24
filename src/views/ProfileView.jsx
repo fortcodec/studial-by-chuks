@@ -440,9 +440,9 @@ export default function ProfileView() {
                     <p className="text-xs text-outline">{tx.date}</p>
                   </div>
                   <span
-                    className={`font-bold text-sm ${tx.amount.startsWith("+") ? "text-secondary-green" : "text-error"}`}
+                    className={`font-bold text-sm ${String(tx.amount).startsWith("+") ? "text-secondary-green" : "text-error"}`}
                   >
-                    {tx.amount}
+                    {tx.amount > 0 && !String(tx.amount).startsWith('+') ? '+' : ''}{tx.amount}
                   </span>
                 </div>
               ))
