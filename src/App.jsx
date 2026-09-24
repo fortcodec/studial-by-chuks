@@ -59,49 +59,48 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-on-surface transition-colors duration-200">
-      <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/landing" element={session ? <Navigate to="/" replace /> : <LandingPage />} />
-            <Route path="/onboarding" element={session ? <Navigate to="/" replace /> : <Onboarding />} />
-            <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
-            <Route path="/update-password" element={<UpdatePassword />} />
+  return (
+    <BrowserRouter>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/landing" element={session ? <Navigate to="/" replace /> : <LandingPage />} />
+          <Route path="/onboarding" element={session ? <Navigate to="/" replace /> : <Onboarding />} />
+          <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
+          <Route path="/update-password" element={<UpdatePassword />} />
 
-            {/* Protected Routes */}
-            {session ? (
-              <Route element={<SessionTimeout><Outlet /></SessionTimeout>}>
-                <Route element={<StudentGuard />}>
-                  <Route element={<Layout />}>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/live" element={<LiveStudyRoom />} />
-                    <Route path="/samuel" element={<AITutorView />} />
-                    <Route path="/inbox" element={<Inbox />} />
-                    <Route path="/chat/:conversationId" element={<ChatRoom />} />
-                    <Route path="/profile" element={<ProfileView />} />
-                    <Route path="/profile/:id" element={<ProfileView />} />
-                    <Route path="/user/:username" element={<ProfileView />} />
-                    <Route path="/library" element={<Library />} />
-                    <Route path="/studyRoom" element={<StudyRoom />} />
-                    <Route path="/tasksHub" element={<TasksHub />} />
-                    <Route path="/tasks" element={<Tasks />} />
-                    <Route path="/settings" element={<Settings />} />
-                  </Route>
+          {/* Protected Routes */}
+          {session ? (
+            <Route element={<div className="min-h-screen bg-background text-on-surface transition-colors duration-200"><SessionTimeout><Outlet /></SessionTimeout></div>}>
+              <Route element={<StudentGuard />}>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/live" element={<LiveStudyRoom />} />
+                  <Route path="/samuel" element={<AITutorView />} />
+                  <Route path="/inbox" element={<Inbox />} />
+                  <Route path="/chat/:conversationId" element={<ChatRoom />} />
+                  <Route path="/profile" element={<ProfileView />} />
+                  <Route path="/profile/:id" element={<ProfileView />} />
+                  <Route path="/user/:username" element={<ProfileView />} />
+                  <Route path="/library" element={<Library />} />
+                  <Route path="/studyRoom" element={<StudyRoom />} />
+                  <Route path="/tasksHub" element={<TasksHub />} />
+                  <Route path="/tasks" element={<Tasks />} />
+                  <Route path="/settings" element={<Settings />} />
                 </Route>
-                
-                <Route element={<AdminGuard />}>
-                  <Route path="/admin" element={<AdminGateway />} />
-                </Route>
-                <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
-            ) : (
-              <Route path="*" element={<Navigate to="/landing" replace />} />
-            )}
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </div>
+              
+              <Route element={<AdminGuard />}>
+                <Route path="/admin" element={<AdminGateway />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          ) : (
+            <Route path="*" element={<Navigate to="/landing" replace />} />
+          )}
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
   );
 }
 
