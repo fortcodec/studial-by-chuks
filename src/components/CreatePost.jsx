@@ -168,9 +168,7 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
         
         // Deduct from profile
         const { error: deductError } = await supabase
-          .from('profiles')
-          .update({ c_coins: currentUser.c_coins - parsedBounty })
-          .eq('id', currentUser.id);
+          .rpc('increment_coins', { user_id_param: currentUser.id, amount_param: -parsedBounty });
           
         if (deductError) {
           console.error("Failed to deduct bounty coins", deductError);
@@ -236,10 +234,7 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
 
       // ── Micro-Reward: +2 C-Coins for posting ──────────────────────────
       try {
-        await supabase.rpc('increment_coins', { user_id_param: currentUser.id, amount_param: 2 }).catch(async () => {
-          // Fallback: direct update if RPC doesn't exist
-          await supabase.from('profiles').update({ c_coins: (currentUser.c_coins || 0) + 2 }).eq('id', currentUser.id);
-        });
+        await supabase.rpc('increment_coins', { user_id_param: currentUser.id, amount_param: 2 }).catch(() => {});
 
         await supabase.from('c_coin_transactions').insert({
           user_id: currentUser.id,

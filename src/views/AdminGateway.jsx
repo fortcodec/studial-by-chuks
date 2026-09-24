@@ -345,9 +345,7 @@ export default function AdminGateway() {
       if (fetchError) throw fetchError;
 
       const { error: userError } = await supabase
-        .from('profiles')
-        .update({ c_coins: (userData.c_coins || 0) + requestedCoins })
-        .eq('id', userId);
+        .rpc('increment_coins', { user_id_param: userId, amount_param: requestedCoins });
       if (userError) throw userError;
 
       // Log transaction
@@ -426,7 +424,7 @@ export default function AdminGateway() {
       // Reward reporter
       const { data: userData } = await supabase.from('profiles').select('c_coins').eq('id', reporterId).single();
       if (userData) {
-        await supabase.from('profiles').update({ c_coins: (userData.c_coins || 0) + 10 }).eq('id', reporterId);
+        await supabase.rpc('increment_coins', { user_id_param: reporterId, amount_param: 10 });
         await supabase.from('c_coin_transactions').insert({ 
           user_id: reporterId, 
           amount: '+10 C', 

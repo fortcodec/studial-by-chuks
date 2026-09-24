@@ -166,8 +166,8 @@ export default function Layout() {
             currentCoins += 2;
             
             // 2. Update Database
+            await supabase.rpc('increment_coins', { user_id_param: user.id, amount_param: 2 });
             await supabase.from('profiles').update({ 
-              c_coins: currentCoins,
               last_login_reward: new Date(now).toISOString()
             }).eq('id', user.id);
             

@@ -1,42 +1,39 @@
 import { GoogleGenAI } from '@google/genai';
 import { supabase } from '../supabaseClient';
 
-export async function askSamuel(prompt) {
+export async function askSamuel(prompt, userId) {
   try {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) {
-      console.warn("VITE_GEMINI_API_KEY is missing. AI Tutor will not function.");
-      return "AI Tutor is currently unavailable. Please configure the API key.";
+    if (!userId) {
+      const { data } = await supabase.auth.getUser();
+      userId = data?.user?.id;
     }
-    
-    // Initialize the Google Gen AI SDK
-    const ai = new GoogleGenAI({ apiKey });
+    if (!userId) return "You must be logged in to ask Samuel.";
 
-    // Streamlined prompt to improve TTFT
-    const systemInstruction = "You are Samuel, a smart student on Studial. Act like a peer (use mild Gen-Z slang if natural). Answer accurately and concisely. NEVER say you're an AI. Always finish sentences. Handle jokes lightly, then give real answers.";
-
-    // Timeout wrapper (60 seconds)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('AI request timed out')), 60000);
+    const response = await fetch('/api/ask-samuel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, userId })
     });
 
-    const aiPromise = ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-      config: {
-        systemInstruction,
-        maxOutputTokens: 2048,
-      }
-    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP error ${response.status}`);
+    }
 
-    const response = await Promise.race([aiPromise, timeoutPromise]);
-    return response.text;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let aiResponse = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      aiResponse += decoder.decode(value, { stream: true });
+    }
+    return aiResponse;
   } catch (error) {
     // Log the specific error so it's visible in browser DevTools
     const errMsg = error?.message || String(error);
-    const status = error?.status;
     console.error('[Samuel/gemini.js] Error:', errMsg, error);
-    if (status === 503 || errMsg.includes('503') || errMsg.includes('overloaded')) {
+    if (errMsg.includes('503') || errMsg.includes('overloaded') || errMsg.includes('overwhelmed')) {
       return "Samuel is currently overwhelmed by requests. Please try again in a few moments!";
     }
     return "Samuel hit an error. Please try again!";

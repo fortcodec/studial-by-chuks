@@ -154,9 +154,7 @@ export const PostCard = React.memo(function PostCard({
         // Micro-Reward: +2 C-Coins only for a genuinely new vote (not switching)
         if (isNewVote) {
           try {
-            await supabase.rpc('increment_coins', { user_id_param: currentUser.id, amount_param: 2 }).catch(async () => {
-              await supabase.from('profiles').update({ c_coins: (currentUser.c_coins || 0) + 2 }).eq('id', currentUser.id);
-            });
+            await supabase.rpc('increment_coins', { user_id_param: currentUser.id, amount_param: 2 }).catch(() => {});
 
             await supabase.from('c_coin_transactions').insert({
               user_id: currentUser.id,
