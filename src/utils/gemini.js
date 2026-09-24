@@ -34,8 +34,12 @@ export async function askSamuel(prompt) {
   } catch (error) {
     // Log the specific error so it's visible in browser DevTools
     const errMsg = error?.message || String(error);
+    const status = error?.status;
     console.error('[Samuel/gemini.js] Error:', errMsg, error);
-    return `Samuel hit an error (${errMsg}). Please try again!`;
+    if (status === 503 || errMsg.includes('503') || errMsg.includes('overloaded')) {
+      return "Samuel is currently overwhelmed by requests. Please try again in a few moments!";
+    }
+    return "Samuel hit an error. Please try again!";
   }
 }
 

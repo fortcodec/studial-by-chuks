@@ -199,9 +199,9 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
             media_url: finalMediaUrl
           }),
           ...(isBounty && {
-            bounty_amount: parsedBounty,
             type: 'bounty'
           }),
+          bounty_amount: isBounty ? parsedBounty : 0,
           is_anonymous: isAnonymous
         }
       ]).select().single();

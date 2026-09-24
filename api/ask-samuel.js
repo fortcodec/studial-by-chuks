@@ -103,7 +103,7 @@ export default async function handler(req) {
     // 3. Initiate Gemini Stream with Backoff
     const streamResponse = await fetchWithBackoff(async () => {
       return await ai.models.generateContentStream({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-3.6-flash',
         contents: prompt,
         config: {
           systemInstruction,
@@ -163,11 +163,17 @@ export default async function handler(req) {
       console.error('[Samuel] RATE LIMIT (429):', message);
     } else if (message.toLowerCase().includes('timeout') || message.includes('DEADLINE_EXCEEDED')) {
       console.error('[Samuel] TIMEOUT:', message);
+    } else if (status === 503 || message.includes('503') || message.includes('overloaded')) {
+      console.error('[Samuel] UNAVAILABLE (503):', message);
+      return new Response(JSON.stringify({ error: 'Samuel is currently overwhelmed by requests. Please try again in a few moments!' }), { 
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
     } else {
       console.error('[Samuel] UNEXPECTED ERROR:', status, message, error);
     }
 
-    return new Response(JSON.stringify({ error: 'Internal server error', details: message, status }), { 
+    return new Response(JSON.stringify({ error: 'Samuel hit an error. Please try again!' }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

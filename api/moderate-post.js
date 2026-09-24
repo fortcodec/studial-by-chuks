@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
     const systemPrompt = `You are an academic moderator for a university social platform. 
 Your job is to classify the provided text as 'ALLOWED' or 'REJECTED'.
