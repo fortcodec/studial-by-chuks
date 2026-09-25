@@ -58,9 +58,7 @@ export default async function handler(req, res) {
           is_free: price === 0,
           uploaded_by: 'Admin (Telegram)',
           course_code: 'General',
-          department: 'General',
-          category: 'Lecture Notes',
-          description: 'Uploaded via Studial Admin Bot'
+          department: 'General'
         });
 
         if (insertError) {
