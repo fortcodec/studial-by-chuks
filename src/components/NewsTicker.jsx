@@ -1,71 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import { Megaphone } from 'lucide-react';
 
-export default function NewsTicker() {
+export default function LiveNewsTicker() {
   const [news, setNews] = useState([]);
 
   useEffect(() => {
+    // Fetches live RSS feeds and converts them to JSON without needing an API key
+    // Using Vanguard Nigeria as the default source
     const fetchNews = async () => {
       try {
-        const { data, error } = await supabase
-          .from('platform_news')
-          .select('headline, source, url')
-          .order('created_at', { ascending: false })
-          .limit(10);
-          
-        if (error) throw error;
-        setNews(data || []);
-      } catch (err) {
-        console.error("Error fetching news:", err);
+        const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://punchng.com/feed');
+        const data = await res.json();
+        
+        if (data.items) {
+          // Grab the top 5 latest headlines
+          setNews(data.items.slice(0, 5));
+        }
+      } catch (error) {
+        console.error("Failed to fetch live news:", error);
       }
     };
-    
+
     fetchNews();
   }, []);
 
-  if (news.length === 0) return null;
-
   return (
-    <div className="bg-surface/80 dark:bg-black/60 backdrop-blur-md text-on-surface w-full overflow-hidden flex items-center py-1.5 border-b border-white/20 dark:border-white/5 shrink-0 relative z-50">
-      <div className="bg-[#eab308] text-black font-extrabold text-[11px] uppercase tracking-wider px-3 py-1 flex items-center gap-1 z-10 shrink-0 shadow-lg">
-        <Megaphone className="w-3 h-3" />
-        Breaking
+    <div className="flex items-center w-full h-8 bg-black text-white overflow-hidden text-xs sm:text-sm border-b border-gray-800">
+      {/* The static yellow tag */}
+      <div className="bg-yellow-500 text-black font-extrabold px-3 py-1 flex-shrink-0 z-10 flex items-center gap-2 h-full">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+        </svg>
+        BREAKING
       </div>
-      <div className="flex-1 overflow-hidden whitespace-nowrap relative">
-        <div className="inline-block animate-[marquee_20s_linear_infinite] px-4 space-x-8 hover:[animation-play-state:paused]">
-          {news.map((item, index) => (
-            <a 
-              key={index} 
-              href={item.url || '#'} 
-              target={item.url ? "_blank" : "_self"}
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-on-surface hover:text-primary transition-colors inline-flex items-center"
-            >
-              • {item.headline} {item.source && <span className="text-xs text-outline ml-1">({item.source})</span>}
-            </a>
-          ))}
-          {/* Duplicate for seamless loop */}
-          {news.map((item, index) => (
-            <a 
-              key={`dup-${index}`} 
-              href={item.url || '#'} 
-              target={item.url ? "_blank" : "_self"}
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-on-surface hover:text-primary transition-colors inline-flex items-center"
-            >
-              • {item.headline} {item.source && <span className="text-xs text-outline ml-1">({item.source})</span>}
-            </a>
-          ))}
-        </div>
+
+      {/* The scrolling live data */}
+      <div className="flex-1 overflow-hidden whitespace-nowrap relative flex items-center">
+        {news.length > 0 ? (
+          <div className="inline-block animate-[marquee_25s_linear_infinite] hover:[animation-play-state:paused]">
+            {news.map((item, index) => (
+              <span key={index} className="mx-6">
+                • 
+                <a 
+                  href={item.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="ml-2 hover:text-yellow-400 hover:underline transition-colors"
+                >
+                  {item.title}
+                </a>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="mx-4 text-gray-400 animate-pulse">Loading live campus updates...</span>
+        )}
       </div>
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes marquee {
-          0% { transform: translateX(0%); }
-          100% { transform: translateX(-50%); }
-        }
-      `}} />
     </div>
   );
 }
