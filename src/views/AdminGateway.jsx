@@ -15,6 +15,8 @@ export default function AdminGateway() {
     activeLiveRooms: 0,
     totalCoins: 0
   });
+  const [whatsappAdminsCount, setWhatsappAdminsCount] = useState(0);
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
   // Users State
   const [users, setUsers] = useState([]);
@@ -118,6 +120,9 @@ export default function AdminGateway() {
       
       const { data: coinsData } = await supabase.from('profiles').select('c_coins').eq('role', 'student');
       const totalCoins = coinsData ? coinsData.reduce((sum, p) => sum + (p.c_coins || 0), 0) : 0;
+
+      const { count } = await supabase.from('whatsapp_admins').select('*', { count: 'exact', head: true });
+      if (count !== null) setWhatsappAdminsCount(count);
 
       setStats({
         totalStudents: studentsCount || 0,
@@ -620,7 +625,7 @@ export default function AdminGateway() {
 
         <main className="p-8 max-w-7xl mx-auto">
           {activeTab === 'Dashboard' && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 opacity-5"><Users className="w-16 h-16" /></div>
                 <h3 className="text-gray-500 font-medium mb-1">Total Students</h3>
@@ -640,6 +645,19 @@ export default function AdminGateway() {
                 <h3 className="text-gray-500 font-medium mb-1">C-Coins in Circulation</h3>
                 <div className="flex items-baseline gap-3">
                   <span className="text-4xl font-extrabold text-gray-900 tracking-tight">{stats.totalCoins.toLocaleString()}</span>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-5"><MessageSquare className="w-16 h-16" /></div>
+                <h3 className="text-gray-500 font-medium mb-1">WhatsApp Admins</h3>
+                <div className="flex items-center justify-between mt-auto pt-2">
+                  <span className="text-4xl font-extrabold text-gray-900 tracking-tight">{whatsappAdminsCount}</span>
+                  <button 
+                    onClick={() => setIsWhatsAppModalOpen(true)}
+                    className="px-4 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-sm font-semibold transition-colors"
+                  >
+                    Manage
+                  </button>
                 </div>
               </div>
             </div>
