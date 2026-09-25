@@ -38,6 +38,7 @@ export default async function handler(req, res) {
 
   const update = req.body;
 
+  // 1. Handle Inline Button Clicks (Final Step: Price)
   if (update.callback_query) {
     const callbackQuery = update.callback_query;
     const userId = callbackQuery.from.id;
@@ -51,24 +52,21 @@ export default async function handler(req, res) {
       const { data: state } = await supabase.from('telegram_admin_states').select('*').eq('telegram_user_id', userId).single();
 
       if (state && state.temp_file_url) {
+        // REPLACE 'price' BELOW WITH YOUR ACTUAL PRICE COLUMN NAME
         const { error: insertError } = await supabase.from('study_materials').insert({
           title: state.pending_title || state.pending_filename,
           file_url: state.temp_file_url,
-          price_in_coins: price,
-          course_code: 'General',
-          department: 'General'
+          department: state.department,
+          course_code: state.course_code,
+          price_in_coins: price 
         });
 
         if (insertError) {
-          await sendMessage(
-            callbackQuery.message.chat.id, 
-            `❌ <b>Database Error:</b> ${insertError.message}\n\nUpload failed.`
-          );
-          return res.status(200).send('OK');
+          await sendMessage(callbackQuery.message.chat.id, `❌ <b>Database Error:</b> ${insertError.message}\n\nUpload failed.`);
+        } else {
+          await supabase.from('telegram_admin_states').delete().eq('telegram_user_id', userId);
+          await sendMessage(callbackQuery.message.chat.id, `✅ <b>Uploaded successfully!</b>\n\n<b>Title:</b> ${state.pending_title || state.pending_filename}\n<b>Dept:</b> ${state.department}\n<b>Course:</b> ${state.course_code}\n<b>Price:</b> ${price === 0 ? 'Free' : price + ' C-Coins'}`);
         }
-
-        await supabase.from('telegram_admin_states').delete().eq('telegram_user_id', userId);
-        await sendMessage(callbackQuery.message.chat.id, `✅ <b>Uploaded successfully!</b>\n\n<b>Title:</b> ${state.pending_title || state.pending_filename}\n<b>Price:</b> ${price === 0 ? 'Free' : price + ' C-Coins'}`);
       }
     }
     return res.status(200).send('OK');
@@ -97,6 +95,25 @@ export default async function handler(req, res) {
     return res.status(200).send('OK');
   }
 
+  // 2. Handle Multi-Step Conversation State
+  const { data: state } = await supabase.from('telegram_admin_states').select('*').eq('telegram_user_id', userId).maybeSingle();
+
+  if (state && message.text) {
+    if (state.current_step === 'awaiting_department') {
+      await supabase.from('telegram_admin_states').update({ department: message.text, current_step: 'awaiting_course_code' }).eq('telegram_user_id', userId);
+      await sendMessage(chatId, 'Got it! Now, what is the <b>Course Code</b>? (e.g., CSC 201)');
+      return res.status(200).send('OK');
+    }
+
+    if (state.current_step === 'awaiting_course_code') {
+      await supabase.from('telegram_admin_states').update({ course_code: message.text, current_step: 'awaiting_price' }).eq('telegram_user_id', userId);
+      const keyboard = [[{ text: '🎁 Free', callback_data: 'price_0' }, { text: '🪙 50 C', callback_data: 'price_50' }], [{ text: '🪙 100 C', callback_data: 'price_100' }, { text: '🪙 200 C', callback_data: 'price_200' }]];
+      await sendMessage(chatId, `Perfect! Finally, how many C-Coins should this cost?`, keyboard);
+      return res.status(200).send('OK');
+    }
+  }
+
+  // 3. Handle Initial Document Upload (Starts Conversation)
   if (message.document) {
     const doc = message.document;
     const fileName = doc.file_name || `document_${Date.now()}.pdf`;
@@ -114,15 +131,15 @@ export default async function handler(req, res) {
     const { data: publicUrlData } = supabase.storage.from('study-materials').getPublicUrl(storagePath);
 
     await supabase.from('telegram_admin_states').upsert({
-      telegram_user_id: userId, current_step: 'awaiting_price', temp_file_url: publicUrlData.publicUrl, pending_filename: fileName, pending_title: title,
+      telegram_user_id: userId, current_step: 'awaiting_department', temp_file_url: publicUrlData.publicUrl, pending_filename: fileName, pending_title: title,
     });
 
-    const keyboard = [[{ text: '🎁 Free', callback_data: 'price_0' }, { text: '🪙 50 C', callback_data: 'price_50' }], [{ text: '🪙 100 C', callback_data: 'price_100' }, { text: '🪙 200 C', callback_data: 'price_200' }]];
-    await sendMessage(chatId, `📄 <b>${fileName}</b> received!\nHow many C-Coins should this cost?`, keyboard);
+    await sendMessage(chatId, `📄 <b>${fileName}</b> received!\n\nWhat <b>Department</b> is this for?`);
     return res.status(200).send('OK');
   }
 
-  if (message.text && !message.text.startsWith('/')) {
+  // 4. Handle Initial Text-to-PDF Conversion (Starts Conversation)
+  if (message.text) {
     const title = `Notes_${new Date().toISOString().slice(0, 10)}`;
     await sendMessage(chatId, '📝 Converting notes to PDF...');
 
@@ -133,15 +150,10 @@ export default async function handler(req, res) {
     const { data: publicUrlData } = supabase.storage.from('study-materials').getPublicUrl(storagePath);
 
     await supabase.from('telegram_admin_states').upsert({
-      telegram_user_id: userId, 
-      current_step: 'awaiting_price', 
-      temp_file_url: publicUrlData.publicUrl, 
-      pending_filename: title + '.pdf', 
-      pending_title: title
+      telegram_user_id: userId, current_step: 'awaiting_department', temp_file_url: publicUrlData.publicUrl, pending_filename: `${title}.pdf`, pending_title: title,
     });
 
-    const keyboard = [[{ text: '🎁 Free', callback_data: 'price_0' }, { text: '🪙 50 C', callback_data: 'price_50' }], [{ text: '🪙 100 C', callback_data: 'price_100' }, { text: '🪙 200 C', callback_data: 'price_200' }]];
-    await sendMessage(chatId, `📄 <b>${title}.pdf</b> generated!\nHow many C-Coins should this cost?`, keyboard);
+    await sendMessage(chatId, `✨ Converted to PDF!\n\nWhat <b>Department</b> is this for?`);
     return res.status(200).send('OK');
   }
 
