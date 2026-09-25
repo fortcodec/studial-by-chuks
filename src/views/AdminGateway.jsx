@@ -148,6 +148,22 @@ export default function AdminGateway() {
     }
   };
 
+  const deleteTelegramAdmin = async (id) => {
+    const confirmed = window.confirm("Are you sure you want to remove this admin?");
+    if (!confirmed) return;
+
+    const { error } = await supabase.from('telegram_admins').delete().eq('id', id);
+    
+    if (error) {
+      console.error("Error deleting admin:", error);
+      alert("Failed to delete admin.");
+    } else {
+      // Refresh the list and count after successful deletion
+      fetchTelegramAdmins();
+      const { count } = await supabase.from('telegram_admins').select('*', { count: 'exact', head: true });
+      if (count !== null) setTelegramAdminsCount(count);
+    }
+  };
 
   const fetchUsers = async () => {
     setIsUsersLoading(true);
@@ -1131,9 +1147,17 @@ export default function AdminGateway() {
             ) : (
               <ul className="space-y-3">
                 {telegramAdminsList.map(admin => (
-                  <li key={admin.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg flex flex-col">
-                    <span className="font-semibold text-slate-800 dark:text-white">{admin.name || 'Unnamed Admin'}</span>
-                    <span className="text-sm text-slate-500">ID: {admin.telegram_user_id}</span>
+                  <li key={admin.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg flex justify-between items-center">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-slate-800 dark:text-white">{admin.name || 'Unnamed Admin'}</span>
+                      <span className="text-sm text-slate-500">ID: {admin.telegram_user_id}</span>
+                    </div>
+                    <button 
+                      onClick={() => deleteTelegramAdmin(admin.id)}
+                      className="text-red-500 hover:text-red-700 font-medium text-sm px-3 py-1 bg-red-50 dark:bg-red-900/20 rounded-md transition-colors"
+                    >
+                      Remove
+                    </button>
                   </li>
                 ))}
               </ul>
