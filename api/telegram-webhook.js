@@ -51,15 +51,25 @@ export default async function handler(req, res) {
       const { data: state } = await supabase.from('telegram_admin_states').select('*').eq('telegram_user_id', userId).single();
 
       if (state && state.temp_file_url) {
-        await supabase.from('study_materials').insert({
+        const { error: insertError } = await supabase.from('study_materials').insert({
           title: state.pending_title || state.pending_filename,
           file_url: state.temp_file_url,
           coin_price: price,
           is_free: price === 0,
           uploaded_by: 'Admin (Telegram)',
+          course_code: 'General',
+          department: 'General',
           category: 'Lecture Notes',
           description: 'Uploaded via Studial Admin Bot'
         });
+
+        if (insertError) {
+          await sendMessage(
+            callbackQuery.message.chat.id, 
+            `❌ <b>Database Error:</b> ${insertError.message}\n\nUpload failed.`
+          );
+          return res.status(200).send('OK');
+        }
 
         await supabase.from('telegram_admin_states').delete().eq('telegram_user_id', userId);
         await sendMessage(callbackQuery.message.chat.id, `✅ <b>Uploaded successfully!</b>\n\n<b>Title:</b> ${state.pending_title || state.pending_filename}\n<b>Price:</b> ${price === 0 ? 'Free' : price + ' C-Coins'}`);
