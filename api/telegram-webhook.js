@@ -54,9 +54,11 @@ export default async function handler(req, res) {
         await supabase.from('study_materials').insert({
           title: state.pending_title || state.pending_filename,
           file_url: state.temp_file_url,
-          price_in_coins: price,
+          coin_price: price,
           is_free: price === 0,
           uploaded_by: 'Admin (Telegram)',
+          category: 'Lecture Notes',
+          description: 'Uploaded via Studial Admin Bot'
         });
 
         await supabase.from('telegram_admin_states').delete().eq('telegram_user_id', userId);
