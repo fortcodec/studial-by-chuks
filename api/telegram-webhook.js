@@ -54,7 +54,7 @@ export default async function handler(req, res) {
         const { error: insertError } = await supabase.from('study_materials').insert({
           title: state.pending_title || state.pending_filename,
           file_url: state.temp_file_url,
-          coin_price: price,
+          price_in_coins: price,
           is_free: price === 0,
           uploaded_by: 'Admin (Telegram)',
           course_code: 'General',
