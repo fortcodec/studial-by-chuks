@@ -55,7 +55,6 @@ export default async function handler(req, res) {
           title: state.pending_title || state.pending_filename,
           file_url: state.temp_file_url,
           price_in_coins: price,
-          uploaded_by: 'Admin (Telegram)',
           course_code: 'General',
           department: 'General'
         });
