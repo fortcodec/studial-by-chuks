@@ -4,7 +4,7 @@ import { ArrowLeft, Moon, Sun, Settings as SettingsIcon } from "lucide-react";
 import { useTheme } from "../components/ThemeProvider";
 
 function ThemeModal({ currentTheme, onClose, onSave }) {
-  const [selected, setSelected] = useState(currentTheme);
+  const { setTheme } = useTheme();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -13,9 +13,13 @@ function ThemeModal({ currentTheme, onClose, onSave }) {
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Choose theme</h3>
           <div className="space-y-4">
             {['system', 'light', 'dark'].map((t) => (
-              <label key={t} className="flex items-center gap-3 cursor-pointer">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selected === t ? 'border-primary' : 'border-outline'}`}>
-                  {selected === t && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+              <label 
+                key={t} 
+                onClick={() => setTheme(t)} 
+                className="flex items-center gap-3 cursor-pointer"
+              >
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${currentTheme === t ? 'border-primary' : 'border-outline'}`}>
+                  {currentTheme === t && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
                 </div>
                 <span className="text-slate-900 dark:text-white font-medium capitalize">{t}</span>
               </label>
