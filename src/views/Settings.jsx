@@ -8,30 +8,30 @@ function ThemeModal({ currentTheme, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-surface dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border dark:border-slate-700 rounded-2xl shadow-xl w-full max-w-xs overflow-hidden">
         <div className="p-5">
-          <h3 className="text-lg font-bold text-on-surface mb-4">Choose theme</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Choose theme</h3>
           <div className="space-y-4">
             {['system', 'light', 'dark'].map((t) => (
               <label key={t} className="flex items-center gap-3 cursor-pointer">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selected === t ? 'border-primary' : 'border-outline'}`}>
                   {selected === t && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
                 </div>
-                <span className="text-on-surface font-medium capitalize">{t}</span>
+                <span className="text-slate-900 dark:text-white font-medium capitalize">{t}</span>
               </label>
             ))}
           </div>
         </div>
-        <div className="flex justify-end gap-2 p-3 pr-4 border-t border-outline-variant/20">
+        <div className="flex justify-end gap-2 p-3 pr-4 border-t border-outline-variant/20 dark:border-slate-700">
           <button 
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-full transition-colors"
+            className="px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-full transition-colors"
           >
             Cancel
           </button>
           <button 
             onClick={() => onSave(selected)}
-            className="px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-full transition-colors"
+            className="px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-full transition-colors"
           >
             OK
           </button>
