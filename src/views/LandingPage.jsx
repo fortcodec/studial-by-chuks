@@ -43,7 +43,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="dark min-h-screen bg-[#080b14] flex flex-col font-inter text-white selection:bg-indigo-500 selection:text-white relative overflow-x-hidden">
+    <div className="dark min-h-screen bg-[#080b14] text-white selection:bg-indigo-500 selection:text-white relative overflow-x-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-gradient-to-b from-indigo-600/15 via-purple-600/5 to-transparent blur-3xl pointer-events-none -z-10" />
       <style>{`
         @keyframes float-slow {
@@ -276,8 +276,11 @@ export default function LandingPage() {
       </section>
 
       {/* FortCodec Footer */}
-      <footer className="w-full text-center text-sm text-slate-500 py-8 mt-12 border-t border-white/5">
-        &copy; {new Date().getFullYear()} FortCodec. All rights reserved.
+      <footer className="border-t border-slate-800/60 bg-[#080b14] py-8 mt-20 flex flex-col items-center gap-2">
+        <span className="text-white font-bold text-xl">Studial</span>
+        <span className="text-slate-400 hover:text-white transition-colors text-sm">
+          &copy; {new Date().getFullYear()} FortCodec. All rights reserved.
+        </span>
       </footer>
     </div>
   );
