@@ -526,7 +526,6 @@ export default function Onboarding() {
           </button>
         </div>
       )}
-      </div>
     </div>
   );
 }
