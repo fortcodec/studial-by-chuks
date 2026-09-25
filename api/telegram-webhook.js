@@ -78,6 +78,17 @@ export default async function handler(req, res) {
     return res.status(200).send('OK');
   }
 
+  // Handle Bot Commands
+  if (message.text && message.text.startsWith('/')) {
+    if (message.text === '/start') {
+      await sendMessage(
+        chatId,
+        "👋 <b>Welcome to Studial Admin!</b>\n\nYou are authorized to upload study materials.\n\n• <b>Forward a PDF</b> to upload it directly.\n• <b>Paste lecture notes</b> to convert them into a PDF.\n\nI am ready when you are!"
+      );
+    }
+    return res.status(200).send('OK');
+  }
+
   if (message.document) {
     const doc = message.document;
     const fileName = doc.file_name || `document_${Date.now()}.pdf`;
