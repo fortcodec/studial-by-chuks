@@ -43,7 +43,8 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-indigo-950/20 to-slate-950 flex flex-col font-inter relative text-slate-100 overflow-x-hidden">
+    <div className="dark min-h-screen bg-[#080b14] flex flex-col font-inter text-white selection:bg-indigo-500 selection:text-white relative overflow-x-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-gradient-to-b from-indigo-600/15 via-purple-600/5 to-transparent blur-3xl pointer-events-none -z-10" />
       <style>{`
         @keyframes float-slow {
           0%, 100% { transform: translateY(0); }
@@ -136,20 +137,17 @@ export default function LandingPage() {
             <Star size={32} />
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight max-w-4xl mx-auto leading-tight">
-            Your Campus, <br className="md:hidden" />
-            <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent inline-block drop-shadow-sm mt-2 md:mt-0">
-              Connected.
-            </span>
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6">
+            Your Campus, <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-indigo-200 bg-clip-text text-transparent">Connected.</span>
           </h1>
-          <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-4 text-base md:text-lg text-slate-400 max-w-xl mx-auto mb-10">
             The immersive social learning network. Access past questions, chat with peers, and earn rewards while you study.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">
             <button 
               onClick={() => navigate('/onboarding')}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 active:scale-95 border border-indigo-500/50"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-lg shadow-indigo-500/25 px-8 py-4 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95"
             >
               Get Started <ArrowRight size={20} />
             </button>
@@ -169,56 +167,56 @@ export default function LandingPage() {
       <section id="features" className="py-24 px-4 relative z-10">
         <div className="max-w-6xl mx-auto animate-fade-in-up-delayed">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
               Everything you need.
             </h2>
-            <p className="text-slate-400 text-lg">Designed for the modern student ecosystem.</p>
+            <p className="text-slate-400 text-sm mt-1">Designed for the modern student ecosystem.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Card 1: The Library */}
-            <div className="md:col-span-2 bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 flex flex-col justify-between group hover:bg-white/[0.07] transition-colors relative overflow-hidden">
+            <div className="md:col-span-2 bg-slate-900/70 border border-slate-800/80 hover:border-slate-700/80 backdrop-blur-md rounded-2xl p-6 transition-all shadow-xl flex flex-col justify-between group relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
               <div className="relative z-10">
                 <div className="bg-blue-500/20 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30">
                   <Library className="text-blue-400" size={28} />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-3 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-white mb-2 flex items-center justify-between">
                   The Library <ArrowUpRight className="text-slate-500 group-hover:text-blue-400 transition-colors" />
                 </h3>
-                <p className="text-slate-300 leading-relaxed text-lg max-w-md">
+                <p className="text-sm text-slate-300 leading-relaxed max-w-md">
                   A massive, crowdsourced repository of past questions and lecture notes tailored to your exact department and courses.
                 </p>
               </div>
             </div>
 
             {/* Card 2: The Economy */}
-            <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 flex flex-col justify-between group hover:bg-white/[0.07] transition-colors relative overflow-hidden">
+            <div className="bg-slate-900/70 border border-slate-800/80 hover:border-slate-700/80 backdrop-blur-md rounded-2xl p-6 transition-all shadow-xl flex flex-col justify-between group relative overflow-hidden">
               <div className="absolute top-0 right-0 w-48 h-48 bg-yellow-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
               <div className="relative z-10">
                 <div className="bg-yellow-500/20 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/30">
                   <Coins className="text-yellow-400" size={28} />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-3 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-white mb-2 flex items-center justify-between">
                   C-Coins <ArrowUpRight className="text-slate-500 group-hover:text-yellow-400 transition-colors" />
                 </h3>
-                <p className="text-slate-300 leading-relaxed">
+                <p className="text-sm text-slate-300 leading-relaxed">
                   Help peers, upload notes, and complete tasks to earn C-Coins. Spend them on premium materials or withdraw to fiat.
                 </p>
               </div>
             </div>
 
             {/* Card 3: The AI */}
-            <div className="md:col-span-3 bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between group hover:bg-white/[0.07] transition-colors relative overflow-hidden">
+            <div className="md:col-span-3 bg-slate-900/70 border border-slate-800/80 hover:border-slate-700/80 backdrop-blur-md rounded-2xl p-6 md:p-12 transition-all shadow-xl flex flex-col md:flex-row items-center justify-between group relative overflow-hidden">
               <div className="absolute top-1/2 left-1/2 w-[800px] h-[300px] bg-purple-500/10 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2"></div>
               <div className="relative z-10 md:w-1/2 mb-8 md:mb-0">
                 <div className="bg-purple-500/20 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30">
                   <Bot className="text-purple-400" size={28} />
                 </div>
-                <h3 className="text-3xl font-bold text-white mb-4 flex items-center gap-3">
+                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-3">
                   Meet Samuel <ArrowUpRight className="text-slate-500 group-hover:text-purple-400 transition-colors" />
                 </h3>
-                <p className="text-slate-300 leading-relaxed text-lg max-w-md">
+                <p className="text-sm text-slate-300 leading-relaxed max-w-md">
                   Stuck on a concept? Samuel is your 24/7 AI Tutor built right into the platform. Ask questions, get explanations, and ace your exams.
                 </p>
               </div>
