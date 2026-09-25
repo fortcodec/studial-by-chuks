@@ -122,7 +122,8 @@ export default function AdminGateway() {
       const { data: coinsData } = await supabase.from('profiles').select('c_coins').eq('role', 'student');
       const totalCoins = coinsData ? coinsData.reduce((sum, p) => sum + (p.c_coins || 0), 0) : 0;
 
-      const { count } = await supabase.from('telegram_admins').select('*', { count: 'exact', head: true });
+      const { count, error } = await supabase.from('telegram_admins').select('*', { count: 'exact', head: true });
+      if (error) console.error("Supabase count error:", error);
       if (count !== null) setTelegramAdminsCount(count);
 
       setStats({
@@ -665,11 +666,8 @@ export default function AdminGateway() {
                 <div className="flex items-center justify-between mt-auto pt-2">
                   <span className="text-4xl font-extrabold text-gray-900 tracking-tight">{telegramAdminsCount}</span>
                   <button 
-                    onClick={() => {
-                      fetchTelegramAdmins();
-                      setIsTelegramModalOpen(true);
-                    }}
-                    className="px-4 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-sm font-semibold transition-colors"
+                    onClick={() => { fetchTelegramAdmins(); setIsTelegramModalOpen(true); }}
+                    className="relative z-10 px-3 py-1 bg-indigo-100 text-indigo-600 rounded-md text-sm font-medium hover:bg-indigo-200"
                   >
                     Manage
                   </button>
@@ -1122,34 +1120,24 @@ export default function AdminGateway() {
 
       {/* Telegram Admins Modal */}
       {isTelegramModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-                <Send className="w-5 h-5 text-indigo-600" />
-                Telegram Admins
-              </h3>
-              <button onClick={() => setIsTelegramModalOpen(false)} className="text-gray-400 hover:text-gray-600">&times;</button>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl w-96 max-w-[90%] shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">Telegram Admins</h3>
+              <button onClick={() => setIsTelegramModalOpen(false)} className="text-slate-500 hover:text-slate-800 dark:hover:text-white">✕</button>
             </div>
-            <div className="p-0 overflow-y-auto flex-1">
-              {telegramAdminsList.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 text-sm">No Telegram admins found.</div>
-              ) : (
-                <ul className="divide-y divide-gray-100">
-                  {telegramAdminsList.map((admin) => (
-                    <li key={admin.id} className="p-4 hover:bg-gray-50 flex flex-col gap-1">
-                      <span className="font-bold text-gray-900">{admin.name || 'Unnamed Admin'}</span>
-                      <span className="text-sm text-gray-500 font-mono text-xs bg-gray-100 px-2 py-0.5 rounded w-fit">ID: {admin.telegram_user_id}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div className="p-4 border-t border-gray-100 bg-gray-50">
-              <button onClick={() => setIsTelegramModalOpen(false)} className="w-full px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
-                Close
-              </button>
-            </div>
+            {telegramAdminsList.length === 0 ? (
+              <p className="text-slate-500">No admins found.</p>
+            ) : (
+              <ul className="space-y-3">
+                {telegramAdminsList.map(admin => (
+                  <li key={admin.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg flex flex-col">
+                    <span className="font-semibold text-slate-800 dark:text-white">{admin.name || 'Unnamed Admin'}</span>
+                    <span className="text-sm text-slate-500">ID: {admin.telegram_user_id}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       )}
