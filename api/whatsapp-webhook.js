@@ -1,3 +1,32 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+async function sendWhatsAppMessage(to, text) {
+  try {
+    const response = await fetch(`https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_ID}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: to,
+        type: "text",
+        text: { body: text }
+      })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error sending WhatsApp message:', error);
+  }
+}
+
 export default async function handler(req, res) {
   // 1. GET REQUEST: Meta's Verification Handshake
   if (req.method === 'GET') {
@@ -30,8 +59,31 @@ export default async function handler(req, res) {
     // Confirm this is a WhatsApp API event
     if (body.object === 'whatsapp_business_account') {
       
-      // We will build the PDF extraction and Bot conversational logic here next!
       console.log('Incoming Webhook Event:', JSON.stringify(body, null, 2));
+
+      try {
+        const changes = body.entry?.[0]?.changes?.[0]?.value;
+        if (changes?.messages && changes.messages.length > 0) {
+          const senderNumber = changes.messages[0].from;
+          
+          // Allowlist Security Check
+          const { data, error } = await supabase
+            .from('whatsapp_admins')
+            .select('phone_number')
+            .eq('phone_number', senderNumber)
+            .single();
+
+          if (error || !data) {
+            await sendWhatsAppMessage(senderNumber, "Hey there!! This number isn't available for messages...");
+            // Still return 200 OK so Meta doesn't retry
+            return res.status(200).send('EVENT_RECEIVED');
+          }
+          
+          // Build PDF extraction and Bot conversational logic here next
+        }
+      } catch (err) {
+        console.error('Webhook error:', err);
+      }
 
       // Meta requires an immediate 200 OK response, or it will retry the message
       return res.status(200).send('EVENT_RECEIVED');
