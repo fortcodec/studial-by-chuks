@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, ShieldAlert, Coins, LogOut, Loader2, Trash2, Edit2, CheckCircle, ListTodo, BookOpen, Upload, FileText, MessageSquare, Gift } from 'lucide-react';
+import { LayoutDashboard, Users, ShieldAlert, Coins, LogOut, Loader2, Trash2, Edit2, CheckCircle, ListTodo, BookOpen, Upload, FileText, MessageSquare, Gift, Send } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import GiftUsers from '../components/GiftUsers';
@@ -15,8 +15,9 @@ export default function AdminGateway() {
     activeLiveRooms: 0,
     totalCoins: 0
   });
-  const [whatsappAdminsCount, setWhatsappAdminsCount] = useState(0);
-  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+  const [telegramAdminsCount, setTelegramAdminsCount] = useState(0);
+  const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
+  const [telegramAdminsList, setTelegramAdminsList] = useState([]);
 
   // Users State
   const [users, setUsers] = useState([]);
@@ -121,8 +122,8 @@ export default function AdminGateway() {
       const { data: coinsData } = await supabase.from('profiles').select('c_coins').eq('role', 'student');
       const totalCoins = coinsData ? coinsData.reduce((sum, p) => sum + (p.c_coins || 0), 0) : 0;
 
-      const { count } = await supabase.from('whatsapp_admins').select('*', { count: 'exact', head: true });
-      if (count !== null) setWhatsappAdminsCount(count);
+      const { count } = await supabase.from('telegram_admins').select('*', { count: 'exact', head: true });
+      if (count !== null) setTelegramAdminsCount(count);
 
       setStats({
         totalStudents: studentsCount || 0,
@@ -132,6 +133,17 @@ export default function AdminGateway() {
     } catch (error) {
       console.error('Error fetching stats', error);
       alert("Failed to load dashboard statistics.");
+    }
+  };
+
+  const fetchTelegramAdmins = async () => {
+    try {
+      const { data, error } = await supabase.from('telegram_admins').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      setTelegramAdminsList(data || []);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to fetch Telegram admins.');
     }
   };
 
@@ -648,12 +660,15 @@ export default function AdminGateway() {
                 </div>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-6 opacity-5"><MessageSquare className="w-16 h-16" /></div>
-                <h3 className="text-gray-500 font-medium mb-1">WhatsApp Admins</h3>
+                <div className="absolute top-0 right-0 p-6 opacity-5"><Send className="w-16 h-16" /></div>
+                <h3 className="text-gray-500 font-medium mb-1">Telegram Admins</h3>
                 <div className="flex items-center justify-between mt-auto pt-2">
-                  <span className="text-4xl font-extrabold text-gray-900 tracking-tight">{whatsappAdminsCount}</span>
+                  <span className="text-4xl font-extrabold text-gray-900 tracking-tight">{telegramAdminsCount}</span>
                   <button 
-                    onClick={() => setIsWhatsAppModalOpen(true)}
+                    onClick={() => {
+                      fetchTelegramAdmins();
+                      setIsTelegramModalOpen(true);
+                    }}
                     className="px-4 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-sm font-semibold transition-colors"
                   >
                     Manage
@@ -1101,6 +1116,40 @@ export default function AdminGateway() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Telegram Admins Modal */}
+      {isTelegramModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                <Send className="w-5 h-5 text-indigo-600" />
+                Telegram Admins
+              </h3>
+              <button onClick={() => setIsTelegramModalOpen(false)} className="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div className="p-0 overflow-y-auto flex-1">
+              {telegramAdminsList.length === 0 ? (
+                <div className="p-8 text-center text-gray-500 text-sm">No Telegram admins found.</div>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {telegramAdminsList.map((admin) => (
+                    <li key={admin.id} className="p-4 hover:bg-gray-50 flex flex-col gap-1">
+                      <span className="font-bold text-gray-900">{admin.name || 'Unnamed Admin'}</span>
+                      <span className="text-sm text-gray-500 font-mono text-xs bg-gray-100 px-2 py-0.5 rounded w-fit">ID: {admin.telegram_user_id}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-100 bg-gray-50">
+              <button onClick={() => setIsTelegramModalOpen(false)} className="w-full px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
