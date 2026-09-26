@@ -295,13 +295,10 @@ export default function Layout() {
         <GlobalSearch />
 
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
-          <button 
-            onClick={() => setIsBuyCoinsOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full font-bold text-[13px] shadow-sm backdrop-blur-sm hover:bg-amber-500/20 active:scale-95 transition-all"
-          >
-            <span>🪙</span>
-            <span>{currentUser.c_coins || 0} C</span>
-          </button>
+          <CCoinBadge 
+            balance={currentUser?.c_coins || 0} 
+            onClick={() => setIsBuyCoinsOpen(true)} 
+          />
 
           <button
             onClick={() => navigate('/live')}

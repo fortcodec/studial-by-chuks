@@ -1,179 +1,295 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, Users } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
+import { AlertTriangle, Play, Square, Users, ArrowLeft } from 'lucide-react';
+
+const ROOM_ID = 'global-study-room'; // Replace with dynamic ID for private rooms
+const PENALTY_THRESHOLD_MS = 30000; // 30 seconds hidden = failed
 
 export default function StudyRoom() {
+  const { currentUser } = useOutletContext() || {};
   const navigate = useNavigate();
-  const [activeUsers, setActiveUsers] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
   
-  // Time state
-  const [remainingSeconds, setRemainingSeconds] = useState(0);
-  const [isFocusTime, setIsFocusTime] = useState(true);
+  // -- State: Core Timer & Anti-Cheat --
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // Default 25 mins
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [sessionStatus, setSessionStatus] = useState('idle'); // 'idle' | 'running' | 'failed' | 'completed'
+  const [taskIntent, setTaskIntent] = useState("Getting work done");
+  
+  // -- State: Multiplayer Presence --
+  const [participants, setParticipants] = useState({});
+  const channelRef = useRef(null);
+  
+  // -- Refs for Anti-Cheat Mechanics --
+  const hiddenTimestampRef = useRef(null);
+  const timerIntervalRef = useRef(null);
+  const currentSessionIdRef = useRef(null); // Track the active row in `study_sessions`
 
-  // 1. Fetch Current User
+  // ==========================================
+  // 1. SUPABASE REALTIME PRESENCE
+  // ==========================================
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-          if (error) throw error;
-          setCurrentUser(profile);
-        }
-      } catch (err) {
-        console.error("Error fetching user for study room:", err);
-      }
-    };
-    fetchUser();
-  }, []);
+    if (!currentUser?.id) return;
 
-  // 2. Presence
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const room = supabase.channel('study-room');
+    // Initialize the channel for this specific room
+    const roomChannel = supabase.channel(`room:${ROOM_ID}`, {
+      config: {
+        presence: {
+          key: currentUser.id,
+        },
+      },
+    });
     
-    room
+    channelRef.current = roomChannel;
+
+    roomChannel
       .on('presence', { event: 'sync' }, () => {
-        const state = room.presenceState();
-        const users = [];
-        for (const id in state) {
-          users.push(...state[id]);
-        }
-        setActiveUsers(users);
+        const state = roomChannel.presenceState();
+        setParticipants(state);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        // User joined
+        console.log(`${key} joined the room!`);
       })
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        // User left
+        console.log(`${key} left the room.`);
+      })
+      // Listen for custom "Cheer" broadcasts
+      .on('broadcast', { event: 'cheer' }, (payload) => {
+        if (payload.payload.targetUserId === currentUser.id) {
+          console.log(`Received a ${payload.payload.emoji} from ${payload.payload.fromName}!`);
+        }
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          try {
-            await room.track({
-              id: currentUser.id,
-              full_name: currentUser.full_name || 'Anonymous',
-              username: currentUser.username || 'user',
-              avatar_url: currentUser.avatar_url || '',
-              department: currentUser.department || 'Unknown',
-            });
-          } catch (err) {
-            console.error("Error tracking presence in study room:", err);
-          }
+          // Track the local user's state
+          await roomChannel.track({
+            id: currentUser.id,
+            name: currentUser.name,
+            avatar: currentUser.avatar,
+            intent: taskIntent,
+            status: isTimerRunning ? 'focusing' : 'idle',
+            joined_at: new Date().toISOString()
+          });
         }
       });
 
     return () => {
-      room.untrack();
-      supabase.removeChannel(room);
+      supabase.removeChannel(roomChannel);
     };
-  }, [currentUser]);
+  }, [currentUser, taskIntent, isTimerRunning]);
 
-  // 3. System Clock Pomodoro Logic
+
+  // ==========================================
+  // 2. ANTI-CHEAT: PAGE VISIBILITY API
+  // ==========================================
   useEffect(() => {
-    const calculateTime = () => {
-      const now = new Date();
-      const minutes = now.getMinutes();
-      const seconds = now.getSeconds();
-      
-      const currentMinuteInBlock = minutes % 30; // 0 to 29
-      
-      if (currentMinuteInBlock < 25) {
-        setIsFocusTime(true);
-        // remaining time until minute 25
-        const minutesLeft = 24 - currentMinuteInBlock;
-        const secondsLeft = 59 - seconds;
-        setRemainingSeconds(minutesLeft * 60 + secondsLeft);
+    const handleVisibilityChange = async () => {
+      if (!isTimerRunning) return;
+
+      if (document.hidden) {
+        // User switched tabs. Start the penalty clock.
+        hiddenTimestampRef.current = Date.now();
+        console.warn("User switched tabs. Anti-cheat countdown started.");
       } else {
-        setIsFocusTime(false);
-        // remaining time until minute 30
-        const minutesLeft = 29 - currentMinuteInBlock;
-        const secondsLeft = 59 - seconds;
-        setRemainingSeconds(minutesLeft * 60 + secondsLeft);
+        // User came back. Check if they were gone too long.
+        if (hiddenTimestampRef.current) {
+          const timeAway = Date.now() - hiddenTimestampRef.current;
+          
+          if (timeAway >= PENALTY_THRESHOLD_MS) {
+            // CHEAT DETECTED
+            handleCheatDetected();
+          } else {
+            console.log(`User returned safely within ${timeAway}ms`);
+          }
+          hiddenTimestampRef.current = null; // Reset
+        }
       }
     };
-    
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
-  const formatTime = (totalSeconds) => {
-    const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-    const s = (totalSeconds % 60).toString().padStart(2, '0');
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isTimerRunning]);
+
+  const handleCheatDetected = async () => {
+    setIsTimerRunning(false);
+    setSessionStatus('failed');
+    
+    // Update Supabase to flag the failed session
+    if (currentSessionIdRef.current) {
+      await supabase.from('study_sessions').update({ 
+        status: 'failed', 
+        failed_reason: 'tab_switched' 
+      }).eq('id', currentSessionIdRef.current);
+    }
+
+    // Update Presence to show failure
+    if (channelRef.current) {
+      await channelRef.current.track({
+        ...currentUser,
+        status: 'failed'
+      });
+    }
+
+    alert("🚨 Session Failed: You left the tab for more than 30 seconds! Focus means focus.");
+  };
+
+
+  // ==========================================
+  // 3. TIMER ENGINE & RPC REWARDS
+  // ==========================================
+  useEffect(() => {
+    if (isTimerRunning && timeLeft > 0) {
+      timerIntervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (isTimerRunning && timeLeft === 0) {
+      // SPRINT COMPLETED!
+      handleSprintComplete();
+    }
+
+    return () => clearInterval(timerIntervalRef.current);
+  }, [isTimerRunning, timeLeft]);
+
+  const handleSprintComplete = async () => {
+    setIsTimerRunning(false);
+    setSessionStatus('completed');
+    
+    // Call the secure RPC to calculate and award C-Coins
+    if (currentSessionIdRef.current) {
+      const { data, error } = await supabase.rpc('complete_study_session', { 
+        p_session_id: currentSessionIdRef.current 
+      });
+      
+      if (!error) {
+        console.log("Earned coins:", data.awarded_coins);
+      }
+    }
+  };
+
+  const startSprint = async () => {
+    if (!currentUser?.id) return;
+    
+    // Instantiate the session in DB
+    const { data, error } = await supabase.from('study_sessions').insert({
+      user_id: currentUser.id,
+      room_id: ROOM_ID,
+      intended_minutes: 25,
+      task_intent: taskIntent,
+      status: 'active'
+    }).select().single();
+
+    if (!error && data) {
+      currentSessionIdRef.current = data.id;
+      setIsTimerRunning(true);
+      setSessionStatus('running');
+    } else {
+      // Fallback if DB fails or offline, start timer locally
+      setIsTimerRunning(true);
+      setSessionStatus('running');
+    }
+  };
+
+
+  // ==========================================
+  // UI RENDER 
+  // ==========================================
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   };
 
-  const getInitials = (name) => {
-    return name && name.trim() !== '' ? name.charAt(0).toUpperCase() : 'U';
-  };
-
   return (
-    <div className={`min-h-screen transition-colors duration-1000 flex flex-col font-inter ${isFocusTime ? 'bg-gray-900 text-white' : 'bg-blue-50 text-gray-900'}`}>
-      {/* Header */}
-      <header className={`px-6 py-4 flex items-center justify-between border-b ${isFocusTime ? 'border-gray-800' : 'border-blue-200'}`}>
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className={`p-2 rounded-full transition ${isFocusTime ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-blue-200 text-gray-600'}`}>
-            <ArrowLeft size={24} />
+    <div className="relative w-full h-full min-h-screen bg-slate-950 text-white flex flex-col overflow-hidden">
+      
+      {/* 1. Dynamic Visuals (Background) */}
+      <div className={`absolute inset-0 transition-opacity duration-1000 ${isTimerRunning ? 'opacity-100' : 'opacity-30'}`}>
+        {/* Placeholder for DynamicVisuals component */}
+        <div className="w-full h-full bg-gradient-to-t from-indigo-900/40 to-transparent" />
+      </div>
+
+      {/* 2. Top Header & Task Input */}
+      <div className="relative z-10 p-6 flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="flex items-start gap-4">
+          <button onClick={() => navigate(-1)} className="p-2 bg-slate-900/60 rounded-full hover:bg-slate-800 transition">
+            <ArrowLeft className="w-5 h-5 text-slate-300" />
           </button>
-          <h1 className="text-xl font-bold tracking-tight">Study Room</h1>
-        </div>
-        <div className={`px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-2 ${isFocusTime ? 'bg-gray-800 text-red-400' : 'bg-blue-200 text-primary-navy'}`}>
-          <Clock size={16} />
-          {isFocusTime ? 'FOCUS PHASE' : 'BREAK PHASE'}
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-        {/* Timer */}
-        <div className="mb-12">
-          <h2 className={`text-sm md:text-base uppercase tracking-[0.3em] font-bold mb-4 transition-colors ${isFocusTime ? 'text-gray-400' : 'text-blue-500'}`}>
-            {isFocusTime ? 'Deep Work in Progress' : 'Time to Recharge'}
-          </h2>
-          <div className={`text-8xl md:text-[9rem] font-black tracking-tighter tabular-nums drop-shadow-lg transition-colors ${isFocusTime ? 'text-white' : 'text-primary-navy'}`}>
-            {formatTime(remainingSeconds)}
-          </div>
-        </div>
-
-        {/* Currently Studying */}
-        <div className={`mt-12 p-8 rounded-3xl backdrop-blur-md border max-w-2xl w-full transition-colors ${isFocusTime ? 'bg-gray-800/50 border-gray-700' : 'bg-white/60 border-blue-100 shadow-xl'}`}>
-          <div className="flex flex-col items-center">
-            <div className={`flex items-center gap-2 mb-6 font-bold transition-colors ${isFocusTime ? 'text-gray-300' : 'text-gray-600'}`}>
-              <Users size={20} />
-              <h3>Currently Studying ({activeUsers.length})</h3>
-            </div>
-            
-            {activeUsers.length === 0 ? (
-              <p className={isFocusTime ? 'text-gray-500' : 'text-gray-400'}>Waiting for others to join...</p>
+          <div>
+            <h1 className="text-2xl font-bold">Deep Work Room</h1>
+            {isTimerRunning ? (
+              <div className="mt-2 text-indigo-400 font-medium">🎯 {taskIntent}</div>
             ) : (
-              <div className="flex flex-wrap justify-center items-center">
-                {activeUsers.map((user, index) => (
-                  <div key={user.id || index} className="relative -ml-4 first:ml-0 group hover:z-10 transition-transform hover:scale-110">
-                    <div className={`w-14 h-14 rounded-full border-4 flex items-center justify-center text-xl font-bold overflow-hidden transition-colors ${isFocusTime ? 'border-gray-900 bg-gray-700 text-white' : 'border-blue-50 bg-primary-navy text-white'}`}>
-                      {user.avatar_url ? (
-                        <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
-                      ) : (
-                        getInitials(user.full_name)
-                      )}
-                    </div>
-                    {/* Online Dot */}
-                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse shadow-sm"></div>
-                    
-                    {/* Tooltip */}
-                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none z-20">
-                      {user.full_name || 'Anonymous User'}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <input 
+                type="text" 
+                value={taskIntent}
+                onChange={(e) => setTaskIntent(e.target.value)}
+                className="mt-2 bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-1.5 text-sm w-64 focus:outline-none focus:border-indigo-500"
+                placeholder="What are you working on?"
+              />
             )}
           </div>
         </div>
-      </main>
+        
+        <div className="flex items-center gap-2 bg-slate-900/60 px-4 py-2 rounded-full border border-slate-800">
+          <Users className="w-4 h-4 text-indigo-400" />
+          <span className="text-sm font-medium">{Object.keys(participants).length} Focusing</span>
+        </div>
+      </div>
+
+      {/* 3. Center Timer Engine */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center">
+        <div className="text-[100px] sm:text-[140px] font-black tracking-tighter tabular-nums drop-shadow-2xl">
+          {formatTime(timeLeft)}
+        </div>
+        
+        <div className="mt-8 flex gap-4">
+          {!isTimerRunning && sessionStatus !== 'completed' && (
+            <button 
+              onClick={startSprint}
+              className="flex items-center gap-2 bg-white text-black px-8 py-4 rounded-full font-bold hover:scale-105 transition-transform shadow-lg shadow-white/10"
+            >
+              <Play className="w-5 h-5" /> Start Focus
+            </button>
+          )}
+          
+          {isTimerRunning && (
+            <button 
+              onClick={() => setIsTimerRunning(false)}
+              className="flex items-center gap-2 bg-red-500/20 text-red-400 border border-red-500/50 px-8 py-4 rounded-full font-bold hover:bg-red-500/30 transition-colors"
+            >
+              <Square className="w-5 h-5" /> Give Up
+            </button>
+          )}
+        </div>
+
+        {sessionStatus === 'failed' && (
+          <div className="mt-6 flex items-center gap-2 text-red-400 bg-red-400/10 px-4 py-2 rounded-lg border border-red-500/20 animate-in fade-in slide-in-from-bottom-2">
+            <AlertTriangle className="w-5 h-5" /> Penalty applied for leaving the app. Focus means focus.
+          </div>
+        )}
+      </div>
+
+      {/* 4. Utilities: Audio, Chat, and Jotter Placeholder */}
+      <div className="relative z-10 p-6 flex justify-between items-end mt-auto">
+        <div className="w-64 hidden md:block">
+           {/* AmbientAudio Placeholder */}
+           <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl text-slate-400 text-sm">
+             🎵 Audio Player (Coming Soon)
+           </div>
+        </div>
+        
+        <div className="flex-1 max-w-md hidden lg:block mx-4">
+           {/* PostSprintChat Placeholder */}
+        </div>
+        
+        <div className="hidden md:block">
+           {/* JotterPanel Placeholder */}
+           <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl text-slate-400 text-sm">
+             📝 Jotter (Coming Soon)
+           </div>
+        </div>
+      </div>
+
     </div>
   );
 }
