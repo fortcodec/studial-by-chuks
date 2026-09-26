@@ -356,7 +356,9 @@ export const PostCard = React.memo(function PostCard({
             })}
           </div>
           {userVote !== null && (
-            <p className="text-xs text-slate-500 text-center mt-2">{Object.values(pollVotes).reduce((a, b) => a + b, 0)} votes</p>
+            <p className="text-xs text-slate-500 text-center mt-2">
+              {Object.values(pollVotes).reduce((a, b) => a + b, 0)} {Object.values(pollVotes).reduce((a, b) => a + b, 0) === 1 ? 'vote' : 'votes'}
+            </p>
           )}
         </div>
       ) : (

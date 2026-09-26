@@ -371,7 +371,7 @@ export default function ProfileView() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-tactile">
+        <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-3 flex flex-col items-center justify-center gap-2 shadow-tactile">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
             <FileText className="w-4 h-4 text-primary" />
           </div>
@@ -380,12 +380,15 @@ export default function ProfileView() {
               {stats.posts}
             </h4>
             <span className="text-[10px] font-semibold text-outline uppercase tracking-wider">
-              Posts
+              {stats.posts === 1 ? 'Post' : 'Posts'}
             </span>
           </div>
         </div>
 
-        <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-tactile">
+        <button 
+          onClick={() => navigate('/dashboard')} 
+          className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-3 flex flex-col items-center justify-center gap-2 shadow-tactile hover:bg-surface-container-low transition-colors active:scale-95 cursor-pointer"
+        >
           <div className="w-8 h-8 rounded-full bg-secondary-green/10 flex items-center justify-center">
             <Brain className="w-4 h-4 text-secondary-green" />
           </div>
@@ -394,16 +397,19 @@ export default function ProfileView() {
               {stats.quizzes}
             </h4>
             <span className="text-[10px] font-semibold text-outline uppercase tracking-wider">
-              Quizzes
+              {stats.quizzes === 1 ? 'Quiz' : 'Quizzes'}
             </span>
           </div>
-        </div>
+        </button>
 
-        <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-tactile">
+        <button 
+          onClick={() => navigate('/study-room')} 
+          className="bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-3 flex flex-col items-center justify-center gap-2 shadow-tactile hover:bg-surface-container-low transition-colors active:scale-95 cursor-pointer"
+        >
           <div className="w-8 h-8 rounded-full bg-tertiary-orange/10 flex items-center justify-center">
             <GraduationCap className="w-4 h-4 text-tertiary-orange" />
           </div>
-          <div className="text-center">
+          <div className="text-center truncate w-full">
             <h4 className="text-lg font-bold text-on-surface leading-none mb-1">
               {stats.studyHours}h
             </h4>
@@ -411,7 +417,7 @@ export default function ProfileView() {
               Studied
             </span>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Transaction Ledger */}
