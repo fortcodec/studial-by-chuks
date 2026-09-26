@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { FileText, MessageSquare, Bot, User, BookOpen } from "lucide-react";
+import { FileText, MessageSquare, Bot, User, BookOpen, Plus } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { useNotificationStore } from "../store/useNotificationStore";
 
-import { Plus } from "lucide-react";
-
-export function BottomNav({ onNewPost, unreadMessagesCount }) {
+export function BottomNav({ onNewPost }) {
   const location = useLocation();
   const currentView = location.pathname.substring(1);
+  const { unreadMessagesCount, unreadNotificationsCount, unreadTransactionsCount } = useNotificationStore();
   const [liveCount, setLiveCount] = useState(0);
 
   useEffect(() => {
@@ -28,13 +28,15 @@ export function BottomNav({ onNewPost, unreadMessagesCount }) {
     };
   }, []);
 
+  const profileBadgeCount = unreadNotificationsCount + unreadTransactionsCount;
+
   const leftNavItems = [
     { name: "Feed", href: "", icon: FileText, badge: null },
     { name: "Inbox", href: "inbox", icon: MessageSquare, badge: unreadMessagesCount > 0 ? (unreadMessagesCount > 9 ? '9+' : unreadMessagesCount) : null },
   ];
   const rightNavItems = [
     { name: "Library", href: "library", icon: BookOpen, badge: null },
-    { name: "Profile", href: "profile", icon: User, badge: null },
+    { name: "Profile", href: "profile", icon: User, badge: profileBadgeCount > 0 ? '' : null },
   ];
 
   return (

@@ -9,6 +9,7 @@ import CCoinBadge from "./CCoinBadge";
 import GlobalSearch from "./GlobalSearch";
 import NewsTicker from "./NewsTicker";
 import BuyCoinsModal from "./BuyCoinsModal";
+import { useNotificationStore } from "../store/useNotificationStore";
 
 const CreatePost = lazy(() => import("./CreatePost"));
 const CoinRewardModal = lazy(() => import("./CoinRewardModal"));
@@ -41,8 +42,8 @@ export default function Layout() {
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const navigate = useNavigate();
+  const initializeNotifications = useNotificationStore(state => state.initialize);
 
   useEffect(() => {
     const hasSeen = localStorage.getItem('hasSeenOnboarding');
@@ -122,8 +123,14 @@ export default function Layout() {
   };
 
   useEffect(() => {
-    fetchUnreadCount();
-  }, [currentUser?.id]);
+    if (currentUser?.id) {
+      fetchUnreadCount();
+      const unsubscribe = initializeNotifications(currentUser.id);
+      return () => {
+        if (typeof unsubscribe === 'function') unsubscribe();
+      };
+    }
+  }, [currentUser?.id, initializeNotifications]);
 
   useEffect(() => {
     if (isNotificationsOpen) {
@@ -209,27 +216,6 @@ export default function Layout() {
     fetchUser();
     return () => { isMounted = false; };
   }, []);
-
-  useEffect(() => {
-    if (!currentUser?.id) return;
-    
-    const channel = supabase
-      .channel('public:messages')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
-        (payload) => {
-          if (payload.new.sender_id !== currentUser.id) {
-            setUnreadMessagesCount((prev) => prev + 1);
-          }
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentUser?.id]);
 
   // Dedicated Coin Drops Check (Weekly or Admin Gift)
   useEffect(() => {
@@ -374,7 +360,7 @@ export default function Layout() {
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 z-40 w-full pb-safe">
-        <BottomNav onNewPost={() => setIsCreatePostOpen(true)} unreadMessagesCount={(unreadCount || 0) + (unreadMessagesCount || 0)} />
+        <BottomNav onNewPost={() => setIsCreatePostOpen(true)} />
       </div>
 
       {/* Coin Reward Modal */}
