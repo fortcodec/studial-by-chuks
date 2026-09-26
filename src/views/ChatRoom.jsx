@@ -212,7 +212,7 @@ export default function ChatRoom() {
       </div>
 
       {/* Message Input Area */}
-      <div className="p-3 border-t border-outline-variant/30 bg-surface pb-safe">
+      <div className="sticky bottom-0 z-20 p-3 border-t border-outline-variant/30 bg-surface/95 backdrop-blur-xl pb-[90px] md:pb-6">
         <form onSubmit={handleSendMessage} className="flex items-end gap-2 bg-surface-container-low rounded-3xl p-1.5 border border-outline-variant/30 focus-within:ring-2 focus-within:ring-primary/30 transition-all shadow-sm">
           <textarea
             value={newMessage}

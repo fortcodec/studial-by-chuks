@@ -227,113 +227,149 @@ export default function Library() {
         </div>
       </div>
 
-      {/* Resource List */}
-      <div className="flex-1 overflow-y-auto p-5">
+      {/* Resource Layout */}
+      <div className="flex-1 overflow-y-auto pb-6">
         {isLoading ? (
-          <div className="flex flex-col gap-4">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-tactile border border-outline-variant/20 flex items-start gap-4 animate-pulse">
-                <div className="w-12 h-14 rounded-2xl bg-gray-200 dark:bg-slate-700 flex-shrink-0"></div>
-                <div className="flex-grow min-w-0">
-                  <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-16 mb-2"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-full mb-3"></div>
-                  <div className="flex justify-between items-center mt-2">
-                    <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-24"></div>
-                    <div className="flex gap-2">
-                      <div className="w-20 h-8 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
-                      <div className="w-8 h-8 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
-                      <div className="w-8 h-8 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="p-5 flex flex-col gap-6">
+            <div className="h-40 bg-white dark:bg-slate-800 rounded-3xl animate-pulse"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="h-32 bg-white dark:bg-slate-800 rounded-3xl animate-pulse"></div>
+              ))}
+            </div>
           </div>
         ) : pageError ? (
-          <div className="text-center py-12 px-4">
+          <div className="text-center py-16 px-4">
             <AlertCircle className="w-12 h-12 text-error mx-auto mb-3" />
-            <h3 className="text-on-surface font-bold text-error">Error Loading Library</h3>
+            <h3 className="text-on-surface font-bold text-error text-lg">Error Loading Library</h3>
             <p className="text-error/80 text-[14px] mt-1">{pageError}</p>
-            <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-error/10 text-error rounded-full font-bold text-sm">Try Again</button>
+            <button onClick={() => window.location.reload()} className="mt-6 px-6 py-2.5 bg-error/10 text-error rounded-full font-bold text-sm">Try Again</button>
           </div>
         ) : filteredResources.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText className="w-12 h-12 text-outline-variant mx-auto mb-3" />
-            <h3 className="text-on-surface font-bold">No resources found</h3>
-            <p className="text-outline text-[14px] mt-1">{searchQuery ? "Try adjusting your search or filters." : "No study materials uploaded by the admin yet. Check back soon!"}</p>
+          <div className="text-center py-20 px-4">
+            <FileText className="w-16 h-16 text-outline-variant mx-auto mb-4" />
+            <h3 className="text-on-surface font-extrabold text-xl mb-2">No resources found</h3>
+            <p className="text-outline text-[15px]">{searchQuery ? "Try adjusting your search or filters." : "No study materials available yet. Check back soon!"}</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            {filteredResources.map(resource => (
-              <div key={resource?.id} className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-tactile border border-outline-variant/20 flex items-start gap-4 transition-transform active:scale-[0.98]">
-                <div className="w-12 h-14 rounded-2xl bg-error/10 border border-error/20 flex flex-col items-center justify-center flex-shrink-0">
-                  <FileText className="w-6 h-6 text-error mb-0.5" />
-                  <span className="text-[9px] font-bold text-error uppercase">DOC</span>
+          <div className="flex flex-col">
+            
+            {/* Continue Studying Carousel (Only show if no search/filter active and we have some items) */}
+            {!searchQuery && activeFilter === 'All' && filteredResources.length > 0 && (
+              <div className="mb-8 pt-4">
+                <div className="px-5 mb-4 flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-on-surface">Continue Studying</h2>
+                  <ChevronRight className="w-5 h-5 text-outline" />
                 </div>
-                
-                <div className="flex-grow min-w-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="bg-primary-container/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      {resource?.course_code || 'UNK'}
-                    </span>
-                    {(!resource.price_in_coins || resource.price_in_coins === 0) ? (
-                      <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Free</span>
-                    ) : unlockedMaterials.has(resource.id) ? (
-                      <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Purchased</span>
-                    ) : (
-                      <span className="bg-yellow-100 text-yellow-700 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        <Lock className="w-3 h-3" /> {resource.price_in_coins} C
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="font-bold text-on-surface text-[15px] leading-tight mb-2 truncate">{resource?.title || 'Untitled Document'}</h3>
-                  <p className="text-[12px] text-outline mb-2 line-clamp-2">{resource?.description || 'No description available.'}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-[12px] text-outline font-medium truncate pr-2">
-                        Studial Admin
-                      </span>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide px-5 pb-4 snap-x snap-mandatory">
+                  {filteredResources.slice(0, 4).map(resource => (
+                    <div 
+                      key={`carousel-${resource.id}`} 
+                      className="snap-start flex-shrink-0 w-72 bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-outline-variant/30 flex flex-col cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handleMaterialClick(resource)}
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                          <BookOpen className="w-5 h-5 text-primary" />
+                        </div>
+                        {(!resource.price_in_coins || resource.price_in_coins === 0) ? (
+                          <span className="bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 text-[10px] font-bold px-2.5 py-1 rounded-full">Free</span>
+                        ) : unlockedMaterials.has(resource.id) ? (
+                          <span className="bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-[10px] font-bold px-2.5 py-1 rounded-full">Purchased</span>
+                        ) : (
+                          <span className="bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full">
+                            <Lock className="w-3 h-3" /> {resource.price_in_coins} C
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-bold text-on-surface text-[15px] leading-snug mb-1 truncate">{resource?.title || 'Untitled Document'}</h3>
+                      <p className="text-[12px] text-outline truncate">{resource?.course_code || 'General'}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Main Library Grid */}
+            <div className="px-5">
+              <h2 className="text-lg font-bold text-on-surface mb-4">
+                {searchQuery ? 'Search Results' : activeFilter !== 'All' ? activeFilter : 'All Materials'}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6">
+                {filteredResources.map(resource => (
+                  <div key={resource?.id} className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-outline-variant/30 flex flex-col group hover:shadow-md transition-all active:scale-[0.98]">
+                    
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="w-12 h-14 rounded-2xl bg-error/10 border border-error/20 flex flex-col items-center justify-center flex-shrink-0">
+                        <FileText className="w-6 h-6 text-error mb-0.5" />
+                        <span className="text-[9px] font-bold text-error uppercase">DOC</span>
+                      </div>
+                      
+                      <div className="flex-grow min-w-0 pt-1">
+                        <div className="flex justify-between items-start mb-1.5">
+                          <span className="bg-surface-container-high text-on-surface text-[10px] font-bold px-2.5 py-0.5 rounded-full truncate max-w-[50%]">
+                            {resource?.course_code || 'UNK'}
+                          </span>
+                          {(!resource.price_in_coins || resource.price_in_coins === 0) ? (
+                            <span className="text-green-600 dark:text-green-400 text-[11px] font-bold">Free</span>
+                          ) : unlockedMaterials.has(resource.id) ? (
+                            <span className="text-blue-600 dark:text-blue-400 text-[11px] font-bold">Unlocked</span>
+                          ) : (
+                            <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 text-[11px] font-bold">
+                              <Lock className="w-3 h-3" /> {resource.price_in_coins}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-extrabold text-on-surface text-[15px] leading-tight line-clamp-2">{resource?.title || 'Untitled Document'}</h3>
+                      </div>
+                    </div>
+
+                    <p className="text-[13px] text-outline mb-4 line-clamp-2 flex-grow">{resource?.description || 'No description available.'}</p>
+                    
+                    <div className="flex items-center justify-between pt-3 border-t border-outline-variant/20">
+                      <button
+                        onClick={() => navigate('/samuel', { state: { studyContext: resource } })}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors text-[12px] font-bold"
+                      >
+                        <Bot className="w-4 h-4" /> Ask AI
+                      </button>
+                      
+                      <div className="flex items-center gap-2">
                         {isAdmin && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteMaterial(resource.id); }}
-                            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm bg-red-50 text-red-500 hover:bg-red-100"
+                            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20"
                             title="Delete Material"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                         <button
-                          onClick={() => navigate('/samuel', { state: { studyContext: resource } })}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition-colors shadow-sm active:scale-95 text-[11px] font-bold"
+                          onClick={(e) => { e.stopPropagation(); handleToggleSave(resource?.id); }}
+                          className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${savedMaterials?.has(resource?.id) ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'bg-surface-container text-outline hover:bg-surface-container-high hover:text-on-surface'}`}
                         >
-                          <Bot className="w-3.5 h-3.5" /> Ask Samuel
+                          <Bookmark className={`w-4.5 h-4.5 ${savedMaterials?.has(resource?.id) ? 'fill-current' : ''}`} />
                         </button>
                         <button
-                        onClick={(e) => { e.stopPropagation(); handleToggleSave(resource?.id); }}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${savedMaterials?.has(resource?.id) ? 'bg-indigo-500/10 text-indigo-600' : 'bg-surface-container-low text-outline hover:bg-surface-container hover:text-on-surface'}`}
-                      >
-                        <Bookmark className={`w-4 h-4 ${savedMaterials?.has(resource?.id) ? 'fill-current' : ''}`} />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleMaterialClick(resource); }}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${
-                          (!resource.price_in_coins || resource.price_in_coins === 0 || unlockedMaterials.has(resource.id) || isAdmin)
-                            ? 'bg-primary/10 text-primary hover:bg-primary/20'
-                            : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                        }`}
-                      >
-                        {(!resource.price_in_coins || resource.price_in_coins === 0 || unlockedMaterials.has(resource.id) || isAdmin) ? (
-                          <FileText className="w-4 h-4" />
-                        ) : (
-                          <Lock className="w-4 h-4" />
-                        )}
-                      </button>
+                          onClick={(e) => { e.stopPropagation(); handleMaterialClick(resource); }}
+                          className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                            (!resource.price_in_coins || resource.price_in_coins === 0 || unlockedMaterials.has(resource.id) || isAdmin)
+                              ? 'bg-primary text-on-primary shadow-sm hover:opacity-90'
+                              : 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 hover:opacity-80'
+                          }`}
+                        >
+                          {(!resource.price_in_coins || resource.price_in_coins === 0 || unlockedMaterials.has(resource.id) || isAdmin) ? (
+                            <FileText className="w-4.5 h-4.5" />
+                          ) : (
+                            <Lock className="w-4.5 h-4.5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         )}
       </div>
