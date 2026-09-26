@@ -45,6 +45,8 @@ export const PostCard = React.memo(function PostCard({
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsError, setCommentsError] = useState(null);
   const [isAITyping, setIsAITyping] = useState(false);
+  const [isAISheetOpen, setIsAISheetOpen] = useState(false);
+  const [aiResponse, setAiResponse] = useState('');
 
   // Poll state
   const [pollVotes, setPollVotes] = useState({});
@@ -254,21 +256,22 @@ export const PostCard = React.memo(function PostCard({
   };
 
   const handleAskAI = async () => {
-    setIsCommentsOpen(true);
+    setIsAISheetOpen(true);
+    setAiResponse('');
     setIsAITyping(true);
     try {
-      const samuelId = await getSamuelProfileId();
       const aiText = await askSamuel(`Explain this post helpfully: "${content}"`);
       if (aiText) {
-        const { data: aiInserted } = await supabase
-          .from('post_comments')
-          .insert([{ post_id: postId, author_id: samuelId, content: `[AI_SAMUEL_RESPONSE] ${aiText}` }])
-          .select('id, content, created_at, author_id, profiles!author_id(id, username, full_name, avatar_url)')
-          .single();
-        if (aiInserted) setComments(prev => [...prev, aiInserted]);
+        setAiResponse(aiText);
+      } else {
+        setAiResponse("I couldn't generate a response. Please try again.");
       }
-    } catch (err) { console.error('AI Error:', err); }
-    finally { setIsAITyping(false); }
+    } catch (err) {
+      console.error('AI Error:', err);
+      setAiResponse("An error occurred while generating the response.");
+    } finally {
+      setIsAITyping(false);
+    }
   };
 
   return (
@@ -539,6 +542,41 @@ export const PostCard = React.memo(function PostCard({
             </form>
           </div>
         </CommentErrorBoundary>
+      )}
+
+      {/* ── AI Bottom Sheet ─────────────────────────────────────────── */}
+      {isAISheetOpen && (
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsAISheetOpen(false)} />
+          <div className="relative bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-full duration-300">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800 shrink-0">
+              <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                <Bot className="w-5 h-5" />
+                <h3 className="font-bold text-lg">Samuel AI</h3>
+              </div>
+              <button onClick={() => setIsAISheetOpen(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-5 pb-safe">
+              {isAITyping ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                  <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+                    <Bot className="w-6 h-6 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+                  </div>
+                  <p className="text-gray-500 dark:text-slate-400 font-medium animate-pulse text-sm">Samuel is analyzing the thread...</p>
+                </div>
+              ) : (
+                <div className="markdown-body text-[15px] leading-relaxed text-gray-800 dark:text-slate-200">
+                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                    {aiResponse}
+                  </ReactMarkdown>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
