@@ -3,6 +3,13 @@ import { supabase } from '../supabaseClient';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { AlertTriangle, Play, Square, Users, ArrowLeft } from 'lucide-react';
 
+// Subcomponents
+import DynamicVisuals from '../components/study/DynamicVisuals';
+import ParticipantsGrid from '../components/study/ParticipantsGrid';
+import AmbientAudio from '../components/study/AmbientAudio';
+import JotterPanel from '../components/study/JotterPanel';
+import PostSprintChat from '../components/study/PostSprintChat';
+
 const ROOM_ID = 'global-study-room'; // Replace with dynamic ID for private rooms
 const PENALTY_THRESHOLD_MS = 30000; // 30 seconds hidden = failed
 
@@ -203,10 +210,10 @@ export default function StudyRoom() {
     <div className="relative w-full h-full min-h-screen bg-slate-950 text-white flex flex-col overflow-hidden">
       
       {/* 1. Dynamic Visuals (Background) */}
-      <div className={`absolute inset-0 transition-opacity duration-1000 ${isTimerRunning ? 'opacity-100' : 'opacity-30'}`}>
-        {/* Placeholder for DynamicVisuals component */}
-        <div className="w-full h-full bg-gradient-to-t from-indigo-900/40 to-transparent" />
-      </div>
+      <DynamicVisuals isTimerRunning={isTimerRunning} timeLeft={timeLeft} totalTime={25 * 60} />
+
+      {/* Realtime Participants Grid */}
+      <ParticipantsGrid participants={participants} currentUser={currentUser} />
 
       {/* 2. Top Header & Task Input */}
       <div className="relative z-10 p-6 flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -269,24 +276,18 @@ export default function StudyRoom() {
         )}
       </div>
 
-      {/* 4. Utilities: Audio, Chat, and Jotter Placeholder */}
+      {/* 4. Utilities: Audio, Chat, and Jotter */}
       <div className="relative z-10 p-6 flex justify-between items-end mt-auto">
         <div className="w-64 hidden md:block">
-           {/* AmbientAudio Placeholder */}
-           <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl text-slate-400 text-sm">
-             🎵 Audio Player (Coming Soon)
-           </div>
+           <AmbientAudio />
         </div>
         
         <div className="flex-1 max-w-md hidden lg:block mx-4">
-           {/* PostSprintChat Placeholder */}
+           <PostSprintChat isDisabled={isTimerRunning} currentUser={currentUser} roomId={ROOM_ID} />
         </div>
         
         <div className="hidden md:block">
-           {/* JotterPanel Placeholder */}
-           <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl text-slate-400 text-sm">
-             📝 Jotter (Coming Soon)
-           </div>
+           <JotterPanel />
         </div>
       </div>
 
