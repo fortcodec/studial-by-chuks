@@ -9,6 +9,7 @@ import ParticipantsGrid from '../components/study/ParticipantsGrid';
 import AmbientAudio from '../components/study/AmbientAudio';
 import JotterPanel from '../components/study/JotterPanel';
 import PostSprintChat from '../components/study/PostSprintChat';
+import WelcomeBountyModal from '../components/study/WelcomeBountyModal';
 
 const ROOM_ID = 'global-study-room'; // Replace with dynamic ID for private rooms
 const PENALTY_THRESHOLD_MS = 30000; // 30 seconds hidden = failed
@@ -209,6 +210,8 @@ export default function StudyRoom() {
   return (
     <div className="relative w-full h-full min-h-screen bg-slate-950 text-white flex flex-col overflow-hidden">
       
+      <WelcomeBountyModal />
+
       {/* 1. Dynamic Visuals (Background) */}
       <DynamicVisuals isTimerRunning={isTimerRunning} timeLeft={timeLeft} totalTime={25 * 60} />
 
