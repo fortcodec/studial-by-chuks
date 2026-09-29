@@ -20,6 +20,10 @@ export async function askSamuel(prompt, userId) {
       throw new Error(err.error || `HTTP error ${response.status}`);
     }
 
+    if (!response.body) {
+      throw new Error("No response body received from API");
+    }
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let aiResponse = "";

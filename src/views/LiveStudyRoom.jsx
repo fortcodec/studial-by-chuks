@@ -144,7 +144,24 @@ export default function LiveStudyRoom() {
 
   const handleJoinSprint = async () => {
     if (!currentUser || hasJoined) return;
+    
     setHasJoined(true);
+    setIsActive(true); // Start the local countdown timer state
+    
+    try {
+      const duration = parseInt(sprintMode, 10);
+      const { error } = await supabase.from('study_sessions').insert([
+        {
+          user_id: currentUser.id,
+          duration_minutes: duration,
+          status: 'in_progress'
+        }
+      ]);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Error creating study session:", err);
+    }
+
     if (channelRef.current) {
       await channelRef.current.track({ user_id: currentUser.id, joined_at: new Date() });
     }
@@ -230,22 +247,13 @@ export default function LiveStudyRoom() {
           
           <div className="flex items-center gap-2">
             {hasJoined ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={toggleTimer}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-white shadow-sm transition-transform active:scale-95 ${
-                    isActive ? 'bg-error' : 'bg-secondary-green'
-                  }`}
-                >
-                  {isActive ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-                </button>
-                <button
-                  onClick={resetTimer}
-                  className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-container text-outline hover:text-on-surface transition-colors"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                disabled
+                className="bg-surface-container-high text-outline text-xs font-bold px-4 py-2 rounded-full cursor-not-allowed border border-outline-variant/30 flex items-center gap-2"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-secondary-green animate-pulse" />
+                Focusing...
+              </button>
             ) : (
               <button
                 onClick={handleJoinSprint}

@@ -20,6 +20,8 @@ import {
   Award,
 } from "lucide-react";
 import { PostCard } from "../components/PostCard";
+import useSWR from "swr";
+import PullToRefresh from "../components/PullToRefresh";
 
 export default function ProfileView() {
   const { currentUser } = useOutletContext();
@@ -100,138 +102,126 @@ export default function ProfileView() {
     }
   };
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchProfileData = async () => {
+    setIsLoading(true);
+    try {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
 
-    const fetchProfileData = async () => {
-      setIsLoading(true);
-      try {
-        const {
-          data: { user: authUser },
-        } = await supabase.auth.getUser();
+      const param = profileId || profileUsername;
+      let targetId = null;
+      let targetProfile = null;
 
-        const param = profileId || profileUsername;
-        let targetId = null;
-        let targetProfile = null;
-
-        if (param) {
-          // Check if param is a valid UUID
-          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
-          let query = supabase.from("profiles").select("*");
-          if (isUuid) {
-            query = query.eq("id", param);
-          } else {
-            query = query.ilike("username", param);
-          }
-          const { data, error } = await query.maybeSingle();
-          if (error) {
-            console.error("Error fetching target profile:", error);
-          }
-          if (data) {
-            targetProfile = data;
-            targetId = data.id;
-          } else {
-            // Fallback if not found: check if UUID
-            targetId = param;
-          }
+      if (param) {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
+        let query = supabase.from("profiles").select("*");
+        if (isUuid) {
+          query = query.eq("id", param);
         } else {
-          // No URL param: view own profile from authenticated user
-          targetId = authUser?.id || currentUser?.id;
-          if (targetId) {
-            const { data } = await supabase.from("profiles").select("*").eq("id", targetId).maybeSingle();
-            targetProfile = data;
-          }
+          query = query.ilike("username", param);
+        }
+        const { data, error } = await query.maybeSingle();
+        if (error) {
+          console.error("Error fetching target profile:", error);
+        }
+        if (data) {
+          targetProfile = data;
+          targetId = data.id;
+        } else {
+          targetId = param;
+        }
+      } else {
+        targetId = authUser?.id || currentUser?.id;
+        if (targetId) {
+          const { data } = await supabase.from("profiles").select("*").eq("id", targetId).maybeSingle();
+          targetProfile = data;
+        }
+      }
+
+      const isCurrent = !param || targetId === authUser?.id || targetId === currentUser?.id;
+      setIsOwnProfile(isCurrent);
+      setResolvedUserId(targetId);
+
+      if (targetId) {
+        if (isCurrent && authUser) {
+          setEmail(authUser.email);
         }
 
-        const isCurrent = !param || targetId === authUser?.id || targetId === currentUser?.id;
-        if (isMounted) {
-          setIsOwnProfile(isCurrent);
-          setResolvedUserId(targetId);
+        if (targetProfile) {
+          setDepartment(targetProfile.department || "Computer Science");
+          setFullName(targetProfile.full_name || "");
+          setUsername(targetProfile.username || "");
+          setTargetAvatarUrl(targetProfile.avatar_url || "");
+          setEditForm({
+            username: targetProfile.username || "",
+            department: targetProfile.department || "",
+            university: targetProfile.university || "",
+            full_name: targetProfile.full_name || "",
+            bio: targetProfile.bio || "",
+          });
         }
 
-        if (targetId && isMounted) {
-          if (isCurrent && authUser) {
-            setEmail(authUser.email);
-          }
+        const { count: postsCount } = await supabase
+          .from("posts")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", targetId);
 
-          if (targetProfile) {
-            setDepartment(targetProfile.department || "Computer Science");
-            setFullName(targetProfile.full_name || "");
-            setUsername(targetProfile.username || "");
-            setTargetAvatarUrl(targetProfile.avatar_url || "");
-            setEditForm({
-              username: targetProfile.username || "",
-              department: targetProfile.department || "",
-              university: targetProfile.university || "",
-              full_name: targetProfile.full_name || "",
-              bio: targetProfile.bio || "",
-            });
-          }
-
-          // Fetch Posts Count
-          const { count: postsCount } = await supabase
-            .from("posts")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", targetId);
-
-          // Fetch live transactions only if own profile
-          let transactionData = [];
-          if (isCurrent) {
-            const { data } = await supabase
-              .from("c_coin_transactions")
-              .select("*")
-              .eq("user_id", targetId)
-              .order("created_at", { ascending: false });
-            transactionData = data || [];
-          }
-
-          // Fetch target user's Posts
-          setIsMyPostsLoading(true);
-          const { data: postsData } = await supabase
-            .from("posts")
-            .select(
-              "*, profiles!user_id(username, full_name, avatar_url), post_likes(count), post_comments(count)",
-            )
+        let transactionData = [];
+        if (isCurrent) {
+          const { data } = await supabase
+            .from("c_coin_transactions")
+            .select("*")
             .eq("user_id", targetId)
             .order("created_at", { ascending: false });
-
-          if (isMounted) {
-            setStats({
-              posts: postsCount || 0,
-              quizzes: 0,
-              studyHours: 0,
-            });
-
-            setMyPosts(postsData || []);
-            setIsMyPostsLoading(false);
-
-            if (transactionData) {
-              setTransactions(
-                transactionData.map((tx) => ({
-                  id: tx.id,
-                  type: tx.description,
-                  amount: tx.amount,
-                  date: new Date(tx.created_at).toLocaleDateString(),
-                })),
-              );
-            } else {
-              setTransactions([]);
-            }
-          }
+          transactionData = data || [];
         }
-      } catch (error) {
-        console.error("Error fetching profile data:", error);
-      } finally {
-        if (isMounted) setIsLoading(false);
+
+        setIsMyPostsLoading(true);
+        const { data: postsData } = await supabase
+          .from("posts")
+          .select(
+            "*, profiles!user_id(username, full_name, avatar_url), post_likes(count), post_comments(count)",
+          )
+          .eq("user_id", targetId)
+          .order("created_at", { ascending: false });
+
+        setStats({
+          posts: postsCount || 0,
+          quizzes: 0,
+          studyHours: 0,
+        });
+
+        setMyPosts(postsData || []);
+        setIsMyPostsLoading(false);
+
+        if (transactionData) {
+          setTransactions(
+            transactionData.map((tx) => ({
+              id: tx.id,
+              type: tx.description,
+              amount: tx.amount,
+              date: new Date(tx.created_at).toLocaleDateString(),
+            })),
+          );
+        } else {
+          setTransactions([]);
+        }
       }
-    };
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchProfileData();
+  const { mutate: mutateProfile } = useSWR(
+    ['profile', profileId, profileUsername, currentUser?.id],
+    fetchProfileData,
+    { revalidateOnFocus: true }
+  );
 
-    return () => {
-      isMounted = false;
-    };
-  }, [profileId, profileUsername, currentUser?.id]);
+
 
   const handleLogout = async () => {
     try {
@@ -295,6 +285,7 @@ export default function ProfileView() {
   }
 
   return (
+    <PullToRefresh onRefresh={async () => await mutateProfile()}>
     <div className="px-5 pt-4 pb-[90px] flex flex-col gap-6 relative bg-[#f8fafc] bg-white dark:bg-slate-900 dark:border-slate-800 min-h-screen">
       {/* Toast Notification */}
       {toastMessage && (
@@ -862,5 +853,6 @@ export default function ProfileView() {
         </div>
       )}
     </div>
+    </PullToRefresh>
   );
 }

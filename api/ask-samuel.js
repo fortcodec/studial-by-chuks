@@ -103,7 +103,7 @@ export default async function handler(req) {
     // 3. Initiate Gemini Stream with Backoff
     const streamResponse = await fetchWithBackoff(async () => {
       return await ai.models.generateContentStream({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-1.5-flash',
         contents: prompt,
         config: {
           systemInstruction,

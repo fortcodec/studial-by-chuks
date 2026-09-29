@@ -3,20 +3,17 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { Loader2, MessageSquare, ChevronRight, Bell, Clock, CheckCircle2 } from "lucide-react";
 import { Avatar } from "../components/Avatar";
+import useSWR from "swr";
+import PullToRefresh from "../components/PullToRefresh";
 
 export default function Inbox() {
   const { currentUser } = useOutletContext();
-  const [conversations, setConversations] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isActivityLoading, setIsActivityLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("messages"); // 'messages' or 'activity'
   const navigate = useNavigate();
 
-  const fetchConversations = async () => {
-    if (!currentUser?.id) return;
-    try {
+  const { data: conversations = [], isLoading: isLoadingConversations, mutate: mutateConversations } = useSWR(
+    currentUser?.id ? `conversations_${currentUser.id}` : null,
+    async () => {
       const { data, error } = await supabase
         .from("conversations")
         .select(`
@@ -31,7 +28,7 @@ export default function Inbox() {
         
       if (error) throw error;
       
-      const processed = data.map((conv) => {
+      return data.map((conv) => {
         const otherUser = conv.user1.id === currentUser.id ? conv.user2 : conv.user1;
         const sortedMessages = conv.messages?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) || [];
         const latestMessage = sortedMessages[0];
@@ -43,19 +40,13 @@ export default function Inbox() {
           latestMessage,
         };
       });
-      
-      setConversations(processed);
-    } catch (err) {
-      console.error("Error fetching conversations:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    { revalidateOnFocus: true }
+  );
 
-  const fetchActivity = async () => {
-    if (!currentUser?.id) return;
-    setIsActivityLoading(true);
-    try {
+  const { data: activityData, isLoading: isActivityLoading, mutate: mutateActivity } = useSWR(
+    currentUser?.id && activeTab === 'activity' ? `activity_${currentUser.id}` : null,
+    async () => {
       const [txRes, notifRes] = await Promise.all([
         supabase
           .from('c_coin_transactions')
@@ -70,31 +61,26 @@ export default function Inbox() {
           .order('created_at', { ascending: false })
           .limit(50)
       ]);
-      
-      if (txRes.data) setTransactions(txRes.data);
-      if (notifRes.data) setNotifications(notifRes.data);
 
-      // Mark all notifications as read when viewing the activity tab
       if (notifRes.data && notifRes.data.some(n => !n.read)) {
         await supabase.from('notifications')
           .update({ read: true })
           .eq('user_id', currentUser.id)
           .eq('read', false);
       }
-    } catch (err) {
-      console.error("Error fetching activity:", err);
-    } finally {
-      setIsActivityLoading(false);
-    }
-  };
+
+      return {
+        transactions: txRes.data || [],
+        notifications: notifRes.data || []
+      };
+    },
+    { revalidateOnFocus: true }
+  );
+
+  const transactions = activityData?.transactions || [];
+  const notifications = activityData?.notifications || [];
 
   useEffect(() => {
-    if (activeTab === "messages") {
-      fetchConversations();
-    } else if (activeTab === "activity") {
-      fetchActivity();
-    }
-    
     // Listen for realtime updates to bump conversations
     const channel = supabase
       .channel('public:conversations_inbox')
@@ -102,7 +88,7 @@ export default function Inbox() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'messages' },
         () => {
-          if (activeTab === "messages") fetchConversations();
+          if (activeTab === "messages") mutateConversations();
         }
       )
       .subscribe();
@@ -110,7 +96,7 @@ export default function Inbox() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUser?.id, activeTab]);
+  }, [activeTab, mutateConversations]);
 
   return (
     <div className="flex flex-col min-h-screen w-full max-w-2xl mx-auto bg-[#f8fafc] dark:bg-slate-900 md:border-x border-outline-variant/30 pt-4 pb-[90px]">
@@ -141,8 +127,12 @@ export default function Inbox() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        <PullToRefresh onRefresh={async () => {
+          if (activeTab === 'messages') await mutateConversations();
+          else await mutateActivity();
+        }}>
         {activeTab === 'messages' && (
-          isLoading ? (
+          isLoadingConversations ? (
             <div className="flex justify-center items-center h-32">
               <Loader2 className="w-6 h-6 text-primary animate-spin" />
             </div>
@@ -239,6 +229,7 @@ export default function Inbox() {
             </div>
           )
         )}
+        </PullToRefresh>
       </div>
     </div>
   );

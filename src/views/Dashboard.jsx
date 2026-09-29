@@ -5,6 +5,8 @@ import { PostCard, LiveRoomCard } from "../components/PostCard";
 import QuizModal from "../components/QuizModal";
 import { supabase } from "../supabaseClient";
 import { useOutletContext } from "react-router-dom";
+import useSWR from "swr";
+import PullToRefresh from "../components/PullToRefresh";
 
 function formatTimeAgo(dateString) {
   if (!dateString) return '';
@@ -60,40 +62,29 @@ export default function Dashboard() {
   const { currentUser, setCurrentUser } = useOutletContext();
   
   const [posts, setPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
   const [quizOpen, setQuizOpen] = useState(false);
   const [activeQuizContent, setActiveQuizContent] = useState("");
+  const { data: swrPosts, error, isLoading, mutate } = useSWR(
+    'dashboard_posts',
+    async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*, profiles!user_id(id, username, full_name, avatar_url, department, is_shadow_banned), post_likes(count), post_comments(count)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    { revalidateOnFocus: true }
+  );
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchPosts = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('posts')
-          .select('*, profiles!user_id(id, username, full_name, avatar_url, department, is_shadow_banned), post_likes(count), post_comments(count)')
-          .order('created_at', { ascending: false });
-          
-        if (error) {
-          console.error("Error fetching posts:", error);
-        } else if (isMounted) {
-          // Shadow Ban Logic: Filter out shadow-banned users' posts, unless it belongs to the current user
-          const filteredPosts = (data || []).filter(post => 
-            !post?.profiles?.is_shadow_banned || post?.user_id === currentUser?.id
-          );
-          
-          setPosts(filteredPosts);
-        }
-      } catch (err) {
-        console.error("Unexpected error fetching posts:", err);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    fetchPosts();
+    if (swrPosts) {
+      const filteredPosts = swrPosts.filter(post => 
+        !post?.profiles?.is_shadow_banned || post?.user_id === currentUser?.id
+      );
+      setPosts(filteredPosts);
+    }
+  }, [swrPosts, currentUser?.id]);
 
     // Realtime Updates for Posts
     const channel = supabase
@@ -144,6 +135,7 @@ export default function Dashboard() {
     <div className="flex flex-col h-full w-full relative overflow-y-auto bg-transparent">
       {/* Main Feed */}
       <div className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-28">
+        <PullToRefresh onRefresh={async () => await mutate()}>
 
 
 
@@ -215,6 +207,7 @@ export default function Dashboard() {
             );
           })
         )}
+        </PullToRefresh>
       </div>
 
       <QuizModal 

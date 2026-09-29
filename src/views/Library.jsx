@@ -2,19 +2,16 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Search, Download, FileText, ArrowLeft, Loader2, BookOpen, Bookmark, Bot, AlertCircle, X, Filter, CheckCircle2, ChevronRight, Lock, Trash2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useOutletContext, useNavigate } from 'react-router-dom';
+import useSWR from "swr";
+import PullToRefresh from "../components/PullToRefresh";
 
 const UnlockMaterialModal = lazy(() => import('../components/UnlockMaterialModal'));
 
 export default function Library() {
   const { currentUser, setCurrentUser } = useOutletContext();
   const navigate = useNavigate();
-  const [resources, setResources] = useState([]);
-  const [savedMaterials, setSavedMaterials] = useState(new Set());
-  const [unlockedMaterials, setUnlockedMaterials] = useState(new Set());
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
-  const [pageError, setPageError] = useState(null);
   const [activeDocument, setActiveDocument] = useState(null);
   const [unlockModalOpen, setUnlockModalOpen] = useState(false);
   const [selectedMaterialForUnlock, setSelectedMaterialForUnlock] = useState(null);
@@ -28,55 +25,38 @@ export default function Library() {
 
   const filters = ['All', 'Past Questions', 'Lecture Notes', 'Syllabus'];
 
-  useEffect(() => {
-    const fetchResources = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('study_materials')
-          .select('*')
-          .order('created_at', { ascending: false });
+  const { data: resources = [], isLoading, error: pageErrorSWR, mutate: mutateResources } = useSWR(
+    'library_materials',
+    async () => {
+      const { data, error } = await supabase
+        .from('study_materials')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    { revalidateOnFocus: true }
+  );
 
-        if (error) {
-          console.error("Error fetching study materials:", error);
-          setPageError(error.message || "Failed to load study materials");
-          setResources([]);
-        } else if (data) {
-          setResources(data);
-          setPageError(null);
-        } else {
-          setResources([]);
-          setPageError(null);
-        }
-      } catch (err) {
-        console.error("Unexpected error fetching study materials:", err);
-        setPageError(err.message || "An unexpected error occurred");
-        setResources([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const pageError = pageErrorSWR?.message || null;
 
-    fetchResources();
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchSavedAndUnlocked = async () => {
-      if (!currentUser?.id) return;
+  const { data: userLibraryData, mutate: mutateUserLibrary } = useSWR(
+    currentUser?.id ? `user_library_${currentUser.id}` : null,
+    async () => {
       const [{ data: savedData }, { data: unlockedData }] = await Promise.all([
         supabase.from('saved_materials').select('material_id').eq('user_id', currentUser.id),
         supabase.from('unlocked_materials').select('material_id').eq('user_id', currentUser.id)
       ]);
-      
-      if (isMounted) {
-        if (savedData) setSavedMaterials(new Set(savedData.map(item => item.material_id)));
-        if (unlockedData) setUnlockedMaterials(new Set(unlockedData.map(item => item.material_id)));
-      }
-    };
-    fetchSavedAndUnlocked();
-    return () => { isMounted = false; };
-  }, [currentUser]);
+      return {
+        saved: new Set((savedData || []).map(item => item.material_id)),
+        unlocked: new Set((unlockedData || []).map(item => item.material_id))
+      };
+    },
+    { revalidateOnFocus: true }
+  );
+
+  const savedMaterials = userLibraryData?.saved || new Set();
+  const unlockedMaterials = userLibraryData?.unlocked || new Set();
 
   const handleToggleSave = async (materialId) => {
     if (!currentUser?.id) return;
@@ -95,12 +75,12 @@ export default function Library() {
     const alreadySaved = savedMaterials.has(materialId);
 
     // ── Optimistic UI update (instant feedback) ───────────────────────────────
-    setSavedMaterials(prev => {
-      const next = new Set(prev);
-      if (alreadySaved) next.delete(materialId);
-      else next.add(materialId);
-      return next;
-    });
+    mutateUserLibrary(prev => {
+      const nextSaved = new Set(prev?.saved || []);
+      if (alreadySaved) nextSaved.delete(materialId);
+      else nextSaved.add(materialId);
+      return { ...prev, saved: nextSaved, unlocked: prev?.unlocked || new Set() };
+    }, false);
 
     try {
       if (alreadySaved) {
@@ -129,12 +109,12 @@ export default function Library() {
     } catch (err) {
       console.error('Error toggling save:', err);
       // ── Roll back the optimistic update on failure ────────────────────────
-      setSavedMaterials(prev => {
-        const rollback = new Set(prev);
-        if (alreadySaved) rollback.add(materialId);    // restore saved state
-        else rollback.delete(materialId);               // restore unsaved state
-        return rollback;
-      });
+      mutateUserLibrary(prev => {
+        const rollback = new Set(prev?.saved || []);
+        if (alreadySaved) rollback.add(materialId);
+        else rollback.delete(materialId);
+        return { ...prev, saved: rollback, unlocked: prev?.unlocked || new Set() };
+      }, false);
       setToastMessage({ type: 'error', text: `Failed: ${err.message}` });
       setTimeout(() => setToastMessage(null), 5000);
     } finally {
@@ -148,7 +128,7 @@ export default function Library() {
     try {
       const { error } = await supabase.from('study_materials').delete().eq('id', materialId);
       if (error) throw error;
-      setResources(prev => prev.filter(r => r.id !== materialId));
+      mutateResources();
       setToastMessage({ type: 'success', text: 'Material deleted successfully!' });
       setTimeout(() => setToastMessage(null), 3000);
     } catch (err) {
@@ -170,7 +150,11 @@ export default function Library() {
   };
 
   const handleUnlockSuccess = (materialId) => {
-    setUnlockedMaterials(prev => new Set(prev).add(materialId));
+    mutateUserLibrary(prev => {
+      const nextUnlocked = new Set(prev?.unlocked || []);
+      nextUnlocked.add(materialId);
+      return { ...prev, unlocked: nextUnlocked, saved: prev?.saved || new Set() };
+    }, false);
     // The modal itself will now show a 'Read Now' button instead of auto-opening
   };
 
@@ -229,6 +213,10 @@ export default function Library() {
 
       {/* Resource Layout */}
       <div className="flex-1 overflow-y-auto pb-6">
+        <PullToRefresh onRefresh={async () => {
+          await mutateResources();
+          await mutateUserLibrary();
+        }}>
         {isLoading ? (
           <div className="p-5 flex flex-col gap-6">
             <div className="h-40 bg-white dark:bg-slate-800 rounded-3xl animate-pulse"></div>
@@ -372,6 +360,7 @@ export default function Library() {
             </div>
           </div>
         )}
+        </PullToRefresh>
       </div>
 
       {/* Document Viewer Modal */}

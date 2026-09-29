@@ -134,10 +134,19 @@ export default function ChatRoom() {
 
   const isOnline = otherUser?.id && onlineUsers[otherUser.id];
 
-  if (isLoading && !otherUser) {
+  if (isLoading) {
     return (
-      <div className="flex h-[100dvh] w-full items-center justify-center bg-background md:border-x border-outline-variant/30">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="flex flex-col h-[100dvh] w-full max-w-2xl mx-auto bg-background md:border-x border-outline-variant/30 p-4 space-y-4">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-full bg-surface-container animate-pulse" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 bg-surface-container rounded w-1/4 animate-pulse" />
+            <div className="h-3 bg-surface-container rounded w-1/3 animate-pulse" />
+          </div>
+        </div>
+        <div className="flex justify-start"><div className="h-10 w-2/3 bg-surface-container rounded-2xl animate-pulse" /></div>
+        <div className="flex justify-end"><div className="h-16 w-1/2 bg-primary/20 rounded-2xl animate-pulse" /></div>
+        <div className="flex justify-start"><div className="h-12 w-3/4 bg-surface-container rounded-2xl animate-pulse" /></div>
       </div>
     );
   }
@@ -176,11 +185,11 @@ export default function ChatRoom() {
       {/* Messages Scroll Area */}
       <div className={`flex-1 overflow-y-auto p-4 space-y-4 pt-6 relative ${messages.length === 0 ? 'bg-[#efeae2] dark:bg-[#0b141a]' : ''}`}>
         {/* WhatsApp style subtle pattern overlay for empty state */}
-        {messages.length === 0 && (
+        {(!Array.isArray(messages) || messages.length === 0) && (
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-5 pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}></div>
         )}
 
-        {messages.length === 0 ? (
+        {!Array.isArray(messages) || messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-20 text-slate-400 dark:text-slate-500">
             <div className="bg-[#FFEEDB] dark:bg-[#182229] text-[#54656F] dark:text-[#8696A0] text-[12.5px] font-medium text-center px-4 py-2 rounded-xl shadow-sm max-w-[85%] leading-relaxed flex flex-col items-center gap-1.5 mb-6">
               <span>🔒</span>
