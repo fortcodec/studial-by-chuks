@@ -14,15 +14,8 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    const applied = theme === 'system'
-      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-      : theme;
-    if (applied === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    root.setAttribute('data-theme', applied);
+    root.classList.remove('dark');
+    root.setAttribute('data-theme', 'light');
   }, [theme]);
 
   const updateTheme = (newTheme) => {
