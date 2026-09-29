@@ -257,7 +257,7 @@ export default function LiveStudyRoom() {
             ) : (
               <button
                 onClick={handleJoinSprint}
-                className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full shadow-md hover:bg-primary/90 transition-all active:scale-95"
+                className="bg-primary text-slate-900 dark:text-white text-xs font-bold px-4 py-2 rounded-full shadow-md hover:bg-primary/90 transition-all active:scale-95"
               >
                 Join Sprint
               </button>
@@ -300,7 +300,7 @@ export default function LiveStudyRoom() {
                   <div 
                     className={`px-4 py-2.5 rounded-2xl ${
                       isMe 
-                        ? 'bg-primary text-white rounded-br-sm shadow-sm shadow-primary/20' 
+                        ? 'bg-primary text-slate-900 dark:text-white rounded-br-sm shadow-sm shadow-primary/20' 
                         : 'bg-surface-container-highest text-on-surface rounded-bl-sm border border-outline-variant/30 shadow-sm'
                     }`}
                   >
@@ -327,7 +327,7 @@ export default function LiveStudyRoom() {
           <button 
             type="submit"
             disabled={!newMessage.trim()}
-            className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-md disabled:opacity-60 disabled:shadow-none transition-all active:scale-95 shrink-0"
+            className="w-10 h-10 bg-primary text-slate-900 dark:text-white rounded-full flex items-center justify-center shadow-md disabled:opacity-60 disabled:shadow-none transition-all active:scale-95 shrink-0"
           >
             <Send size={18} className="mr-0.5" />
           </button>

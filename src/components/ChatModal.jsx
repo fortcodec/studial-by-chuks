@@ -133,7 +133,7 @@ export default function ChatModal({ currentUser, targetUser, onClose }) {
               const isMine = msg.sender_id === currentUser.id;
               return (
                 <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-[15px] ${isMine ? 'bg-primary text-white rounded-br-sm' : 'bg-surface-container text-on-surface rounded-bl-sm border border-outline-variant/20'}`}>
+                  <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-[15px] ${isMine ? 'bg-primary text-slate-900 dark:text-white rounded-br-sm' : 'bg-surface-container text-on-surface rounded-bl-sm border border-outline-variant/20'}`}>
                     {msg.content}
                   </div>
                 </div>
@@ -156,7 +156,7 @@ export default function ChatModal({ currentUser, targetUser, onClose }) {
             <button 
               type="submit" 
               disabled={!newMessage.trim()}
-              className="w-11 h-11 bg-primary text-white rounded-full flex items-center justify-center shrink-0 disabled:opacity-50 transition-opacity"
+              className="w-11 h-11 bg-primary text-slate-900 dark:text-white rounded-full flex items-center justify-center shrink-0 disabled:opacity-50 transition-opacity"
             >
               <Send className="w-5 h-5" />
             </button>

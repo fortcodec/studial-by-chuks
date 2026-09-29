@@ -114,7 +114,7 @@ export default function Login() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-4">
-            <div className="bg-primary-navy p-3 rounded-full text-white">
+            <div className="bg-indigo-600 p-3 rounded-full text-slate-900 dark:text-white">
               <BookOpen size={32} />
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function Login() {
             <div className="space-y-1 text-left">
               <label className="block text-sm font-medium text-gray-700">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
+                <Mail className="absolute left-3 top-3 text-slate-500 dark:text-slate-400" size={20} />
                 <input 
                   type="email"
                   name="identifier"
@@ -158,7 +158,7 @@ export default function Login() {
             <button 
               type="submit"
               disabled={loading}
-              className={`w-full bg-primary-navy hover:bg-[#112440] text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-6 shadow-lg shadow-primary-navy/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-6 shadow-lg shadow-indigo-600/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {loading ? 'Sending...' : 'Send Reset Link'}
             </button>
@@ -180,7 +180,7 @@ export default function Login() {
               <div className="space-y-1 text-left">
                 <label className="block text-sm font-medium text-gray-700">Email or Phone Number</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
+                  <Mail className="absolute left-3 top-3 text-slate-500 dark:text-slate-400" size={20} />
                   <input 
                     type="text"
                     name="identifier"
@@ -205,7 +205,7 @@ export default function Login() {
                   </button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={20} />
                   <input 
                     type={showPassword ? 'text' : 'password'}
                     name="password"
@@ -218,7 +218,7 @@ export default function Login() {
                   <button 
                     type="button" 
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-gray-600 transition"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -228,7 +228,7 @@ export default function Login() {
               <button 
                 type="submit"
                 disabled={loading}
-                className={`w-full bg-primary-navy hover:bg-[#112440] text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-6 shadow-lg shadow-primary-navy/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-6 shadow-lg shadow-indigo-600/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
                 <LogIn size={20} />
                 {loading ? 'Signing In...' : 'Sign In'}

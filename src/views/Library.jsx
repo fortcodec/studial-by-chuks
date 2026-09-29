@@ -166,9 +166,9 @@ export default function Library() {
   }) : [];
 
   return (
-    <div className="flex flex-col h-full relative bg-[#f8fafc] dark:bg-slate-900 overflow-hidden pt-4 pb-[90px]">
+    <div className="flex flex-col h-full relative bg-gray-50 dark:bg-gray-950 overflow-hidden pt-4 pb-[90px]">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#f8fafc]/95 dark:bg-slate-900/95 backdrop-blur-xl px-5 pt-4 pb-3 border-b border-outline-variant/20 shadow-sm">
+      <div className="sticky top-0 z-40 bg-gray-50 dark:bg-gray-950/95 dark:bg-slate-900/95 backdrop-blur-xl px-5 pt-4 pb-3 border-b border-outline-variant/20 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => navigate('/')} className="text-outline hover:text-on-surface transition-colors">
             <ArrowLeft size={20} />
@@ -201,7 +201,7 @@ export default function Library() {
               onClick={() => setActiveFilter(filter)}
               className={`px-4 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-all active:scale-95 ${
                 activeFilter === filter
-                  ? "bg-primary text-white shadow-md shadow-primary/20"
+                  ? "bg-primary text-slate-900 dark:text-white shadow-md shadow-primary/20"
                   : "bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:bg-surface-container-low"
               }`}
             >
@@ -219,10 +219,10 @@ export default function Library() {
         }}>
         {isLoading ? (
           <div className="p-5 flex flex-col gap-6">
-            <div className="h-40 bg-white dark:bg-slate-800 rounded-3xl animate-pulse"></div>
+            <div className="h-40 bg-white dark:bg-gray-900 rounded-3xl animate-pulse"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-32 bg-white dark:bg-slate-800 rounded-3xl animate-pulse"></div>
+                <div key={i} className="h-32 bg-white dark:bg-gray-900 rounded-3xl animate-pulse"></div>
               ))}
             </div>
           </div>
@@ -253,7 +253,7 @@ export default function Library() {
                   {filteredResources.slice(0, 4).map(resource => (
                     <div 
                       key={`carousel-${resource.id}`} 
-                      className="snap-start flex-shrink-0 w-72 bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-outline-variant/30 flex flex-col cursor-pointer hover:shadow-md transition-shadow"
+                      className="snap-start flex-shrink-0 w-72 bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm border border-outline-variant/30 flex flex-col cursor-pointer hover:shadow-md transition-shadow"
                       onClick={() => handleMaterialClick(resource)}
                     >
                       <div className="flex justify-between items-start mb-3">
@@ -285,7 +285,7 @@ export default function Library() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6">
                 {filteredResources.map(resource => (
-                  <div key={resource?.id} className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-outline-variant/30 flex flex-col group hover:shadow-md transition-all active:scale-[0.98]">
+                  <div key={resource?.id} className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm border border-outline-variant/30 flex flex-col group hover:shadow-md transition-all active:scale-[0.98]">
                     
                     <div className="flex items-start gap-4 mb-4">
                       <div className="w-12 h-14 rounded-2xl bg-error/10 border border-error/20 flex flex-col items-center justify-center flex-shrink-0">
@@ -400,7 +400,7 @@ export default function Library() {
 
       {/* Unlock Material Modal */}
       {unlockModalOpen && (
-        <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"><Loader2 className="w-8 h-8 text-white animate-spin" /></div>}>
+        <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"><Loader2 className="w-8 h-8 text-slate-900 dark:text-white animate-spin" /></div>}>
           <UnlockMaterialModal 
             isOpen={unlockModalOpen}
             onClose={() => setUnlockModalOpen(false)}

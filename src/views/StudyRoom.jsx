@@ -208,7 +208,7 @@ export default function StudyRoom() {
   };
 
   return (
-    <div className="relative w-full h-full min-h-screen bg-slate-950 text-white flex flex-col overflow-hidden">
+    <div className="relative w-full h-full min-h-screen bg-gray-50 dark:bg-gray-950 text-slate-900 dark:text-white flex flex-col overflow-hidden">
       
       <WelcomeBountyModal />
 

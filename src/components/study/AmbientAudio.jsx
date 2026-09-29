@@ -66,20 +66,20 @@ export default function AmbientAudio() {
       <div className="flex items-center gap-4">
         <button 
           onClick={togglePlay}
-          className="w-10 h-10 flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 text-white rounded-full transition-colors"
+          className="w-10 h-10 flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white rounded-full transition-colors"
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
         </button>
         
         <button 
           onClick={nextTrack}
-          className="p-2 text-slate-400 hover:text-white transition-colors"
+          className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white transition-colors"
         >
           <FastForward className="w-4 h-4" />
         </button>
 
         <div className="flex-1 flex items-center gap-2 ml-2">
-          <button onClick={() => setIsMuted(!isMuted)} className="text-slate-400 hover:text-white">
+          <button onClick={() => setIsMuted(!isMuted)} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white">
             {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
           <input

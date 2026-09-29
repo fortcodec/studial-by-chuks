@@ -286,11 +286,11 @@ export default function ProfileView() {
 
   return (
     <PullToRefresh onRefresh={async () => await mutateProfile()}>
-    <div className="px-5 pt-4 pb-[90px] flex flex-col gap-6 relative bg-[#f8fafc] bg-white dark:bg-slate-900 dark:border-slate-800 min-h-screen">
+    <div className="px-5 pt-4 pb-[90px] flex flex-col gap-6 relative bg-gray-50 dark:bg-gray-950 bg-white dark:bg-gray-900 dark:border-slate-800 min-h-screen">
       {/* Toast Notification */}
       {toastMessage && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-medium shadow-lg transition-all animate-fade-in ${
-          toastMessage.type === 'error' ? 'bg-red-500 text-slate-900 dark:text-white' : 'bg-green-500 text-white'
+          toastMessage.type === 'error' ? 'bg-red-500 text-slate-900 dark:text-white' : 'bg-green-500 text-slate-900 dark:text-white'
         }`}>
           {toastMessage.text}
         </div>
@@ -320,7 +320,7 @@ export default function ProfileView() {
             />
           ) : (
             <div
-              className={`w-20 h-20 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border-4 border-surface shadow-sm text-2xl transition-opacity ${isUploadingAvatar ? "opacity-50" : "group-hover:opacity-80"}`}
+              className={`w-20 h-20 rounded-full bg-indigo-500 text-slate-900 dark:text-white flex items-center justify-center font-bold border-4 border-surface shadow-sm text-2xl transition-opacity ${isUploadingAvatar ? "opacity-50" : "group-hover:opacity-80"}`}
             >
               {(fullName || currentUser?.name || "S").charAt(0).toUpperCase()}
             </div>
@@ -516,7 +516,7 @@ export default function ProfileView() {
             className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full"
           >
             <div className="flex items-center gap-3">
-               <div className="bg-slate-500/10 p-2 rounded-lg text-slate-600 dark:text-slate-300 dark:text-slate-400 group-hover:bg-slate-500 group-hover:text-white transition-colors">
+               <div className="bg-slate-500/10 p-2 rounded-lg text-slate-600 dark:text-slate-300 dark:text-slate-400 group-hover:bg-slate-500 group-hover:text-slate-900 dark:text-white transition-colors">
                 <Settings className="w-5 h-5" />
               </div>
               <span className="text-[15px] font-semibold text-on-surface">
@@ -531,7 +531,7 @@ export default function ProfileView() {
             className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full"
           >
             <div className="flex items-center gap-3">
-              <div className="bg-orange-500/10 p-2 rounded-lg text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+              <div className="bg-orange-500/10 p-2 rounded-lg text-orange-600 group-hover:bg-orange-500 group-hover:text-slate-900 dark:text-white transition-colors">
                 <Award className="w-5 h-5" />
               </div>
               <span className="text-[15px] font-semibold text-on-surface">
@@ -546,7 +546,7 @@ export default function ProfileView() {
             className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 group w-full"
           >
             <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+              <div className="bg-primary/10 p-2 rounded-lg text-primary group-hover:bg-primary group-hover:text-slate-900 dark:text-white transition-colors">
                 <Settings className="w-5 h-5" />
               </div>
               <span className="text-[15px] font-semibold text-on-surface">
@@ -588,7 +588,7 @@ export default function ProfileView() {
             className="flex items-center justify-between p-4 bg-transparent hover:bg-surface-container-low transition-colors group w-full"
           >
             <div className="flex items-center gap-3">
-              <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-600 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+              <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-600 group-hover:bg-indigo-500 group-hover:text-slate-900 dark:text-white transition-colors">
                 <Bookmark className="w-5 h-5" />
               </div>
               <span className="text-[15px] font-semibold text-on-surface">
@@ -602,7 +602,7 @@ export default function ProfileView() {
         <button
           onClick={handleStartConversation}
           disabled={isStartingChat}
-          className="w-full bg-primary text-white font-bold py-3.5 rounded-full hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 flex justify-center items-center gap-2 disabled:opacity-70"
+          className="w-full bg-primary text-slate-900 dark:text-white font-bold py-3.5 rounded-full hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 flex justify-center items-center gap-2 disabled:opacity-70"
         >
           {isStartingChat ? <Loader2 className="w-5 h-5 animate-spin" /> : <MessageSquare className="w-5 h-5" />}
           Message
@@ -692,20 +692,20 @@ export default function ProfileView() {
                     />
                   ) : (
                     <div
-                      className={`w-24 h-24 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold border-4 border-surface shadow-sm text-3xl transition-opacity ${isUploadingAvatar ? "opacity-50" : "group-hover:opacity-80"}`}
+                      className={`w-24 h-24 rounded-full bg-indigo-500 text-slate-900 dark:text-white flex items-center justify-center font-bold border-4 border-surface shadow-sm text-3xl transition-opacity ${isUploadingAvatar ? "opacity-50" : "group-hover:opacity-80"}`}
                     >
                       {(fullName || currentUser?.name || "S").charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="w-8 h-8 text-white" />
+                    <Camera className="w-8 h-8 text-slate-900 dark:text-white" />
                   </div>
                   <div className="absolute bottom-0 right-0 bg-primary rounded-full p-1.5 border-2 border-surface shadow-sm">
-                    <Camera className="w-4 h-4 text-white" />
+                    <Camera className="w-4 h-4 text-slate-900 dark:text-white" />
                   </div>
                   {isUploadingAvatar && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
-                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                      <Loader2 className="w-6 h-6 text-slate-900 dark:text-white animate-spin" />
                     </div>
                   )}
                 </div>
@@ -788,7 +788,7 @@ export default function ProfileView() {
                 <button
                   type="submit"
                   disabled={isSavingProfile}
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 rounded-full transition-all shadow-md shadow-primary/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full bg-primary hover:bg-primary/90 text-slate-900 dark:text-white font-bold py-3.5 rounded-full transition-all shadow-md shadow-primary/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {isSavingProfile ? (
                     <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Saving...</>
@@ -841,7 +841,7 @@ export default function ProfileView() {
                       href={resource.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-surface-container flex items-center justify-center rounded-full text-primary hover:bg-primary-container hover:text-white transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-surface-container flex items-center justify-center rounded-full text-primary hover:bg-primary-container hover:text-slate-900 dark:text-white transition-colors"
                     >
                       <Download className="w-4 h-4" />
                     </a>

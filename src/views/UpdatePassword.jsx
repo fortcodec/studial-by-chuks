@@ -56,7 +56,7 @@ export default function UpdatePassword() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-4">
-            <div className="bg-primary-navy p-3 rounded-full text-white">
+            <div className="bg-indigo-600 p-3 rounded-full text-slate-900 dark:text-white">
               <Lock size={32} />
             </div>
           </div>
@@ -78,7 +78,7 @@ export default function UpdatePassword() {
           <div className="space-y-1 text-left">
             <label className="block text-sm font-medium text-gray-700">New Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={20} />
               <input 
                 type={showPassword ? 'text' : 'password'}
                 name="password"
@@ -91,7 +91,7 @@ export default function UpdatePassword() {
               <button 
                 type="button" 
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-gray-600 transition"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -101,7 +101,7 @@ export default function UpdatePassword() {
           <div className="space-y-1 text-left">
             <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={20} />
               <input 
                 type={showPassword ? 'text' : 'password'}
                 name="confirmPassword"
@@ -117,7 +117,7 @@ export default function UpdatePassword() {
           <button 
             type="submit"
             disabled={loading}
-            className={`w-full bg-primary-navy hover:bg-[#112440] text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-6 shadow-lg shadow-primary-navy/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-6 shadow-lg shadow-indigo-600/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
             <Save size={20} />
             {loading ? 'Updating...' : 'Update Password'}

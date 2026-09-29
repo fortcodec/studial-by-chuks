@@ -25,7 +25,7 @@ export default function LiveNewsTicker() {
   }, []);
 
   return (
-    <div className="flex items-center w-full h-8 bg-black text-white overflow-hidden text-xs sm:text-sm border-b border-gray-800">
+    <div className="flex items-center w-full h-8 bg-black text-slate-900 dark:text-white overflow-hidden text-xs sm:text-sm border-b border-gray-800">
       
       {/* Injecting CSS directly so it scrolls perfectly without needing tailwind.config.js edits */}
       <style>
@@ -72,7 +72,7 @@ export default function LiveNewsTicker() {
             ))}
           </div>
         ) : (
-          <span className="mx-4 text-gray-400 animate-pulse">Loading live campus updates...</span>
+          <span className="mx-4 text-slate-500 dark:text-slate-400 animate-pulse">Loading live campus updates...</span>
         )}
       </div>
     </div>

@@ -70,7 +70,7 @@ export default function SessionTimeout({ children }) {
             
             <button 
               onClick={resetTimers}
-              className="w-full bg-primary hover:bg-primary-container text-white py-3 rounded-full font-bold transition-all active:scale-95"
+              className="w-full bg-primary hover:bg-primary-container text-slate-900 dark:text-white py-3 rounded-full font-bold transition-all active:scale-95"
             >
               Stay Logged In
             </button>

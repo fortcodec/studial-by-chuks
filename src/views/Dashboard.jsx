@@ -146,7 +146,7 @@ export default function Dashboard() {
         {isLoading ? (
           <div className="flex flex-col gap-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 animate-pulse">
+              <div key={i} className="bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 animate-pulse">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
                   <div>

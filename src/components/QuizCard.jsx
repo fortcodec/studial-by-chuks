@@ -66,7 +66,7 @@ export default function QuizCard({ quizData, onComplete, onClose }) {
           if (isAnswered) {
             if (isCorrect) buttonStyle = "bg-green-50 border-green-500 text-green-700";
             else if (isSelected && !isCorrect) buttonStyle = "bg-red-50 border-red-500 text-red-700";
-            else buttonStyle = "bg-gray-50 opacity-50 border-gray-200 text-gray-400";
+            else buttonStyle = "bg-gray-50 opacity-50 border-gray-200 text-slate-500 dark:text-slate-400";
           }
 
           return (
@@ -95,7 +95,7 @@ export default function QuizCard({ quizData, onComplete, onClose }) {
       <button
         onClick={handleNext}
         disabled={!isAnswered}
-        className={`w-full font-semibold py-3 rounded-xl flex items-center justify-center transition-transform ${isAnswered ? 'bg-indigo-600 text-white active:scale-[0.98]' : 'bg-gray-200 text-gray-400'}`}
+        className={`w-full font-semibold py-3 rounded-xl flex items-center justify-center transition-transform ${isAnswered ? 'bg-indigo-600 text-slate-900 dark:text-white active:scale-[0.98]' : 'bg-gray-200 text-slate-500 dark:text-slate-400'}`}
       >
         {currentIndex + 1 === quizData.length ? 'See Results' : 'Next Question'}
         <ChevronRight className="w-5 h-5 ml-2" />

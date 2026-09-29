@@ -131,7 +131,7 @@ export default function TasksHub() {
   return (
     <div className="min-h-screen bg-neutral-background flex flex-col font-inter">
       {/* Header */}
-      <header className="bg-primary-navy text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
+      <header className="bg-indigo-600 text-slate-900 dark:text-white p-4 shadow-md sticky top-0 z-10 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/')} className="hover:text-tertiary-orange transition">
             <ArrowLeft size={20} />
@@ -182,7 +182,7 @@ export default function TasksHub() {
                       <div>
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-bold text-gray-900">{task.title}</h3>
-                          <span className="bg-tertiary-orange text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                          <span className="bg-tertiary-orange text-slate-900 dark:text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                             +{task.reward_coins} C Coins
                           </span>
                         </div>
@@ -196,7 +196,7 @@ export default function TasksHub() {
                       </div>
                       <button 
                         onClick={() => setSelectedTask(task)}
-                        className="w-full bg-secondary-green hover:bg-emerald-600 text-white py-2 rounded-lg text-sm font-semibold transition shadow-sm"
+                        className="w-full bg-secondary-green hover:bg-emerald-600 text-slate-900 dark:text-white py-2 rounded-lg text-sm font-semibold transition shadow-sm"
                       >
                         Submit Proof
                       </button>
@@ -253,7 +253,7 @@ export default function TasksHub() {
                     required
                   />
                   <div className="flex flex-col items-center">
-                    <Upload size={24} className="text-gray-400 mb-2" />
+                    <Upload size={24} className="text-slate-500 dark:text-slate-400 mb-2" />
                     <span className="text-sm text-gray-600">
                       {file ? file.name : 'Tap to select a file'}
                     </span>
@@ -284,7 +284,7 @@ export default function TasksHub() {
                 <button 
                   type="submit"
                   disabled={submitting || !file}
-                  className="flex-1 py-2 bg-primary-navy text-white rounded-lg font-semibold hover:bg-[#112440] transition disabled:opacity-50"
+                  className="flex-1 py-2 bg-indigo-600 text-slate-900 dark:text-white rounded-lg font-semibold hover:bg-[#112440] transition disabled:opacity-50"
                 >
                   {submitting ? 'Uploading...' : 'Submit Proof'}
                 </button>

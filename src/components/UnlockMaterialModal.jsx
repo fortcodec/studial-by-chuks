@@ -90,7 +90,7 @@ export default function UnlockMaterialModal({
               if (onOpenMaterial) onOpenMaterial();
               else onClose();
             }}
-            className="w-full py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/30 active:scale-95 text-[15px]"
+            className="w-full py-4 bg-primary text-slate-900 dark:text-white rounded-2xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/30 active:scale-95 text-[15px]"
           >
             Read Now
           </button>
@@ -131,7 +131,7 @@ export default function UnlockMaterialModal({
             <button 
               onClick={handleUnlock}
               disabled={unlocking}
-              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-2xl font-bold hover:from-amber-600 hover:to-yellow-600 transition shadow-lg shadow-amber-500/30 active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 dark:text-white rounded-2xl font-bold hover:from-amber-600 hover:to-yellow-600 transition shadow-lg shadow-amber-500/30 active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
             >
               {unlocking ? (
                 <>
@@ -158,7 +158,7 @@ export default function UnlockMaterialModal({
                 onClose();
                 navigateTo('/tasksHub');
               }}
-              className="w-full py-3.5 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition shadow-lg active:scale-95"
+              className="w-full py-3.5 bg-primary text-slate-900 dark:text-white rounded-2xl font-bold hover:bg-primary/90 transition shadow-lg active:scale-95"
             >
               Earn Coins (Weekly Tasks)
             </button>

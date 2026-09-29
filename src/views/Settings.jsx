@@ -8,7 +8,7 @@ function ThemeModal({ currentTheme, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-900 border dark:border-slate-700 rounded-2xl shadow-xl w-full max-w-xs overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 border dark:border-slate-700 rounded-2xl shadow-xl w-full max-w-xs overflow-hidden">
         <div className="p-5">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Choose theme</h3>
           <div className="space-y-4">
@@ -62,8 +62,8 @@ export default function Settings() {
   const currentLabel = theme === 'system' ? 'System' : theme.charAt(0).toUpperCase() + theme.slice(1);
 
   return (
-    <div className="flex flex-col min-h-screen w-full max-w-2xl mx-auto bg-[#f8fafc] dark:bg-slate-900 md:border-x border-outline-variant/30 pt-4 pb-[90px]">
-      <div className="sticky top-0 z-10 bg-[#f8fafc]/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-outline-variant/20 px-4 py-3 flex items-center shadow-sm">
+    <div className="flex flex-col min-h-screen w-full max-w-2xl mx-auto bg-gray-50 dark:bg-gray-950 md:border-x border-outline-variant/30 pt-4 pb-[90px]">
+      <div className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-950/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-outline-variant/20 px-4 py-3 flex items-center shadow-sm">
         <button 
           onClick={() => navigate(-1)} 
           className="p-2 mr-2 -ml-2 rounded-full hover:bg-surface-container-low transition-colors text-outline hover:text-on-surface"

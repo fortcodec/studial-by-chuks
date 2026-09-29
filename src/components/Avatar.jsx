@@ -23,7 +23,7 @@ export function Avatar({ url, name, size = "md", className = "" }) {
   }
 
   return (
-    <div className={`${dimensions} rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold shrink-0 shadow-sm ${className}`}>
+    <div className={`${dimensions} rounded-full bg-indigo-500 text-slate-900 dark:text-white flex items-center justify-center font-bold shrink-0 shadow-sm ${className}`}>
       {initial}
     </div>
   );

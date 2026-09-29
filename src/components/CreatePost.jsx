@@ -476,7 +476,7 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting || (!content.trim() && !mediaUrl.trim() && !selectedImage && pollOptions.filter(o => o.trim()).length === 0)}
-          className="flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold text-[13px] shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:shadow-none ml-2 flex-shrink-0"
+          className="flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white rounded-full font-bold text-[13px] shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:shadow-none ml-2 flex-shrink-0"
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           {isSubmitting ? 'Posting…' : 'Post'}

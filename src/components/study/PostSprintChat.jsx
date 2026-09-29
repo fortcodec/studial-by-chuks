@@ -81,12 +81,12 @@ export default function PostSprintChat({ isDisabled, currentUser, roomId }) {
                 )}
                 {msg.is_ai && (
                   <div className="w-6 h-6 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center">
-                    <Sparkles className="w-3 h-3 text-white" />
+                    <Sparkles className="w-3 h-3 text-slate-900 dark:text-white" />
                   </div>
                 )}
                 <div className={`px-3 py-2 rounded-2xl text-sm ${
                   msg.user_id === currentUser?.id 
-                    ? 'bg-indigo-600 text-white rounded-br-sm' 
+                    ? 'bg-indigo-600 text-slate-900 dark:text-white rounded-br-sm' 
                     : msg.is_ai 
                       ? 'bg-indigo-900/50 border border-indigo-500/30 text-indigo-100 rounded-bl-sm'
                       : 'bg-slate-800 text-slate-200 rounded-bl-sm'
@@ -102,7 +102,7 @@ export default function PostSprintChat({ isDisabled, currentUser, roomId }) {
       </div>
 
       {/* Input Form */}
-      <form onSubmit={handleSendMessage} className="p-3 bg-slate-950/50 border-t border-slate-800 flex gap-2">
+      <form onSubmit={handleSendMessage} className="p-3 bg-gray-50 dark:bg-gray-950/50 border-t border-slate-800 flex gap-2">
         <input
           type="text"
           value={newMessage}
@@ -114,7 +114,7 @@ export default function PostSprintChat({ isDisabled, currentUser, roomId }) {
         <button
           type="submit"
           disabled={isDisabled || !newMessage.trim()}
-          className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white disabled:opacity-50 disabled:bg-slate-800 transition-colors"
+          className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-slate-900 dark:text-white disabled:opacity-50 disabled:bg-slate-800 transition-colors"
         >
           <Send className="w-4 h-4 ml-0.5" />
         </button>

@@ -70,7 +70,7 @@ export function BottomNav({ onNewPost }) {
 
       <button 
         onClick={onNewPost}
-        className="flex items-center justify-center -translate-y-4 shadow-[0_8px_25px_rgba(79,70,229,0.4)] w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 text-white transition-transform duration-200 active:scale-90 mx-2"
+        className="flex items-center justify-center -translate-y-4 shadow-[0_8px_25px_rgba(79,70,229,0.4)] w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 text-slate-900 dark:text-white transition-transform duration-200 active:scale-90 mx-2"
       >
         <Plus className="w-7 h-7 stroke-[3]" />
       </button>

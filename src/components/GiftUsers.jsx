@@ -78,7 +78,7 @@ export default function GiftUsers({ users, fetchDashboardStats }) {
         </div>
         
         <div className="flex justify-end pt-2">
-          <button type="submit" disabled={isGifting} className="w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2">
+          <button type="submit" disabled={isGifting} className="w-full px-6 py-3 bg-indigo-600 text-slate-900 dark:text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2">
             {isGifting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Gift className="w-5 h-5" />}
             {isGifting ? 'Sending Gift...' : 'Send Gift'}
           </button>

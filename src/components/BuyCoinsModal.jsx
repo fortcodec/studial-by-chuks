@@ -88,7 +88,7 @@ export default function BuyCoinsModal({ currentUser, onClose }) {
           </p>
           <button 
             onClick={onClose}
-            className="w-full py-3 bg-primary text-white rounded-full font-bold hover:bg-primary-container transition-colors"
+            className="w-full py-3 bg-primary text-slate-900 dark:text-white rounded-full font-bold hover:bg-primary-container transition-colors"
           >
             Got it, thanks!
           </button>
@@ -175,7 +175,7 @@ export default function BuyCoinsModal({ currentUser, onClose }) {
           <button 
             onClick={handleSubmit}
             disabled={isUploading || !selectedTier || !receiptFile}
-            className="w-full py-3.5 bg-primary text-white rounded-full font-bold flex items-center justify-center gap-2 hover:bg-primary-container transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3.5 bg-primary text-slate-900 dark:text-white rounded-full font-bold flex items-center justify-center gap-2 hover:bg-primary-container transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isUploading ? (
               <><Loader2 className="w-5 h-5 animate-spin" /> Submitting...</>

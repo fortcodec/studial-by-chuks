@@ -610,7 +610,7 @@ export default function AdminGateway() {
                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
+                <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-slate-500 dark:text-slate-400'}`} />
                 {item.name}
               </button>
             );
@@ -640,7 +640,7 @@ export default function AdminGateway() {
               {currentUser?.avatar_url ? (
                 <img src={currentUser.avatar_url} alt="Admin" className="w-10 h-10 rounded-full border-2 border-indigo-100 object-cover" />
               ) : (
-                <div className="w-10 h-10 rounded-full border-2 border-indigo-100 bg-indigo-500 text-white flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-full border-2 border-indigo-100 bg-indigo-500 text-slate-900 dark:text-white flex items-center justify-center font-bold">
                   {(currentUser?.full_name || currentUser?.username || 'A').charAt(0).toUpperCase()}
                 </div>
               )}
@@ -710,7 +710,7 @@ export default function AdminGateway() {
                     <textarea rows="3" required value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-indigo-500" placeholder="Task details..."></textarea>
                   </div>
                   <div className="md:col-span-2 flex justify-end">
-                    <button type="submit" disabled={isCreatingTask} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                    <button type="submit" disabled={isCreatingTask} className="px-6 py-2.5 bg-indigo-600 text-slate-900 dark:text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
                       {isCreatingTask ? 'Creating...' : 'Create Task'}
                     </button>
                   </div>
@@ -793,12 +793,12 @@ export default function AdminGateway() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">File</label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 relative cursor-pointer">
                     <input type="file" required onChange={e => setMaterialForm({...materialForm, file: e.target.files[0]})} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <Upload className="w-8 h-8 text-slate-500 dark:text-slate-400 mx-auto mb-2" />
                     <span className="text-sm font-semibold text-gray-600">{materialForm.file ? materialForm.file.name : 'Click to select a file'}</span>
                   </div>
                 </div>
                 <div className="flex justify-end pt-2">
-                  <button type="submit" disabled={isUploadingMaterial || !materialForm.file} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                  <button type="submit" disabled={isUploadingMaterial || !materialForm.file} className="px-6 py-2.5 bg-indigo-600 text-slate-900 dark:text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
                     {isUploadingMaterial ? 'Uploading...' : 'Upload Resource'}
                   </button>
                 </div>
@@ -1036,7 +1036,7 @@ export default function AdminGateway() {
                     <button 
                       onClick={handleDistributeCoins}
                       disabled={isDistributingCoins || weeklyCoinAmount <= 0}
-                      className="mt-5 px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 transition-all"
+                      className="mt-5 px-6 py-2.5 bg-indigo-600 text-slate-900 dark:text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 transition-all"
                     >
                       {isDistributingCoins ? <Loader2 className="w-5 h-5 animate-spin" /> : <Coins className="w-5 h-5" />}
                       {isDistributingCoins ? 'Distributing...' : 'Distribute Coins'}
@@ -1107,7 +1107,7 @@ export default function AdminGateway() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-900">Edit User Details</h3>
-              <button onClick={() => setEditingUser(null)} className="text-gray-400 hover:text-gray-600">&times;</button>
+              <button onClick={() => setEditingUser(null)} className="text-slate-500 dark:text-slate-400 hover:text-gray-600">&times;</button>
             </div>
             <form onSubmit={handleUpdateUser} className="p-6 space-y-4">
               <div>
@@ -1125,7 +1125,7 @@ export default function AdminGateway() {
                 <button type="button" onClick={() => setEditingUser(null)} className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200">
                   Cancel
                 </button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-indigo-600 text-slate-900 dark:text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
                   {isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
@@ -1137,10 +1137,10 @@ export default function AdminGateway() {
       {/* Telegram Admins Modal */}
       {isTelegramModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl w-96 max-w-[90%] shadow-2xl">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl w-96 max-w-[90%] shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white">Telegram Admins</h3>
-              <button onClick={() => setIsTelegramModalOpen(false)} className="text-slate-500 hover:text-slate-800 dark:hover:text-white">✕</button>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-900 dark:text-white">Telegram Admins</h3>
+              <button onClick={() => setIsTelegramModalOpen(false)} className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-900 dark:text-white">✕</button>
             </div>
             {telegramAdminsList.length === 0 ? (
               <p className="text-slate-500">No admins found.</p>
@@ -1149,7 +1149,7 @@ export default function AdminGateway() {
                 {telegramAdminsList.map(admin => (
                   <li key={admin.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg flex justify-between items-center">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-slate-800 dark:text-white">{admin.name || 'Unnamed Admin'}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-900 dark:text-white">{admin.name || 'Unnamed Admin'}</span>
                       <span className="text-sm text-slate-500">ID: {admin.telegram_user_id}</span>
                     </div>
                     <button 

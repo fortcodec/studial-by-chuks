@@ -260,7 +260,7 @@ export default function Onboarding() {
       {!isVerificationRequired && (
         <button 
           onClick={() => navigate('/')}
-          className="absolute top-6 left-6 text-slate-400 hover:text-white flex items-center gap-2 transition font-medium"
+          className="absolute top-6 left-6 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white flex items-center gap-2 transition font-medium"
         >
           <ArrowLeft size={20} /> Back
         </button>
@@ -284,7 +284,7 @@ export default function Onboarding() {
               </div>
               <button
                 onClick={() => navigate('/login')}
-                className="mt-6 bg-primary-navy hover:bg-[#112440] text-white font-semibold py-3 px-8 rounded-full transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 mx-auto"
+                className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-full transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 mx-auto"
               >
                 Continue to Login <ArrowRight size={18} />
               </button>
@@ -293,7 +293,7 @@ export default function Onboarding() {
             <>
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-4">
-                  <div className="bg-primary-navy p-3 rounded-full text-white">
+                  <div className="bg-indigo-600 p-3 rounded-full text-slate-900 dark:text-white">
                     <BookOpen size={32} />
                   </div>
                 </div>
@@ -337,7 +337,7 @@ export default function Onboarding() {
                       required
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {usernameStatus === 'checking' && <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />}
+                      {usernameStatus === 'checking' && <Loader2 className="w-5 h-5 text-slate-500 dark:text-slate-400 animate-spin" />}
                       {usernameStatus === 'available' && <CheckCircle className="w-5 h-5 text-green-500" />}
                       {(usernameStatus === 'taken' || usernameStatus === 'invalid') && <XCircle className="w-5 h-5 text-red-500" />}
                     </div>
@@ -440,7 +440,7 @@ export default function Onboarding() {
                 <div className="space-y-1 text-left">
                   <label className="block text-sm font-medium text-gray-700">Email or Phone Number</label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
+                      <Mail className="absolute left-3 top-3 text-slate-500 dark:text-slate-400" size={20} />
                       <input 
                         type="text"
                         name="identifier"
@@ -454,7 +454,7 @@ export default function Onboarding() {
                         required
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        {identifierStatus === 'checking' && <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />}
+                        {identifierStatus === 'checking' && <Loader2 className="w-5 h-5 text-slate-500 dark:text-slate-400 animate-spin" />}
                         {identifierStatus === 'available' && <CheckCircle className="w-5 h-5 text-green-500" />}
                         {identifierStatus === 'taken' && <XCircle className="w-5 h-5 text-red-500" />}
                       </div>
@@ -469,7 +469,7 @@ export default function Onboarding() {
                 <div className="space-y-1 text-left">
                   <label className="block text-sm font-medium text-gray-700">Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" size={20} />
                     <input 
                       type={showPassword ? 'text' : 'password'}
                       name="password"
@@ -482,7 +482,7 @@ export default function Onboarding() {
                     <button 
                       type="button" 
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-gray-600 transition"
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -492,7 +492,7 @@ export default function Onboarding() {
                 <button 
                   type="submit"
                   disabled={loading}
-                  className={`w-full bg-primary-navy hover:bg-[#112440] text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg shadow-primary-navy/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg shadow-indigo-600/30 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   <UserPlus size={20} />
                   {loading ? 'Registering...' : 'Complete Registration'}
@@ -509,9 +509,9 @@ export default function Onboarding() {
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center text-center p-8 bg-slate-900/70 border border-slate-800/80 backdrop-blur-md rounded-2xl shadow-xl max-w-md mx-auto mt-10">
+        <div className="flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-gray-900 border border-slate-800/80 backdrop-blur-md rounded-2xl shadow-xl max-w-md mx-auto mt-10">
           <MailCheck className="w-16 h-16 text-indigo-400 mb-4"/>
-          <h2 className="text-2xl font-bold text-white mb-2">Check Your Inbox!</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Check Your Inbox!</h2>
           <p className="text-slate-300 mb-6">
             We've sent a verification link to your email address. You must click that link to activate your account before you can log in.
           </p>
@@ -520,7 +520,7 @@ export default function Onboarding() {
           </p>
           <button 
             onClick={() => navigate('/login')}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
           >
             Proceed to Login
           </button>

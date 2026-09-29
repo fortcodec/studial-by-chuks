@@ -21,7 +21,7 @@ export default function WelcomeBountyModal() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
-      <div className="bg-slate-900 border border-indigo-500/30 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden relative">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden relative">
         
         {/* Glow Effects */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-32 bg-indigo-500/20 blur-3xl pointer-events-none" />
@@ -29,7 +29,7 @@ export default function WelcomeBountyModal() {
         <div className="relative p-6 md:p-8">
           <button 
             onClick={handleClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition"
+            className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white hover:bg-slate-700 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -38,7 +38,7 @@ export default function WelcomeBountyModal() {
             <Target className="w-8 h-8 text-indigo-400" />
           </div>
 
-          <h2 className="text-2xl font-black text-white text-center mb-2">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white text-center mb-2">
             Welcome to the Lock-In
           </h2>
           <p className="text-slate-400 text-center text-sm mb-8 max-w-sm mx-auto">
@@ -46,12 +46,12 @@ export default function WelcomeBountyModal() {
           </p>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-4 bg-slate-950/50 p-4 rounded-2xl border border-slate-800">
+            <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-950/50 p-4 rounded-2xl border border-slate-800">
               <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
                 <Clock className="w-6 h-6 text-amber-500" />
               </div>
               <div>
-                <h4 className="text-white font-bold text-sm">25 Minute Sprint</h4>
+                <h4 className="text-slate-900 dark:text-white font-bold text-sm">25 Minute Sprint</h4>
                 <p className="text-slate-400 text-xs">Standard Pomodoro session</p>
               </div>
               <div className="ml-auto font-black text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full">
@@ -59,12 +59,12 @@ export default function WelcomeBountyModal() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 bg-slate-950/50 p-4 rounded-2xl border border-slate-800">
+            <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-950/50 p-4 rounded-2xl border border-slate-800">
               <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0">
                 <Trophy className="w-6 h-6 text-purple-500" />
               </div>
               <div>
-                <h4 className="text-white font-bold text-sm">50 Minute Sprint</h4>
+                <h4 className="text-slate-900 dark:text-white font-bold text-sm">50 Minute Sprint</h4>
                 <p className="text-slate-400 text-xs">Deep Work session</p>
               </div>
               <div className="ml-auto font-black text-purple-400 bg-purple-400/10 px-3 py-1 rounded-full">
@@ -79,7 +79,7 @@ export default function WelcomeBountyModal() {
 
           <button 
             onClick={handleClose}
-            className="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-indigo-500/20"
+            className="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-indigo-500/20"
           >
             I understand, let's focus <ChevronRight className="w-5 h-5" />
           </button>

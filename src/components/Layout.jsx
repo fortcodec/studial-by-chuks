@@ -253,9 +253,9 @@ export default function Layout() {
     <div className="flex flex-col h-[100dvh] relative bg-background overflow-hidden w-full max-w-md md:max-w-3xl lg:max-w-4xl mx-auto shadow-2xl">
       {/* Login Reward Banner */}
       {showLoginReward && (
-        <div className="bg-green-500 text-white text-center py-2 px-4 text-sm font-bold shadow-md animate-slide-down flex justify-center items-center gap-2 relative z-50">
+        <div className="bg-green-500 text-slate-900 dark:text-white text-center py-2 px-4 text-sm font-bold shadow-md animate-slide-down flex justify-center items-center gap-2 relative z-50">
           <span>🎉 +2 C-Coins for logging in today!</span>
-          <button onClick={() => setShowLoginReward(false)} className="absolute right-4 text-white hover:text-green-200">
+          <button onClick={() => setShowLoginReward(false)} className="absolute right-4 text-slate-900 dark:text-white hover:text-green-200">
             &times;
           </button>
         </div>
@@ -315,7 +315,7 @@ export default function Layout() {
 
       {/* Create Post Modal — centered dialog */}
       {isCreatePostOpen && (
-        <Suspense fallback={<div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center"><Loader2 className="w-8 h-8 text-white animate-spin" /></div>}>
+        <Suspense fallback={<div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center"><Loader2 className="w-8 h-8 text-slate-900 dark:text-white animate-spin" /></div>}>
           <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 relative">
               <div className="p-4 border-b border-slate-800 flex justify-between items-center">
@@ -345,7 +345,7 @@ export default function Layout() {
             </p>
             <button 
               onClick={handleCloseOnboarding}
-              className="w-full bg-primary text-white font-bold py-3.5 rounded-full hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 mt-2"
+              className="w-full bg-primary text-slate-900 dark:text-white font-bold py-3.5 rounded-full hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 mt-2"
             >
               Got it
             </button>
@@ -354,7 +354,7 @@ export default function Layout() {
       )}
 
       {/* Main Content Area (Scrollable) */}
-      <div className="absolute inset-0 z-0 h-[100dvh] w-full overflow-y-auto scrollbar-hide bg-[#f8fafc] dark:bg-black pt-[140px]">
+      <div className="absolute inset-0 z-0 h-[100dvh] w-full overflow-y-auto scrollbar-hide bg-gray-50 dark:bg-gray-950 pt-[140px]">
         
         <Outlet context={{ currentUser, setCurrentUser }} />
       </div>

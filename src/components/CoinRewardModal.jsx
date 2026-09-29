@@ -50,7 +50,7 @@ export default function CoinRewardModal({ amount = 500, title, message, onClose 
           </div>
 
           <div className="w-full bg-gray-50 border border-gray-100 rounded-xl p-5 mb-8 relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-3 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Message from Admin
             </div>
             <p className="text-gray-600 text-[15px] leading-relaxed italic text-center font-medium">
@@ -60,7 +60,7 @@ export default function CoinRewardModal({ amount = 500, title, message, onClose 
 
           <button 
             onClick={onClose}
-            className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-md shadow-indigo-200"
+            className="w-full bg-indigo-600 text-slate-900 dark:text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-md shadow-indigo-200"
           >
             Claim Reward
           </button>

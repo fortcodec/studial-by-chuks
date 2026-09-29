@@ -247,7 +247,7 @@ export default function LandingPage() {
       </section>
 
       {/* Marquee Section (Moved down) */}
-      <section id="gist" className="py-12 border-t border-white/5 relative z-10 bg-slate-950/50">
+      <section id="gist" className="py-12 border-t border-white/5 relative z-10 bg-gray-50 dark:bg-gray-950/50">
         <div className="text-center mb-8">
           <h3 className="text-xl font-bold text-slate-300">Live Campus Gist</h3>
         </div>

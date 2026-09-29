@@ -275,7 +275,7 @@ export const PostCard = React.memo(function PostCard({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 mb-3 relative shadow-sm hover:shadow-md dark:shadow-lg hover:border-gray-300 dark:hover:border-slate-700 transition-colors">
+    <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 mb-3 relative shadow-sm hover:shadow-md dark:shadow-lg hover:border-gray-300 dark:hover:border-slate-700 transition-colors">
 
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-3">
@@ -474,7 +474,7 @@ export const PostCard = React.memo(function PostCard({
                     <div key={comment.id} className="flex gap-2.5">
                       {isSamuel ? (
                         <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center shrink-0">
-                          <Bot className="w-4 h-4 text-white" />
+                          <Bot className="w-4 h-4 text-slate-900 dark:text-white" />
                         </div>
                       ) : (
                         <Avatar url={comment.profiles?.avatar_url} name={comment.profiles?.full_name || comment.profiles?.username} size="sm" />
@@ -506,7 +506,7 @@ export const PostCard = React.memo(function PostCard({
               {isAITyping && (
                 <div className="flex gap-2.5">
                   <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center shrink-0">
-                    <Bot className="w-4 h-4 text-white animate-pulse" />
+                    <Bot className="w-4 h-4 text-slate-900 dark:text-white animate-pulse" />
                   </div>
                   <div className="bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 rounded-2xl rounded-tl-sm px-3 py-2 flex items-center gap-1.5">
                     <span className="text-sm text-indigo-700 dark:text-indigo-300 font-medium">Samuel is typing</span>
@@ -548,7 +548,7 @@ export const PostCard = React.memo(function PostCard({
       {isAISheetOpen && (
         <div className="fixed inset-0 z-[100] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsAISheetOpen(false)} />
-          <div className="relative bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-full duration-300">
+          <div className="relative bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-full duration-300">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800 shrink-0">
               <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
                 <Bot className="w-5 h-5" />
@@ -584,7 +584,7 @@ export const PostCard = React.memo(function PostCard({
 
 export function LiveRoomCard() {
   return (
-    <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-5 mb-3 shadow-sm hover:shadow-md dark:shadow-lg transition-shadow">
+    <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-5 mb-3 shadow-sm hover:shadow-md dark:shadow-lg transition-shadow">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
           <span className="relative flex h-3 w-3">
@@ -600,11 +600,11 @@ export function LiveRoomCard() {
       </div>
       <div className="flex justify-center -space-x-2 mb-4">
         {['J','S','M'].map((l, i) => (
-          <div key={i} className={`w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-xs font-bold text-white ${['bg-blue-500','bg-emerald-500','bg-amber-500'][i]}`}>{l}</div>
+          <div key={i} className={`w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-xs font-bold text-slate-900 dark:text-white ${['bg-blue-500','bg-emerald-500','bg-amber-500'][i]}`}>{l}</div>
         ))}
         <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-300">+21</div>
       </div>
-      <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl transition-colors active:scale-[0.98] text-sm">
+      <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white font-bold py-2.5 rounded-xl transition-colors active:scale-[0.98] text-sm">
         Join Sprint
       </button>
     </div>

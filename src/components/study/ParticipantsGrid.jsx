@@ -42,7 +42,7 @@ export default function ParticipantsGrid({ participants, currentUser }) {
               {user.avatar ? (
                 <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-lg font-bold text-white uppercase">
+                <div className="w-full h-full flex items-center justify-center text-lg font-bold text-slate-900 dark:text-white uppercase">
                   {user.name ? user.name.charAt(0) : '?'}
                 </div>
               )}
@@ -54,14 +54,14 @@ export default function ParticipantsGrid({ participants, currentUser }) {
 
           {/* Details (Visible on hover or large screens) */}
           <div className="hidden group-hover:flex md:flex flex-col opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity bg-slate-900/80 backdrop-blur-sm p-2 rounded-xl border border-slate-700">
-            <span className="text-xs font-bold text-white">{user.name}</span>
+            <span className="text-xs font-bold text-slate-900 dark:text-white">{user.name}</span>
             <span className="text-[10px] text-indigo-300 truncate max-w-[120px]">
               {user.intent || 'Focusing...'}
             </span>
           </div>
           
           {/* Cheer Tooltip Hint */}
-          <div className="absolute left-14 -bottom-6 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none delay-500">
+          <div className="absolute left-14 -bottom-6 bg-indigo-600 text-slate-900 dark:text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none delay-500">
             Double-tap to cheer!
           </div>
         </div>

@@ -35,7 +35,7 @@ export default function SyndicateLeaderboard() {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+    <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
@@ -69,7 +69,7 @@ export default function SyndicateLeaderboard() {
               className={`flex items-center gap-4 p-3 rounded-xl transition-all ${
                 idx === 0 
                   ? 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20' 
-                  : 'bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:border-indigo-500/30'
+                  : 'bg-slate-50 dark:bg-gray-50 dark:bg-gray-950 border border-slate-100 dark:border-slate-800 hover:border-indigo-500/30'
               }`}
             >
               <div className={`w-8 text-center font-black ${

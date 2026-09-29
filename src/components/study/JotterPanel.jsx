@@ -32,7 +32,7 @@ export default function JotterPanel() {
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white p-3 md:px-5 md:py-3 rounded-full shadow-lg shadow-indigo-500/20 transition-transform hover:scale-105 active:scale-95"
+        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white p-3 md:px-5 md:py-3 rounded-full shadow-lg shadow-indigo-500/20 transition-transform hover:scale-105 active:scale-95"
       >
         <PenTool className="w-5 h-5" />
         <span className="hidden md:block font-bold text-sm">Jotter</span>
@@ -66,7 +66,7 @@ export default function JotterPanel() {
           </div>
           <button 
             onClick={() => setIsOpen(false)}
-            className="p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+            className="p-1.5 rounded-full bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white hover:bg-slate-700 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -80,7 +80,7 @@ export default function JotterPanel() {
               setIsSaved(false);
             }}
             placeholder="Jot down quick thoughts, formulas, or reminders here. They save automatically and persist across reloads!"
-            className="w-full h-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-slate-300 text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 resize-none"
+            className="w-full h-full bg-gray-50 dark:bg-gray-950 border border-slate-800 rounded-xl p-4 text-slate-300 text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 resize-none"
           />
         </div>
       </div>

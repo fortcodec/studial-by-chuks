@@ -100,7 +100,7 @@ export default function Tasks() {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#f8fafc] dark:bg-slate-900 pt-4 pb-[90px] px-4">
+    <div className="flex flex-col min-h-full bg-gray-50 dark:bg-gray-950 pt-4 pb-[90px] px-4">
       <div className="max-w-4xl mx-auto w-full space-y-6">
         {/* Back Button */}
         <button
@@ -111,7 +111,7 @@ export default function Tasks() {
           Back
         </button>
 
-        <div className="bg-indigo-600 rounded-3xl p-8 text-white flex justify-between items-center shadow-lg">
+        <div className="bg-indigo-600 rounded-3xl p-8 text-slate-900 dark:text-white flex justify-between items-center shadow-lg">
           <div>
             <h1 className="text-3xl font-extrabold mb-2">Bounty Tasks</h1>
             <p className="text-indigo-100 font-medium">Complete campus tasks to earn C-Coins instantly.</p>
@@ -124,7 +124,7 @@ export default function Tasks() {
             <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
           </div>
         ) : tasks.length === 0 ? (
-          <div className="text-center p-12 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700">
+          <div className="text-center p-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700">
             <ListTodo className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-2">No Active Tasks</h3>
             <p className="text-gray-500 dark:text-slate-400">Check back later for new bounties!</p>
@@ -132,7 +132,7 @@ export default function Tasks() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {tasks.map(task => (
-              <div key={task.id} className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col relative overflow-hidden">
+              <div key={task.id} className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col relative overflow-hidden">
                 <div className="absolute top-0 right-0 bg-yellow-100 text-yellow-700 font-extrabold px-4 py-1.5 rounded-bl-xl text-sm flex items-center gap-1 shadow-sm">
                   +{task.reward_coins} C-Coins
                 </div>
@@ -163,12 +163,12 @@ export default function Tasks() {
                           setProofUrl(e.target.value);
                         }}
                         placeholder="https://..."
-                        className="flex-1 text-sm border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 outline-none focus:border-indigo-500 bg-white dark:bg-slate-900 text-on-surface"
+                        className="flex-1 text-sm border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 outline-none focus:border-indigo-500 bg-white dark:bg-gray-900 text-on-surface"
                       />
                       <button 
                         onClick={() => handleSubmitProof(task.id)}
                         disabled={submittingTaskId === task.id && !proofUrl}
-                        className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
+                        className="bg-indigo-600 text-slate-900 dark:text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
                       >
                         <Upload className="w-4 h-4" />
                       </button>

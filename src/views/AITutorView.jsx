@@ -153,7 +153,7 @@ export default function AITutorView() {
       {/* Header Info Banner */}
       <div className="bg-indigo-50/80 dark:bg-indigo-950/60 backdrop-blur-md border-b border-indigo-100 dark:border-indigo-900/50 px-5 py-3 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-indigo-500 text-slate-900 dark:text-white flex items-center justify-center shadow-sm">
             <Bot className="w-5 h-5" />
           </div>
           <div>
@@ -172,17 +172,17 @@ export default function AITutorView() {
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {msg.role === 'ai' && (
-              <div className="w-7 h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0 mr-2 mt-1 shadow-sm">
+              <div className="w-7 h-7 rounded-full bg-indigo-500 text-slate-900 dark:text-white flex items-center justify-center shrink-0 mr-2 mt-1 shadow-sm">
                 <Bot className="w-4 h-4" />
               </div>
             )}
             <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
               msg.role === 'user'
-                ? 'bg-primary text-white rounded-br-none'
+                ? 'bg-primary text-slate-900 dark:text-white rounded-br-none'
                 : 'bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-100 dark:border-indigo-800 rounded-bl-none'
             }`}>
               <p className={`text-[15px] leading-relaxed whitespace-pre-wrap ${
-                msg.role === 'user' ? 'text-white' : 'text-slate-800 dark:text-slate-100'
+                msg.role === 'user' ? 'text-slate-900 dark:text-white' : 'text-slate-800 dark:text-slate-100'
               }`}>{msg.text}</p>
             </div>
           </div>
@@ -234,7 +234,7 @@ export default function AITutorView() {
           <button 
             onClick={() => handleSend()}
             disabled={!inputText.trim()}
-            className="shrink-0 bg-primary text-white p-2.5 rounded-xl disabled:opacity-50 hover:bg-primary/90 transition-colors"
+            className="shrink-0 bg-primary text-slate-900 dark:text-white p-2.5 rounded-xl disabled:opacity-50 hover:bg-primary/90 transition-colors"
           >
             <Send className="w-5 h-5" />
           </button>
