@@ -86,6 +86,9 @@ export default function Dashboard() {
     }
   }, [swrPosts, currentUser?.id]);
 
+  useEffect(() => {
+    let isMounted = true;
+
     // Realtime Updates for Posts
     const channel = supabase
       .channel('public:posts')
@@ -129,7 +132,7 @@ export default function Dashboard() {
       isMounted = false;
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [currentUser?.id]);
 
   return (
     <div className="flex flex-col h-full w-full relative overflow-y-auto bg-transparent">
