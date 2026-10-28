@@ -1,18 +1,29 @@
 import { GoogleGenAI } from '@google/genai';
 import { supabase } from '../supabaseClient';
 
-export async function askSamuel(prompt, userId) {
+export async function askSamuel(payloadOrPrompt, userId) {
   try {
-    if (!userId) {
-      const { data } = await supabase.auth.getUser();
-      userId = data?.user?.id;
+    let payload = {};
+    if (typeof payloadOrPrompt === 'string') {
+      payload = { prompt: payloadOrPrompt };
+    } else if (payloadOrPrompt && typeof payloadOrPrompt === 'object') {
+      payload = { ...payloadOrPrompt };
     }
-    if (!userId) return "You must be logged in to ask Samuel.";
+
+    const targetUserId = userId || payload.userId;
+    let finalUserId = targetUserId;
+    if (!finalUserId) {
+      const { data } = await supabase.auth.getUser();
+      finalUserId = data?.user?.id;
+    }
+    if (!finalUserId) throw new Error("You must be logged in to ask Samuel.");
+
+    payload.userId = finalUserId;
 
     const response = await fetch('/api/ask-samuel', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, userId })
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -34,13 +45,9 @@ export async function askSamuel(prompt, userId) {
     }
     return aiResponse;
   } catch (error) {
-    // Log the specific error so it's visible in browser DevTools
     const errMsg = error?.message || String(error);
     console.error('[Samuel/gemini.js] Error:', errMsg, error);
-    if (errMsg.includes('503') || errMsg.includes('overloaded') || errMsg.includes('overwhelmed')) {
-      return "Samuel is currently overwhelmed by requests. Please try again in a few moments!";
-    }
-    return "Samuel hit an error. Please try again!";
+    throw error;
   }
 }
 

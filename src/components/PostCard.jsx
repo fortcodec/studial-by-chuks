@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import AskAI_BottomSheet from './AskAI_BottomSheet';
 
 // ─── Error Boundary lives at module scope ─────────────────────────────────────
 class CommentErrorBoundary extends React.Component {
@@ -255,23 +256,8 @@ export const PostCard = React.memo(function PostCard({
     }
   };
 
-  const handleAskAI = async () => {
+  const handleAskAI = () => {
     setIsAISheetOpen(true);
-    setAiResponse('');
-    setIsAITyping(true);
-    try {
-      const aiText = await askSamuel(`Explain this post helpfully: "${content}"`);
-      if (aiText) {
-        setAiResponse(aiText);
-      } else {
-        setAiResponse("I couldn't generate a response. Please try again.");
-      }
-    } catch (err) {
-      console.error('AI Error:', err);
-      setAiResponse("An error occurred while generating the response.");
-    } finally {
-      setIsAITyping(false);
-    }
   };
 
   return (
@@ -545,39 +531,12 @@ export const PostCard = React.memo(function PostCard({
       )}
 
       {/* ── AI Bottom Sheet ─────────────────────────────────────────── */}
-      {isAISheetOpen && (
-        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsAISheetOpen(false)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-full duration-300">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800 shrink-0">
-              <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                <Bot className="w-5 h-5" />
-                <h3 className="font-bold text-lg">Samuel AI</h3>
-              </div>
-              <button onClick={() => setIsAISheetOpen(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-5 pb-safe">
-              {isAITyping ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-4">
-                  <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
-                    <Bot className="w-6 h-6 text-indigo-600 dark:text-indigo-400 animate-pulse" />
-                  </div>
-                  <p className="text-gray-500 dark:text-slate-400 font-medium animate-pulse text-sm">Samuel is analyzing the thread...</p>
-                </div>
-              ) : (
-                <div className="markdown-body text-[15px] leading-relaxed text-gray-800 dark:text-slate-200">
-                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                    {aiResponse}
-                  </ReactMarkdown>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <AskAI_BottomSheet
+        isOpen={isAISheetOpen}
+        onClose={() => setIsAISheetOpen(false)}
+        post={{ id: postId, content, topic: course }}
+        currentUser={currentUser}
+      />
     </div>
   );
 });

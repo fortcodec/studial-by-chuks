@@ -48,13 +48,29 @@ export default async function handler(req) {
   }
 
   try {
-    const { prompt, userId } = await req.json();
+    const { prompt, userId, postContent, postTopic, userDepartment } = await req.json();
 
-    if (!prompt || !userId) {
-      return new Response(JSON.stringify({ error: 'Missing prompt or userId' }), { 
+    if ((!prompt && !postContent) || !userId) {
+      return new Response(JSON.stringify({ error: 'Missing prompt/postContent or userId' }), { 
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
+    }
+
+    // Build context-injected prompt if post content is provided
+    let finalPrompt = prompt || '';
+    if (postContent) {
+      finalPrompt = `Academic Context:
+- Student Department: ${userDepartment || 'University Student'}
+- Topic/Course: ${postTopic || 'General Academia'}
+
+Feed Post Content to Analyze:
+"""
+${postContent}
+"""
+
+Student Request:
+${prompt || 'Please analyze this post content and provide a helpful, structured, and concise academic breakdown or answer.'}`;
     }
 
     // Initialize Supabase Admin to verify and deduct balance securely
@@ -98,13 +114,22 @@ export default async function handler(req) {
     console.log('[Samuel] API key found, length:', apiKey.length);
 
     const ai = new GoogleGenAI({ apiKey });
-    const systemInstruction = "You are Samuel, a smart student on Studial. Act like a peer (use mild Gen-Z slang if natural). Answer accurately and concisely. NEVER say you're an AI. Always finish sentences. Handle jokes lightly, then give real answers.";
+    const systemInstruction = `You are Samuel, an expert academic tutor and study mentor for university students on Studial.
+Your goal is to help university students deeply understand concepts, master complex topics, and succeed in their coursework.
+When analyzing a post:
+- Respond specifically as an academic tutor for university students.
+- Analyze the passed post content and provide a helpful, structured, and concise breakdown or answer.
+- Tailor your explanations to the student's department and course topic when provided.
+- Use clear formatting with bullet points, numbered steps, and key takeaways where helpful.
+- Support mathematical expressions with LaTeX syntax ($...$ or $$...$$) and code with markdown blocks.
+- Maintain an intellectual, encouraging, and supportive tone.
+- Never state that you are an AI or language model; speak naturally as Samuel, their trusted academic mentor on Studial.`;
 
-    // 3. Initiate Gemini Stream with Backoff
+    // 3. Initiate Gemini Stream with Backoff using gemini-1.5-flash
     const streamResponse = await fetchWithBackoff(async () => {
       return await ai.models.generateContentStream({
         model: 'gemini-1.5-flash',
-        contents: prompt,
+        contents: finalPrompt,
         config: {
           systemInstruction,
           maxOutputTokens: 2048,
