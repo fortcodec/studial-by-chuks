@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { ArrowLeft, Moon, Sun, Settings as SettingsIcon } from "lucide-react";
 import { useTheme } from "../components/ThemeProvider";
+import VerificationForm from "../components/VerificationForm";
 
 function ThemeModal({ currentTheme, onClose, onSave }) {
   const { setTheme } = useTheme();
@@ -47,6 +48,8 @@ function ThemeModal({ currentTheme, onClose, onSave }) {
 
 export default function Settings() {
   const navigate = useNavigate();
+  const outletCtx = useOutletContext();
+  const currentUser = outletCtx?.currentUser;
   const { theme, setTheme } = useTheme();
   const [showThemeModal, setShowThemeModal] = useState(false);
 
@@ -106,14 +109,9 @@ export default function Settings() {
           />
         )}
 
-        {/* Account Settings Placeholder */}
+        {/* Student Verification & Rewards Settings Module */}
         <section>
-          <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 px-2">Account</h2>
-          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-sm">
-            <div className="p-4 bg-surface text-sm text-slate-900 dark:text-slate-100 border-b border-outline-variant/20">
-              Account settings coming soon...
-            </div>
-          </div>
+          <VerificationForm currentUser={currentUser} />
         </section>
       </div>
     </div>
