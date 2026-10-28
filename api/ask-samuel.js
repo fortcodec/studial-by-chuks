@@ -1,13 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
 
-export const config = {
-  runtime: 'edge',
-};
-export const runtime = 'edge'; // explicit Vercel Edge runtime declaration
+// Configure execution time for serverless function (60 seconds)
 export const maxDuration = 60;
+export const config = {
+  maxDuration: 60,
+};
 
-// Exponential backoff helper for Gemini API
+// Exponential backoff helper for Gemini API with detailed retry logging
 async function fetchWithBackoff(operation, maxRetries = 3) {
   let attempt = 0;
   let baseDelay = 1000;
@@ -16,10 +16,13 @@ async function fetchWithBackoff(operation, maxRetries = 3) {
     try {
       return await operation();
     } catch (error) {
-      if (error?.status === 429 && attempt < maxRetries - 1) {
-        attempt++;
+      attempt++;
+      const isRateLimit = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
+      const isOverloaded = error?.status === 503 || error?.message?.includes('503');
+
+      if ((isRateLimit || isOverloaded) && attempt < maxRetries) {
         const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
-        console.warn(`Rate limit hit. Retrying in ${delay}ms...`);
+        console.warn(`[Samuel Backoff] Temporary rate limit or 503. Retrying attempt ${attempt}/${maxRetries} in ${Math.round(delay)}ms...`);
         await new Promise(res => setTimeout(res, delay));
       } else {
         throw error;
@@ -28,36 +31,102 @@ async function fetchWithBackoff(operation, maxRetries = 3) {
   }
 }
 
-export default async function handler(req) {
+// Helper to reliably parse request body across Node.js and Edge/Web environments
+async function parseRequestBody(req) {
+  if (req.body) {
+    return typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  }
+  if (typeof req.json === 'function') {
+    return await req.json();
+  }
+  return new Promise((resolve) => {
+    let data = '';
+    req.on('data', chunk => { data += chunk; });
+    req.on('end', () => {
+      try {
+        resolve(data ? JSON.parse(data) : {});
+      } catch (err) {
+        console.error('[Samuel] Failed to parse raw stream body:', err);
+        resolve({});
+      }
+    });
+    req.on('error', (err) => {
+      console.error('[Samuel] Request stream error:', err);
+      resolve({});
+    });
+  });
+}
+
+export default async function handler(req, res) {
+  const startTime = Date.now();
+  console.log('[Samuel] ---> Incoming AI Tutor Request:', {
+    method: req.method,
+    url: req.url,
+    timestamp: new Date().toISOString()
+  });
+
+  // Handle CORS Preflight
   if (req.method === 'OPTIONS') {
+    if (res && typeof res.writeHead === 'function') {
+      res.writeHead(200, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      });
+      return res.end();
+    }
     return new Response(null, {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
+    const errorMsg = 'Method not allowed. Only POST is accepted.';
+    console.warn(`[Samuel Warning] Invalid method ${req.method}`);
+    if (res && typeof res.status === 'function') {
+      return res.status(405).json({ error: errorMsg });
+    }
+    return new Response(JSON.stringify({ error: errorMsg }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
   try {
-    const { prompt, userId, postContent, postTopic, userDepartment } = await req.json();
+    // 1. Parse and Validate Request Payload
+    const body = await parseRequestBody(req);
+    const { prompt, userId, postContent, postTopic, userDepartment } = body || {};
+
+    console.log('[Samuel] Payload parsed successfully:', {
+      hasPrompt: Boolean(prompt),
+      hasPostContent: Boolean(postContent),
+      userId: userId || 'MISSING',
+      postTopic: postTopic || 'default',
+      userDepartment: userDepartment || 'default',
+    });
 
     if ((!prompt && !postContent) || !userId) {
-      return new Response(JSON.stringify({ error: 'Missing prompt/postContent or userId' }), { 
+      const missingFields = [];
+      if (!prompt && !postContent) missingFields.push('prompt/postContent');
+      if (!userId) missingFields.push('userId');
+      console.error('[Samuel ERROR] Malformed payload. Missing fields:', missingFields.join(', '));
+
+      const errPayload = { error: `Missing required field(s): ${missingFields.join(', ')}` };
+      if (res && typeof res.status === 'function') {
+        return res.status(400).json(errPayload);
+      }
+      return new Response(JSON.stringify(errPayload), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // Build context-injected prompt if post content is provided
+    // Build context-injected prompt
     let finalPrompt = prompt || '';
     if (postContent) {
       finalPrompt = `Academic Context:
@@ -73,47 +142,70 @@ Student Request:
 ${prompt || 'Please analyze this post content and provide a helpful, structured, and concise academic breakdown or answer.'}`;
     }
 
-    // Initialize Supabase Admin to verify and deduct balance securely
-    const supabase = createClient(
-      process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
+    // 2. Initialize Supabase Admin client
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[Samuel ERROR] Missing Supabase credentials:', {
+        hasUrl: Boolean(supabaseUrl),
+        hasKey: Boolean(supabaseServiceKey),
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const QUERY_COST = 5;
 
-    // 1. Verify Balance
+    // 3. Verify Student Balance
+    console.log(`[Samuel] Verifying C-Coin balance for user: ${userId}`);
     const { data: userProfile, error: fetchError } = await supabase
       .from('profiles')
       .select('c_coins')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (fetchError || !userProfile) {
-      return new Response(JSON.stringify({ error: 'User not found' }), { 
+      console.error('[Samuel ERROR] Failed to fetch user profile:', fetchError || 'User profile not found');
+      const errPayload = { error: 'User profile not found in Studial records' };
+      if (res && typeof res.status === 'function') {
+        return res.status(404).json(errPayload);
+      }
+      return new Response(JSON.stringify(errPayload), {
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
     if ((userProfile.c_coins || 0) < QUERY_COST) {
-      return new Response(JSON.stringify({ error: 'Insufficient C-Coins' }), { 
+      console.warn(`[Samuel Warning] Insufficient funds for user ${userId}. Balance: ${userProfile.c_coins}, Cost: ${QUERY_COST}`);
+      const errPayload = { error: `Insufficient C-Coins. You need at least ${QUERY_COST} C-Coins to consult Samuel.` };
+      if (res && typeof res.status === 'function') {
+        return res.status(403).json(errPayload);
+      }
+      return new Response(JSON.stringify(errPayload), {
         status: 403,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // 2. Prepare Gemini Client
+    // 4. Verify Gemini API Key
     const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
-      console.error('[Samuel] FATAL: No Gemini API key found. Set GEMINI_API_KEY in Vercel environment variables.');
-      return new Response(JSON.stringify({ error: 'AI API Key not configured on server' }), { 
+      console.error('[Samuel FATAL] No Gemini API key found! Checked GEMINI_API_KEY and VITE_GEMINI_API_KEY in process.env.');
+      const errPayload = { error: 'Gemini AI API Key is not configured on the server. Please check environment variables.' };
+      if (res && typeof res.status === 'function') {
+        return res.status(500).json(errPayload);
+      }
+      return new Response(JSON.stringify(errPayload), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
     }
-    console.log('[Samuel] API key found, length:', apiKey.length);
 
+    console.log(`[Samuel] Gemini API key confirmed (length: ${apiKey.length}). Initializing @google/genai SDK...`);
     const ai = new GoogleGenAI({ apiKey });
+
+    // Academic tutor system prompt
     const systemInstruction = `You are Samuel, an expert academic tutor and study mentor for university students on Studial.
 Your goal is to help university students deeply understand concepts, master complex topics, and succeed in their coursework.
 When analyzing a post:
@@ -125,7 +217,8 @@ When analyzing a post:
 - Maintain an intellectual, encouraging, and supportive tone.
 - Never state that you are an AI or language model; speak naturally as Samuel, their trusted academic mentor on Studial.`;
 
-    // 3. Initiate Gemini Stream with Backoff using gemini-1.5-flash
+    // 5. Initiate Gemini Stream with Backoff using gemini-1.5-flash
+    console.log('[Samuel] Dispatching request to model: gemini-1.5-flash');
     const streamResponse = await fetchWithBackoff(async () => {
       return await ai.models.generateContentStream({
         model: 'gemini-1.5-flash',
@@ -133,39 +226,67 @@ When analyzing a post:
         config: {
           systemInstruction,
           maxOutputTokens: 2048,
-        }
+        },
       });
     });
 
-    // 4. If stream initiates successfully, deduct coins & log transaction securely
-    const newBalance = userProfile.c_coins - QUERY_COST;
+    console.log('[Samuel] Gemini 1.5 Flash stream initiated successfully. Deducting C-Coins...');
+
+    // 6. Deduct coins & log transaction
+    const newBalance = Math.max(0, userProfile.c_coins - QUERY_COST);
     await supabase.from('profiles').update({ c_coins: newBalance }).eq('id', userId);
     
-    // Optimistic log (no block on error)
+    // Background transaction log
     supabase.from('c_coin_transactions').insert({
       user_id: userId,
       amount: `-${QUERY_COST} C`,
-      description: 'AI Tutor Query'
-    }).then();
+      description: 'Samuel AI Tutor Consultation'
+    }).catch(err => console.warn('[Samuel] Transaction log non-blocking notice:', err));
 
-    // 5. Pipe Stream to Client
+    // 7. Handle Streaming Response (Supports Node.js Serverless res & Web standard Response)
+    if (res && typeof res.writeHead === 'function') {
+      res.writeHead(200, {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      });
+
+      try {
+        for await (const chunk of streamResponse) {
+          if (chunk.text) {
+            res.write(chunk.text);
+          }
+        }
+        res.end();
+        console.log(`[Samuel] Stream completed in ${Date.now() - startTime}ms`);
+        return;
+      } catch (streamErr) {
+        console.error('[Samuel Streaming Error]:', streamErr);
+        if (!res.writableEnded) {
+          res.end();
+        }
+        return;
+      }
+    }
+
+    // Web Standard Response fallback
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       async start(controller) {
-          try {
-            for await (const chunk of streamResponse) {
-              if (chunk.text) {
-                controller.enqueue(encoder.encode(chunk.text));
-              }
+        try {
+          for await (const chunk of streamResponse) {
+            if (chunk.text) {
+              controller.enqueue(encoder.encode(chunk.text));
             }
-            controller.close();
-          } catch (err) {
-            // ── Raw error dump so Vercel logs show the exact Gemini failure ──
-            console.error('[Samuel] Gemini streaming chunk error (raw):', err);
-            console.error('[Samuel] Error status:', err?.status, 'message:', err?.message);
-            controller.error(err);
           }
+          controller.close();
+          console.log(`[Samuel] Web Stream completed in ${Date.now() - startTime}ms`);
+        } catch (err) {
+          console.error('[Samuel Web Stream Chunk Error]:', err);
+          controller.error(err);
         }
+      },
     });
 
     return new Response(readable, {
@@ -178,29 +299,44 @@ When analyzing a post:
     });
 
   } catch (error) {
-    // ── Detailed error classification for Vercel logs ────────────────────────
-    const status = error?.status || error?.code || 'unknown';
+    const elapsed = Date.now() - startTime;
+    const status = error?.status || error?.code || 500;
     const message = error?.message || String(error);
 
-    if (status === 401 || message.includes('API_KEY') || message.includes('INVALID_ARGUMENT')) {
-      console.error('[Samuel] AUTH ERROR (401/Invalid Key):', message);
-    } else if (status === 429 || message.includes('RESOURCE_EXHAUSTED') || message.includes('quota')) {
-      console.error('[Samuel] RATE LIMIT (429):', message);
-    } else if (message.toLowerCase().includes('timeout') || message.includes('DEADLINE_EXCEEDED')) {
-      console.error('[Samuel] TIMEOUT:', message);
-    } else if (status === 503 || message.includes('503') || message.includes('overloaded')) {
-      console.error('[Samuel] UNAVAILABLE (503):', message);
-      return new Response(JSON.stringify({ error: 'Samuel is currently overwhelmed by requests. Please try again in a few moments!' }), { 
-        status: 503,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    } else {
-      console.error('[Samuel] UNEXPECTED ERROR:', status, message, error);
+    // Detailed error logging with root-cause identification
+    console.error(`[Samuel FATAL ERROR after ${elapsed}ms]:`, {
+      name: error?.name,
+      message: message,
+      status: status,
+      code: error?.code,
+      stack: error?.stack,
+    });
+
+    if (message.includes('API_KEY') || status === 401 || status === 403) {
+      console.error('[Samuel Diagnosis] Authentication failure: Please verify GEMINI_API_KEY has valid Google GenAI permissions.');
+    } else if (status === 429 || message.includes('RESOURCE_EXHAUSTED')) {
+      console.error('[Samuel Diagnosis] Rate limit exceeded on Google Gemini project quota.');
+    } else if (message.includes('timeout') || message.includes('ETIMEDOUT') || message.includes('DEADLINE_EXCEEDED')) {
+      console.error('[Samuel Diagnosis] Request timed out while communicating with Gemini API.');
     }
 
-    return new Response(JSON.stringify({ error: 'Samuel hit an error. Please try again!' }), { 
+    const errorResponse = {
+      error: message.includes('API_KEY') 
+        ? 'Gemini API key is invalid or not authorized.'
+        : 'Samuel is currently resting his circuits. Please try again in a moment.',
+      details: message,
+      status: status
+    };
+
+    if (res && typeof res.status === 'function') {
+      return res.status(500).json(errorResponse);
+    }
+    return new Response(JSON.stringify(errorResponse), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
     });
   }
 }

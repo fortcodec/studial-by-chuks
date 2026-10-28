@@ -228,31 +228,92 @@ export const PostCard = React.memo(function PostCard({
     if (!newComment.trim() || !currentUser) return;
     const text = newComment.trim();
     setNewComment('');
-    const { data: inserted, error } = await supabase
-      .from('post_comments')
-      .insert([{ post_id: postId, author_id: currentUser.id, content: text }])
-      .select('id, content, created_at, author_id, profiles!author_id(id, username, full_name, avatar_url)')
-      .single();
-    if (error) { setNewComment(text); return; }
-    if (inserted) {
-      setComments(prev => [...prev, inserted]);
-      setCommentCount(c => c + 1);
+
+    // ── Optimistic UI: Immediately append comment to local state array ──
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const optimisticComment = {
+      id: tempId,
+      post_id: postId,
+      author_id: currentUser.id,
+      content: text,
+      created_at: new Date().toISOString(),
+      profiles: {
+        id: currentUser.id,
+        username: currentUser.username || currentUser.name || 'You',
+        full_name: currentUser.full_name || currentUser.name || 'You',
+        avatar_url: currentUser.avatar_url || currentUser.avatar || ''
+      },
+      isOptimistic: true,
+    };
+
+    setComments(prev => [...(prev || []), optimisticComment]);
+    setCommentCount(c => c + 1);
+
+    try {
+      const { data: inserted, error } = await supabase
+        .from('post_comments')
+        .insert([{ post_id: postId, author_id: currentUser.id, content: text }])
+        .select('id, content, created_at, author_id, profiles!author_id(id, username, full_name, avatar_url)')
+        .maybeSingle();
+
+      if (error) {
+        console.warn('Comment insert with profiles join failed, trying fallback insert:', error);
+        // Fallback insert without relational join in case of schema discrepancy
+        const { data: fallbackInserted, error: fallbackError } = await supabase
+          .from('post_comments')
+          .insert([{ post_id: postId, author_id: currentUser.id, content: text }])
+          .select('id, content, created_at, author_id')
+          .maybeSingle();
+
+        if (fallbackError) throw fallbackError;
+
+        if (fallbackInserted) {
+          setComments(prev => prev.map(c => c.id === tempId ? { ...c, id: fallbackInserted.id, isOptimistic: false } : c));
+        }
+      } else if (inserted) {
+        // Replace optimistic placeholder with confirmed server row
+        setComments(prev => prev.map(c => c.id === tempId ? { ...inserted, isOptimistic: false } : c));
+      }
+
+      // Sync count on posts table
+      await supabase.from('posts').update({ answers: commentCount + 1 }).eq('id', postId).catch(() => {});
+    } catch (err) {
+      console.error('Error submitting comment to Supabase:', err);
+      // Rollback optimistic update
+      setComments(prev => prev.filter(c => c.id !== tempId));
+      setCommentCount(c => Math.max(0, c - 1));
+      setNewComment(text); // restore input text so user does not lose input
+      alert('Could not send comment. Please try again.');
     }
+
+    // Handle @samuel mention
     if (text.toLowerCase().includes('@samuel')) {
       setIsAITyping(true);
       try {
         const samuelId = await getSamuelProfileId();
-        const aiText = await askSamuel(`A student asked: "${content}". They replied: "${text}". Give a concise academic answer.`);
+        const aiText = await askSamuel({
+          prompt: `A student asked: "${content}". They replied: "${text}". Give a concise, structured academic answer.`,
+          postContent: content,
+          postTopic: course,
+          userDepartment: currentUser?.department,
+          userId: currentUser?.id,
+        });
         if (aiText) {
           const { data: aiInserted } = await supabase
             .from('post_comments')
             .insert([{ post_id: postId, author_id: samuelId, content: `[AI_SAMUEL_RESPONSE] ${aiText}` }])
             .select('id, content, created_at, author_id, profiles!author_id(id, username, full_name, avatar_url)')
-            .single();
-          if (aiInserted) setComments(prev => [...prev, aiInserted]);
+            .maybeSingle();
+          if (aiInserted) {
+            setComments(prev => [...prev, aiInserted]);
+            setCommentCount(c => c + 1);
+          }
         }
-      } catch (err) { console.error('Samuel failed:', err); }
-      finally { setIsAITyping(false); }
+      } catch (err) {
+        console.error('Samuel comment response failed:', err);
+      } finally {
+        setIsAITyping(false);
+      }
     }
   };
 

@@ -20,15 +20,26 @@ export async function askSamuel(payloadOrPrompt, userId) {
 
     payload.userId = finalUserId;
 
-    const response = await fetch('/api/ask-samuel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 50000);
+
+    let response;
+    try {
+      response = await fetch('/api/ask-samuel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || `HTTP error ${response.status}`);
+      const detailedMessage = err.error || err.details || `Server returned HTTP ${response.status}`;
+      console.error('[Samuel/gemini.js] Backend error response:', { status: response.status, error: detailedMessage, full: err });
+      throw new Error(detailedMessage);
     }
 
     if (!response.body) {
@@ -45,8 +56,12 @@ export async function askSamuel(payloadOrPrompt, userId) {
     }
     return aiResponse;
   } catch (error) {
+    if (error?.name === 'AbortError') {
+      console.error('[Samuel/gemini.js] Request timed out after 50 seconds.');
+      throw new Error('Samuel took too long to respond. Please try again.');
+    }
     const errMsg = error?.message || String(error);
-    console.error('[Samuel/gemini.js] Error:', errMsg, error);
+    console.error('[Samuel/gemini.js] Connection error:', errMsg, error);
     throw error;
   }
 }
