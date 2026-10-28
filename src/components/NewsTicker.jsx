@@ -1,27 +1,60 @@
 import React, { useState, useEffect } from 'react';
 
+const FALLBACK_NEWS = [
+  { title: 'Welcome to Studial • Start a Pomodoro Sprint to earn C-Coins', link: '/live' },
+  { title: 'Unlock premium study materials & past exam questions in The Library', link: '/library' },
+  { title: 'Verify your student account in Settings for automated Birthday C-Coin drops', link: '/settings' },
+  { title: 'Ask Samuel AI Tutor for instant step-by-step academic explanations', link: '#' }
+];
+
 export default function LiveNewsTicker() {
   const [news, setNews] = useState([]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    // 3-second fallback timer: if query fails or remains loading for > 3s, gracefully swap to static fallback
+    const fallbackTimer = setTimeout(() => {
+      if (isMounted) {
+        setNews((currentNews) => (currentNews.length > 0 ? currentNews : FALLBACK_NEWS));
+      }
+    }, 3000);
+
     const fetchNews = async () => {
       try {
         // The Date.now() cache-buster forces the API to fetch fresh data
         const cacheBuster = Date.now();
         const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=https://punchng.com/feed?t=${cacheBuster}`);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
         const data = await res.json();
         
-        if (data.items) {
-          // Shuffle the news items so you get a different batch on every refresh
-          const shuffledNews = data.items.sort(() => 0.5 - Math.random());
-          setNews(shuffledNews.slice(0, 5));
+        if (isMounted) {
+          if (data.items && data.items.length > 0) {
+            // Shuffle the news items so you get a different batch on every refresh
+            const shuffledNews = data.items.sort(() => 0.5 - Math.random());
+            setNews(shuffledNews.slice(0, 5));
+          } else {
+            setNews(FALLBACK_NEWS);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch live news:", error);
+        if (isMounted) {
+          setNews(FALLBACK_NEWS);
+        }
       }
     };
 
     fetchNews();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(fallbackTimer);
+    };
   }, []);
 
   return (
@@ -62,7 +95,7 @@ export default function LiveNewsTicker() {
                 • 
                 <a 
                   href={item.link} 
-                  target="_blank" 
+                  target={item.link.startsWith('http') ? "_blank" : undefined}
                   rel="noopener noreferrer" 
                   className="ml-2 hover:text-yellow-400 hover:underline transition-colors"
                 >
@@ -72,9 +105,9 @@ export default function LiveNewsTicker() {
             ))}
           </div>
         ) : (
-          <span className="mx-4 text-slate-500 dark:text-slate-400 animate-pulse">Loading live campus updates...</span>
+          <span className="mx-4 text-slate-400 animate-pulse">Loading live campus updates...</span>
         )}
       </div>
     </div>
   );
-    }
+}

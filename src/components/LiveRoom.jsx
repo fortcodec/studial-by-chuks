@@ -12,7 +12,9 @@ import {
   CheckCircle2, 
   Zap, 
   ShieldAlert, 
-  PartyPopper 
+  PartyPopper,
+  Headphones,
+  FileText
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, useOutletContext } from 'react-router-dom';
@@ -521,6 +523,49 @@ export default function LiveRoom({ currentUser: propUser }) {
                 <span>Join Sprint</span>
               </button>
             )}
+          </div>
+        </div>
+
+        {/* Glassmorphic Placeholder Cards */}
+        <div className="grid grid-cols-2 gap-2.5 mt-3.5 pt-3 border-t border-outline-variant/20">
+          {/* Ambient Audio Card */}
+          <div className="relative overflow-hidden rounded-2xl p-3 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xs flex flex-col justify-between group hover:border-indigo-500/30 transition-all">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-6 h-6 rounded-lg bg-indigo-500/15 text-indigo-500 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <Headphones className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                Audio
+              </span>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-on-surface leading-tight">
+                Ambient Audio (Coming Soon)
+              </h4>
+              <p className="text-[10.5px] text-outline mt-0.5 leading-snug">
+                Binaural beats & rain focus loops.
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Notes Card */}
+          <div className="relative overflow-hidden rounded-2xl p-3 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xs flex flex-col justify-between group hover:border-amber-500/30 transition-all">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-500 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <FileText className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                Notes
+              </span>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-on-surface leading-tight">
+                Quick Notes
+              </h4>
+              <p className="text-[10.5px] text-outline mt-0.5 leading-snug">
+                Capture sprint reflections & reminders.
+              </p>
+            </div>
           </div>
         </div>
       </div>

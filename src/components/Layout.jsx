@@ -267,46 +267,44 @@ export default function Layout() {
         {/* News Ticker Global Banner */}
         <NewsTicker />
 
-        {/* Glass Header */}
-        <div className="bg-white/80 dark:bg-black/60 backdrop-blur-md px-5 py-3 md:py-4 flex justify-between items-center border-b border-white/20 dark:border-white/10">
+        {/* Glass Header with py-4 vertical padding and clear visual separation from Breaking banner */}
+        <div className="bg-white/85 dark:bg-black/75 backdrop-blur-xl px-5 py-4 flex justify-between items-center border-t border-slate-200/50 dark:border-white/10 border-b border-slate-200/60 dark:border-white/10 shadow-sm shadow-black/5 gap-3">
           <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-surface-1">
-            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-on-primary">
-              <path d="M12 3L2 8l10 5 10-5-10-5z" fill="currentColor" />
-              <path d="M2 13l10 5 10-5M2 18l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-surface-1">
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-on-primary">
+                <path d="M12 3L2 8l10 5 10-5-10-5z" fill="currentColor" />
+                <path d="M2 13l10 5 10-5M2 18l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight hidden md:block">Studial.</h1>
           </div>
-          <h1 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight hidden md:block">Studial.</h1>
-        </div>
 
-        <GlobalSearch />
+          <GlobalSearch />
 
-        <div className="flex items-center gap-2 md:gap-4 ml-auto">
-          <CCoinBadge 
-            balance={currentUser?.c_coins || 0} 
-            onClick={() => setIsBuyCoinsOpen(true)} 
-          />
+          <div className="flex items-center gap-2 md:gap-4 ml-auto">
+            <CCoinBadge 
+              balance={currentUser?.c_coins || 0} 
+              onClick={() => setIsBuyCoinsOpen(true)} 
+            />
 
-          <NotificationDropdown currentUser={currentUser} />
+            <NotificationDropdown currentUser={currentUser} />
 
-          <button
-            onClick={() => navigate('/live')}
-            className="relative p-1.5 rounded-full bg-surface-container-low border border-outline-variant/30 text-outline hover:text-on-surface shadow-sm active:scale-95 transition-all"
-          >
-            <Radio className="w-5 h-5 text-red-500" />
-          </button>
-          
-
-          
-          <Avatar 
-            url={currentUser?.avatar_url || currentUser?.avatar} 
-            name={currentUser?.username || currentUser?.name || 'Student'} 
-            size="md" 
-            className="border-2 border-surface-container-low" 
-          />
+            <button
+              onClick={() => navigate('/live')}
+              className="relative p-1.5 rounded-full bg-surface-container-low border border-outline-variant/30 text-outline hover:text-on-surface shadow-sm active:scale-95 transition-all"
+            >
+              <Radio className="w-5 h-5 text-red-500" />
+            </button>
+            
+            <Avatar 
+              url={currentUser?.avatar_url || currentUser?.avatar} 
+              name={currentUser?.username || currentUser?.name || 'Student'} 
+              size="md" 
+              className="border-2 border-surface-container-low" 
+            />
+          </div>
         </div>
       </div>
-    </div>
 
       {/* Buy Coins Modal */}
       {isBuyCoinsOpen && (

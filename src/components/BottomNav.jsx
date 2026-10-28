@@ -49,19 +49,31 @@ export function BottomNav({ onNewPost }) {
           <Link
             key={item.name}
             to={`/${item.href}`}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-transform duration-200 active:scale-90 ${
-              isActive ? "text-primary font-bold" : "text-outline hover:text-primary hover:bg-surface-container/50"
+            className={`flex flex-col items-center justify-center py-1 transition-transform duration-200 active:scale-90 ${
+              isActive ? "text-indigo-400 font-bold" : "text-outline hover:text-indigo-400"
             }`}
           >
             <div className="relative mb-1">
-              <Icon className={`w-6 h-6 ${isActive ? "fill-primary-container/20 stroke-2" : "stroke-[1.5]"}`} />
+              <div
+                className={`transition-all duration-200 flex items-center justify-center ${
+                  isActive
+                    ? "bg-indigo-500/20 text-indigo-400 rounded-full px-4 py-1 shadow-[0_0_12px_rgba(99,102,241,0.25)]"
+                    : "px-4 py-1 rounded-full text-outline hover:bg-surface-container/40"
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : "stroke-[1.75]"}`} />
+              </div>
               {item.badge !== null && (
-                <span className="absolute -top-1 -right-2 bg-error text-on-error text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-surface shadow-sm">
+                <span className="absolute -top-1 right-2 bg-error text-on-error text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-surface shadow-sm">
                   {item.badge}
                 </span>
               )}
             </div>
-            <span className="text-[11px] font-semibold tracking-wide">
+            <span
+              className={`text-[11px] tracking-wide transition-colors ${
+                isActive ? "font-bold text-indigo-500 dark:text-indigo-400" : "font-medium text-outline"
+              }`}
+            >
               {item.name}
             </span>
           </Link>
@@ -83,19 +95,31 @@ export function BottomNav({ onNewPost }) {
           <Link
             key={item.name}
             to={`/${item.href}`}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-transform duration-200 active:scale-90 ${
-              isActive ? "text-primary font-bold" : "text-outline hover:text-primary hover:bg-surface-container/50"
+            className={`flex flex-col items-center justify-center py-1 transition-transform duration-200 active:scale-90 ${
+              isActive ? "text-indigo-400 font-bold" : "text-outline hover:text-indigo-400"
             }`}
           >
             <div className="relative mb-1">
-              <Icon className={`w-6 h-6 ${isActive ? "fill-primary-container/20 stroke-2" : "stroke-[1.5]"}`} />
+              <div
+                className={`transition-all duration-200 flex items-center justify-center ${
+                  isActive
+                    ? "bg-indigo-500/20 text-indigo-400 rounded-full px-4 py-1 shadow-[0_0_12px_rgba(99,102,241,0.25)]"
+                    : "px-4 py-1 rounded-full text-outline hover:bg-surface-container/40"
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : "stroke-[1.75]"}`} />
+              </div>
               {item.badge !== null && (
-                <span className="absolute -top-1 -right-2 bg-error text-on-error text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-surface shadow-sm">
+                <span className="absolute -top-1 right-2 bg-error text-on-error text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-surface shadow-sm">
                   {item.badge}
                 </span>
               )}
             </div>
-            <span className="text-[11px] font-semibold tracking-wide">
+            <span
+              className={`text-[11px] tracking-wide transition-colors ${
+                isActive ? "font-bold text-indigo-500 dark:text-indigo-400" : "font-medium text-outline"
+              }`}
+            >
               {item.name}
             </span>
           </Link>
