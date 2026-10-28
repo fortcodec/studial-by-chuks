@@ -9,6 +9,7 @@ import CCoinBadge from "./CCoinBadge";
 import GlobalSearch from "./GlobalSearch";
 import NewsTicker from "./NewsTicker";
 import BuyCoinsModal from "./BuyCoinsModal";
+import NotificationDropdown from "./NotificationDropdown";
 import { useNotificationStore } from "../store/useNotificationStore";
 
 const CreatePost = lazy(() => import("./CreatePost"));
@@ -285,6 +286,8 @@ export default function Layout() {
             balance={currentUser?.c_coins || 0} 
             onClick={() => setIsBuyCoinsOpen(true)} 
           />
+
+          <NotificationDropdown currentUser={currentUser} />
 
           <button
             onClick={() => navigate('/live')}

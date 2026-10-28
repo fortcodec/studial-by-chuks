@@ -22,6 +22,7 @@ import {
 import { PostCard } from "../components/PostCard";
 import useSWR from "swr";
 import PullToRefresh from "../components/PullToRefresh";
+import ProfileDashboard from "../components/ProfileDashboard";
 
 export default function ProfileView() {
   const { currentUser } = useOutletContext();
@@ -36,6 +37,10 @@ export default function ProfileView() {
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [targetAvatarUrl, setTargetAvatarUrl] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
+  const [reputationTier, setReputationTier] = useState("Student");
+  const [coinMultiplier, setCoinMultiplier] = useState(1);
+  const [profileData, setProfileData] = useState(null);
   const [stats, setStats] = useState({
     posts: 0,
     quizzes: 0,
@@ -153,6 +158,10 @@ export default function ProfileView() {
           setFullName(targetProfile.full_name || "");
           setUsername(targetProfile.username || "");
           setTargetAvatarUrl(targetProfile.avatar_url || "");
+          setIsVerified(Boolean(targetProfile.is_verified));
+          setReputationTier(targetProfile.reputation_tier || "Student");
+          setCoinMultiplier(targetProfile.coin_multiplier ?? 1);
+          setProfileData(targetProfile);
           setEditForm({
             username: targetProfile.username || "",
             department: targetProfile.department || "",
@@ -296,69 +305,25 @@ export default function ProfileView() {
         </div>
       )}
 
-      {/* Header Card */}
-      <div className="bg-surface-container-low rounded-3xl p-6 border border-outline-variant/20 flex flex-col items-center text-center shadow-tactile relative overflow-hidden">
-        {/* Decorative background glow */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
-
-        <div
-          className={`relative mb-3 ${isOwnProfile ? "group cursor-pointer" : ""}`}
-          onClick={() => isOwnProfile && fileInputRef.current?.click()}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleAvatarChange}
-            accept="image/*"
-            className="hidden"
-          />
-          {currentUser?.avatar ? (
-            <img
-              src={currentUser.avatar}
-              alt="Profile"
-              className={`w-20 h-20 rounded-full object-cover border-4 border-surface shadow-sm transition-opacity ${isUploadingAvatar ? "opacity-50" : "group-hover:opacity-80"}`}
-            />
-          ) : (
-            <div
-              className={`w-20 h-20 rounded-full bg-indigo-500 text-slate-900 dark:text-white flex items-center justify-center font-bold border-4 border-surface shadow-sm text-2xl transition-opacity ${isUploadingAvatar ? "opacity-50" : "group-hover:opacity-80"}`}
-            >
-              {(fullName || currentUser?.name || "S").charAt(0).toUpperCase()}
-            </div>
-          )}
-          {isUploadingAvatar && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 text-primary animate-spin" />
-            </div>
-          )}
-          {isOwnProfile && (
-            <div 
-              onClick={(e) => { e.stopPropagation(); navigate('/settings'); }}
-              className="absolute bottom-0 right-0 bg-surface rounded-full p-1.5 border border-outline-variant/30 shadow-sm hover:bg-surface-container transition-colors z-10 hover:bg-surface-container-high"
-            >
-              <Settings className="w-4 h-4 text-on-surface" />
-            </div>
-          )}
-        </div>
-
-        <h2 className="text-xl font-bold text-on-surface mb-1">
-          {fullName || currentUser?.name || "Student"}
-        </h2>
-        <p className="text-[13px] text-outline mb-1">
-          {username ? `@${username}` : email || "Loading..."}
-        </p>
-        <p className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-0.5 rounded mb-4">
-          {department || "University Student"}
-        </p>
-
-        {isOwnProfile && (
-          <div className="flex items-center gap-2 bg-warning/10 border border-warning/20 px-4 py-1.5 rounded-full shadow-sm z-10">
-            <span className="text-warning text-sm drop-shadow-sm">🪙</span>
-            <span className="text-[14px] font-bold text-on-surface">
-              {currentUser?.c_coins?.toLocaleString() || 0} C-Coins
-            </span>
-          </div>
-        )}
-      </div>
+      {/* Header Card / ProfileDashboard */}
+      <ProfileDashboard
+        profile={profileData || {
+          full_name: fullName,
+          username: username,
+          email: email,
+          department: department,
+          avatar_url: targetAvatarUrl || currentUser?.avatar,
+          is_verified: isVerified,
+          reputation_tier: reputationTier,
+          coin_multiplier: coinMultiplier,
+          c_coins: currentUser?.c_coins,
+        }}
+        currentUser={currentUser}
+        isOwnProfile={isOwnProfile}
+        onAvatarClick={() => fileInputRef.current?.click()}
+        fileInputRef={fileInputRef}
+        isUploadingAvatar={isUploadingAvatar}
+      />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-3">
