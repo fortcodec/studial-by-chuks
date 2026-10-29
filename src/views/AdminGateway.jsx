@@ -27,7 +27,10 @@ import {
   X,
   ExternalLink,
   ShieldCheck,
-  Award
+  Award,
+  Menu,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -55,6 +58,10 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
   // Navigation tab state
   const initialTab = location?.pathname?.includes('/economy') ? 'Economy' : defaultTab;
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Mobile responsive & desktop collapsible sidebar states
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Current active admin session state
   const [currentUser, setCurrentUser] = useState(null);
@@ -435,17 +442,31 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
   return (
     <div className="flex h-screen w-full transition-colors duration-200 bg-slate-50 dark:bg-[#0F0F12] text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
       
-      {/* ── Left Sidebar Navigation ────────────────────────────────────── */}
-      <aside className="w-64 border-r flex flex-col shrink-0 transition-colors duration-200
-        bg-white/90 dark:bg-[#1A1A1F]/90 backdrop-blur-xl border-slate-200 dark:border-[#2E2E38]">
+      {/* Mobile Backdrop Overlay */}
+      {isMobileSidebarOpen && (
+        <div
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 md:hidden transition-opacity duration-200"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* ── Left Sidebar Navigation (Off-Canvas on Mobile, Collapsible on Desktop) ── */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col shrink-0 transition-all duration-300 ease-in-out
+          bg-white/95 dark:bg-[#1A1A1F]/95 backdrop-blur-xl border-r border-slate-200 dark:border-[#2E2E38]
+          ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          md:relative md:translate-x-0 md:inset-auto md:z-auto
+          ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}
+      >
         
-        {/* Brand */}
-        <div className="p-6 border-b border-slate-200/80 dark:border-[#2E2E38] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 dark:bg-[#00FF7F] text-white dark:text-[#0F0F12] flex items-center justify-center font-black text-base shadow-md shadow-blue-500/20 dark:shadow-[0_0_14px_rgba(0,255,127,0.35)]">
+        {/* Brand & Collapse Header */}
+        <div className={`p-4 sm:p-5 border-b border-slate-200/80 dark:border-[#2E2E38] flex items-center ${isCollapsed ? 'md:justify-center' : 'justify-between'}`}>
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 dark:bg-[#00FF7F] text-white dark:text-[#0F0F12] flex items-center justify-center font-black text-base shadow-md shadow-blue-500/20 dark:shadow-[0_0_14px_rgba(0,255,127,0.35)] shrink-0">
               S
             </div>
-            <div>
+            <div className={`${isCollapsed ? 'md:hidden' : 'block'} whitespace-nowrap transition-opacity duration-200`}>
               <h1 className="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">
                 Studial<span className="text-blue-600 dark:text-[#00FF7F]">.</span>
               </h1>
@@ -453,6 +474,27 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                 Admin Console
               </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {/* Desktop Collapse Toggle */}
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#24242B] transition-colors"
+              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
+
+            {/* Mobile Close Button */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#24242B] transition-colors"
+              aria-label="Close sidebar"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
@@ -464,34 +506,49 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
             return (
               <button
                 key={item.name}
-                onClick={() => setActiveTab(item.name)}
-                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-extrabold transition-all duration-200 ${
+                onClick={() => {
+                  setActiveTab(item.name);
+                  setIsMobileSidebarOpen(false);
+                }}
+                title={isCollapsed ? item.name : undefined}
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'md:justify-center md:px-0' : 'gap-3 px-3.5'
+                } py-3 rounded-xl text-xs font-extrabold transition-all duration-200 ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20 dark:bg-[#00FF7F]/15 dark:text-[#00FF7F] dark:border dark:border-[#00FF7F]/40 dark:shadow-[0_0_16px_rgba(0,255,127,0.2)]'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#24242B] hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white dark:text-[#00FF7F]' : 'text-slate-400 dark:text-slate-500'}`} />
-                <span>{item.name}</span>
+                <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-white dark:text-[#00FF7F]' : 'text-slate-400 dark:text-slate-500'}`} />
+                <span className={`${isCollapsed ? 'md:hidden' : 'block'} whitespace-nowrap`}>
+                  {item.name}
+                </span>
               </button>
             );
           })}
         </nav>
 
         {/* Bottom System Actions */}
-        <div className="p-4 border-t border-slate-200/80 dark:border-[#2E2E38] space-y-2">
+        <div className="p-3 border-t border-slate-200/80 dark:border-[#2E2E38] space-y-2">
           {/* Quick Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors border
+            title={isCollapsed ? (isDark ? 'Switch to Light' : 'Switch to Dark') : undefined}
+            className={`w-full flex items-center ${
+              isCollapsed ? 'md:justify-center md:px-0' : 'justify-between px-3.5'
+            } py-2.5 rounded-xl text-xs font-bold transition-colors border
               bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200
-              dark:bg-[#24242B] dark:hover:bg-[#2E2E38] dark:text-slate-200 dark:border-[#3F3F4E]"
+              dark:bg-[#24242B] dark:hover:bg-[#2E2E38] dark:text-slate-200 dark:border-[#3F3F4E]`}
           >
-            <span className="flex items-center gap-2">
-              {isDark ? <Sun className="w-4 h-4 text-[#00FF7F]" /> : <Moon className="w-4 h-4 text-blue-600" />}
-              <span>{isDark ? 'Fintech Dark' : 'Crisp Light'}</span>
+            <span className={`flex items-center ${isCollapsed ? 'md:justify-center' : 'gap-2'}`}>
+              {isDark ? <Sun className="w-4 h-4 text-[#00FF7F] shrink-0" /> : <Moon className="w-4 h-4 text-blue-600 shrink-0" />}
+              <span className={`${isCollapsed ? 'md:hidden' : 'block'} whitespace-nowrap`}>
+                {isDark ? 'Fintech Dark' : 'Crisp Light'}
+              </span>
             </span>
-            <span className="text-[10px] font-extrabold uppercase text-slate-400">Mode</span>
+            <span className={`text-[10px] font-extrabold uppercase text-slate-400 ${isCollapsed ? 'md:hidden' : 'inline'}`}>
+              Mode
+            </span>
           </button>
 
           {/* Sign Out */}
@@ -500,33 +557,48 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
               await supabase.auth.signOut();
               navigate('/login');
             }}
-            className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+            title={isCollapsed ? 'Sign Out' : undefined}
+            className={`w-full flex items-center ${
+              isCollapsed ? 'md:justify-center md:px-0' : 'gap-2 px-3.5'
+            } py-2.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors`}
           >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+            <LogOut className="w-4 h-4 shrink-0" />
+            <span className={`${isCollapsed ? 'md:hidden' : 'block'} whitespace-nowrap`}>
+              Sign Out
+            </span>
           </button>
         </div>
       </aside>
 
       {/* ── Main Content Area ──────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-full w-full min-w-0 overflow-hidden">
         
         {/* Top Header Bar */}
-        <header className="h-18 px-6 border-b flex items-center justify-between shrink-0 transition-colors duration-200
+        <header className="h-16 sm:h-18 px-4 sm:px-6 border-b flex items-center justify-between shrink-0 transition-colors duration-200
           bg-white/90 dark:bg-[#1A1A1F]/90 backdrop-blur-xl border-slate-200 dark:border-[#2E2E38]">
           
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile Hamburger Menu Button */}
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden p-2 -ml-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#24242B] transition-colors"
+              aria-label="Open sidebar"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight truncate">
               {activeTab}
             </h2>
             {lastRefreshed && (
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold hidden md:inline">
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold hidden lg:inline">
                 Synced {lastRefreshed}
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             
             {/* Refresh Live Counts Button */}
             <button
@@ -538,18 +610,18 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
             </button>
 
             {/* Profile Badge: 'Fortune James - SUPER ADMIN' accurately fetched from active session */}
-            <div className="flex items-center gap-3 px-3 py-1.5 rounded-2xl border transition-all
+            <div className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-1.5 rounded-2xl border transition-all
               bg-slate-50 border-slate-200 dark:bg-[#24242B] dark:border-[#3F3F4E]">
               
-              <div className="w-8 h-8 rounded-xl bg-blue-600 dark:bg-[#00FF7F] text-white dark:text-[#0F0F12] flex items-center justify-center font-black text-xs shadow-sm">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-600 dark:bg-[#00FF7F] text-white dark:text-[#0F0F12] flex items-center justify-center font-black text-xs shadow-sm shrink-0">
                 {adminName.charAt(0).toUpperCase()}
               </div>
 
-              <div className="flex flex-col pr-1">
-                <span className="font-extrabold text-xs text-slate-900 dark:text-white leading-tight">
+              <div className="flex flex-col pr-1 max-w-[120px] sm:max-w-none">
+                <span className="font-extrabold text-xs text-slate-900 dark:text-white leading-tight truncate">
                   {adminName}
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-[#00FF7F]">
+                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-[#00FF7F]">
                   SUPER ADMIN
                 </span>
               </div>
@@ -559,7 +631,7 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
         </header>
 
         {/* Scrollable Workspace */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+        <main className="flex-1 w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8 space-y-6">
           
           {/* Toast Notification */}
           {toastMessage && (
