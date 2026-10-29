@@ -30,9 +30,10 @@ import {
   Award
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../components/ThemeProvider';
 import GiftUsers from '../components/GiftUsers';
+import AdminEconomyTab from '../components/admin/AdminEconomyTab';
 
 /**
  * Studial Admin Gateway - Phase 1 Redesign & Live Aggregate Engine
@@ -46,12 +47,14 @@ import GiftUsers from '../components/GiftUsers';
  *    - Gold/Yellow: C-Coins in Circulation
  * 4. Dynamic Profile Badge: '{adminName} - SUPER ADMIN' fetched from active session
  */
-export default function AdminGateway() {
+export default function AdminGateway({ defaultTab = 'Dashboard' }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDark, toggleTheme } = useTheme();
 
   // Navigation tab state
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const initialTab = location?.pathname?.includes('/economy') ? 'Economy' : defaultTab;
+  const [activeTab, setActiveTab] = useState(initialTab);
   
   // Current active admin session state
   const [currentUser, setCurrentUser] = useState(null);
@@ -1183,37 +1186,7 @@ export default function AdminGateway() {
           {/* TAB 5: ECONOMY */}
           {/* ───────────────────────────────────────────────────────────── */}
           {activeTab === 'Economy' && (
-            <div className="space-y-6">
-              
-              <div className="rounded-2xl p-6 border
-                bg-white dark:bg-[#1A1A1F] border-slate-200/80 dark:border-[#2E2E38]">
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-white mb-2">
-                  Campus Economic Overview
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                  Total C-Coins circulating across all university accounts: <strong className="text-amber-500 font-black">{stats.totalCoins.toLocaleString()} C</strong>.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl border bg-slate-50 dark:bg-[#24242B] border-slate-200 dark:border-[#3F3F4E]">
-                    <span className="text-xs text-slate-500 font-bold">Estimated Student Treasury</span>
-                    <h4 className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-                      ₦{(stats.totalCoins * 0.5).toLocaleString()}
-                    </h4>
-                    <p className="text-[10px] text-slate-400 mt-1">Pegged at ₦0.50 per C-Coin baseline</p>
-                  </div>
-
-                  <div className="p-4 rounded-xl border bg-slate-50 dark:bg-[#24242B] border-slate-200 dark:border-[#3F3F4E]">
-                    <span className="text-xs text-slate-500 font-bold">Total Accounts</span>
-                    <h4 className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-                      {stats.totalProfiles.toLocaleString()}
-                    </h4>
-                    <p className="text-[10px] text-slate-400 mt-1">Registered student & peer profiles</p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
+            <AdminEconomyTab onShowToast={showToast} />
           )}
 
         </main>

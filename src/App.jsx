@@ -91,6 +91,7 @@ function AppContent() {
               
               <Route element={<AdminGuard />}>
                 <Route path="/admin" element={<AdminGateway />} />
+                <Route path="/admin/economy" element={<AdminGateway defaultTab="Economy" />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
