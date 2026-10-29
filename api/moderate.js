@@ -1,14 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI } from '@google/genai';
+import { runSentinelModeration } from '../lib/ai-router.js';
 
 // Initialize Supabase Client with Service Role Key to bypass RLS
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-// Initialize Gemini AI
-const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY });
 
 // Comprehensive baseline list of generic offensive terms, hate speech, and severe profanity
 const flaggedKeywords = [
@@ -51,63 +48,18 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'ok', flagged: false, reason: 'Passed regex check' });
     }
 
-    // 2. Gemini AI Evaluation
-    const prompt = `
-Analyze this campus forum post. Does it contain hate speech, severe bullying, illegal content, or severe profanity?
-Respond ONLY with a JSON object: { "flagged": true/false, "reason": "Brief explanation if flagged" }.
-Post Content: "${content}"
-    `;
-
-    let aiResponse;
-    try {
-      // Timeout wrapper (15 seconds)
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('AI request timed out')), 15000);
-      });
-
-      const aiPromise = ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              flagged: { type: "BOOLEAN" },
-              reason: { type: "STRING" }
-            },
-            required: ["flagged", "reason"]
-          }
-        }
-      });
-
-      aiResponse = await Promise.race([aiPromise, timeoutPromise]);
-    } catch (aiError) {
-      console.error("AI Evaluation failed or timed out:", aiError);
-      // Fallback: If AI fails, do not shadow ban. Let it pass regex or fail safe.
-      return res.status(200).json({ status: 'ok', flagged: false, reason: 'AI service unavailable' });
-    }
-
-    let result = { flagged: false, reason: "" };
-    
-    try {
-      const textResponse = aiResponse.text();
-      result = JSON.parse(textResponse);
-    } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError);
-      // Fallback
-      if (aiResponse && aiResponse.text && aiResponse.text().includes('"flagged": true')) {
-         result = { flagged: true, reason: "AI flagged content but returned invalid JSON" };
-      }
-    }
+    // 2. AI Sentinel Evaluation (gemini-3.5-flash)
+    const verdict = await runSentinelModeration(content, { timeoutMs: 15000 });
+    const isFlagged = verdict === 'FLAG';
+    const reason = isFlagged ? 'Toxic campus drama, hate speech, or bullying detected by Sentinel' : '';
 
     // 3. Database Update if Flagged
-    if (result.flagged) {
+    if (isFlagged) {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
           is_shadow_banned: true, 
-          shadow_ban_reason: result.reason || "Automated AI Flag" 
+          shadow_ban_reason: reason || "Automated AI Flag" 
         })
         .eq('id', user_id);
 
@@ -116,10 +68,10 @@ Post Content: "${content}"
         return res.status(500).json({ error: 'Failed to apply shadow ban' });
       }
 
-      console.log(`User ${user_id} was shadow banned. Reason: ${result.reason}`);
+      console.log(`User ${user_id} was shadow banned by Sentinel. Reason: ${reason}`);
     }
 
-    return res.status(200).json({ status: 'ok', flagged: result.flagged, reason: result.reason });
+    return res.status(200).json({ status: 'ok', flagged: isFlagged, reason });
   } catch (error) {
     console.error("Moderation API Error:", error);
     return res.status(500).json({ error: 'Internal server error' });

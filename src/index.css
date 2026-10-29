@@ -20,64 +20,59 @@
   --color-outline-variant: #c7c4d7;
   --color-surface-tint: #494bd6;
   
-  --color-primary: #4648d4;
+  --color-primary: #2563eb; /* sharp blue accent */
   --color-on-primary: #ffffff;
-  --color-primary-container: #6063ee;
-  --color-on-primary-container: #fffbff;
-  --color-inverse-primary: #c0c1ff;
-  
-  --color-secondary: #006c49;
-  --color-on-secondary: #ffffff;
-  --color-secondary-container: #6cf8bb;
-  --color-on-secondary-container: #00714d;
-  
-  --color-tertiary: #825100;
-  --color-on-tertiary: #ffffff;
-  --color-tertiary-container: #a36700;
-  --color-on-tertiary-container: #fffbff;
-  
-  --color-error: #ba1a1a;
-  --color-on-error: #ffffff;
-  --color-error-container: #ffdad6;
-  --color-on-error-container: #93000a;
-  
-  --color-background: #ffffff; /* user requested plain white */
-  --color-on-background: #171b26;
-  --color-surface-variant: #dfe2f1;
+  --color-primary-container: #3b82f6;
+  --color-on-primary-container: #ffffff;
+  --color-inverse-primary: #93c5fd;
 
-  --color-neutral-background: #ffffff; /* ensure white background everywhere */
+  --color-background: #ffffff; /* crisp white light mode */
+  --color-on-background: #0f172a;
+  --color-surface-variant: #f1f5f9;
+
+  --color-neutral-background: #ffffff;
+
+  --color-neon-green: #00FF7F;
+  --color-neon-purple: #B026FF;
 
   --font-sans: "Plus Jakarta Sans", sans-serif;
   --font-display: "Plus Jakarta Sans", sans-serif;
   --font-inter: "Inter", sans-serif;
 
   /* Shadows */
-  --shadow-surface-1: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
-  --shadow-surface-2: 0 16px 48px -8px rgba(0, 0, 0, 0.12), 0 0 1px 1px rgba(99, 102, 241, 0.15);
-  --shadow-surface-3: 0 24px 48px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.8);
-  --shadow-ambient-focus: 0 0 0 3px rgba(99, 102, 241, 0.25);
-  --shadow-tactile: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --shadow-surface-1: 0 4px 20px 0 rgba(37, 99, 235, 0.08);
+  --shadow-surface-2: 0 10px 30px -5px rgba(37, 99, 235, 0.12);
+  --shadow-surface-3: 0 20px 40px -10px rgba(15, 23, 42, 0.1);
+  --shadow-ambient-focus: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  --shadow-tactile: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .dark {
-  --color-surface: #0f172a;
-  --color-surface-dim: #1e293b;
-  --color-surface-bright: #334155;
-  --color-surface-container-lowest: #0f172a;
-  --color-surface-container-low: #1e293b;
-  --color-surface-container: #334155;
-  --color-surface-container-high: #475569;
-  --color-surface-container-highest: #64748b;
-  --color-on-surface: #f8fafc;
-  --color-on-surface-variant: #cbd5e1;
-  --color-inverse-surface: #e2e8f0;
-  --color-inverse-on-surface: #0f172a;
-  --color-outline: #94a3b8;
-  --color-outline-variant: #475569;
+  /* Fintech Dark Aesthetic */
+  --color-surface: #0F0F12;
+  --color-surface-dim: #141418;
+  --color-surface-bright: #24242B;
+  --color-surface-container-lowest: #0F0F12;
+  --color-surface-container-low: #141418;
+  --color-surface-container: #1A1A1F;
+  --color-surface-container-high: #24242B;
+  --color-surface-container-highest: #2E2E38;
+  --color-on-surface: #F8FAFC;
+  --color-on-surface-variant: #94A3B8;
+  --color-inverse-surface: #F8FAFC;
+  --color-inverse-on-surface: #0F0F12;
+  --color-outline: #2E2E38;
+  --color-outline-variant: #3F3F4E;
   
-  --color-background: #0f172a;
-  --color-on-background: #f8fafc;
-  --color-neutral-background: #0f172a;
+  --color-primary: #00FF7F; /* neon green primary in dark mode */
+  --color-on-primary: #0F0F12;
+  --color-primary-container: #00E673;
+  --color-on-primary-container: #0F0F12;
+  --color-inverse-primary: #2563EB;
+
+  --color-background: #0F0F12;
+  --color-on-background: #F8FAFC;
+  --color-neutral-background: #0F0F12;
 }
 
 @layer base {

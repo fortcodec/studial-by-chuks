@@ -217,11 +217,11 @@ When analyzing a post:
 - Maintain an intellectual, encouraging, and supportive tone.
 - Never state that you are an AI or language model; speak naturally as Samuel, their trusted academic mentor on Studial.`;
 
-    // 5. Initiate Gemini Stream with Backoff using gemini-1.5-flash
-    console.log('[Samuel] Dispatching request to model: gemini-1.5-flash');
+    // 5. Initiate Gemini Stream with Backoff using upgraded gemini-3.5-flash
+    console.log('[Samuel] Dispatching request to model: gemini-3.5-flash');
     const streamResponse = await fetchWithBackoff(async () => {
       return await ai.models.generateContentStream({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-3.5-flash',
         contents: finalPrompt,
         config: {
           systemInstruction,
@@ -230,7 +230,7 @@ When analyzing a post:
       });
     });
 
-    console.log('[Samuel] Gemini 1.5 Flash stream initiated successfully. Deducting C-Coins...');
+    console.log('[Samuel] Gemini 3.5 Flash stream initiated successfully. Deducting C-Coins...');
 
     // 6. Deduct coins & log transaction
     const newBalance = Math.max(0, userProfile.c_coins - QUERY_COST);

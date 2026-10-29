@@ -161,7 +161,7 @@ export default function AskAI_BottomSheet({
               <div className="flex items-center gap-2">
                 <h3 className="font-extrabold text-base text-slate-900 dark:text-white">Samuel AI Tutor</h3>
                 <span className="text-[10px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/20">
-                  gemini-1.5-flash
+                  gemini-3.5-flash
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-xs">
