@@ -46,7 +46,7 @@ export default function AdminEconomyTab({ onShowToast }) {
   const fetchEconomyData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin/economy');
+      const res = await fetch('/api/admin/action?action=economy');
       if (!res.ok) {
         if (res.status === 500) {
           const errData = await res.json().catch(() => ({}));
@@ -93,10 +93,11 @@ export default function AdminEconomyTab({ onShowToast }) {
 
     setIsSubmittingMint(true);
     try {
-      const res = await fetch('/api/admin/economy', {
+      const res = await fetch('/api/admin/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'mint_coins',
           userId: selectedUserId || undefined,
           userEmail: !selectedUserId ? customEmail.trim() : undefined,
           amount: amountNum,

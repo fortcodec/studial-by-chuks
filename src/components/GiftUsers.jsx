@@ -10,10 +10,11 @@ export default function GiftUsers({ users, fetchDashboardStats }) {
     if (giftForm.amount <= 0) return alert("Amount must be greater than 0");
     setIsGifting(true);
     try {
-      const response = await fetch('/api/gift-coins', {
+      const response = await fetch('/api/admin/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'gift_coins',
           targetUserId: giftForm.targetUserId,
           amount: giftForm.amount,
           message: giftForm.message

@@ -175,8 +175,8 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
   const fetchDashboardStats = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Connect to the service-role backend API route
-      const res = await fetch('/api/admin/stats');
+      // Connect to the consolidated service-role backend API route
+      const res = await fetch('/api/admin/action?action=stats');
 
       if (!res.ok) {
         // Only trigger the red error toast if the fetch block catches an actual 500 error from the API route
@@ -201,7 +201,7 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
         setLastRefreshed(new Date().toLocaleTimeString());
       }
     } catch (err) {
-      console.error('[Admin] Error fetching stats from /api/admin/stats:', err);
+      console.error('[Admin] Error fetching stats from /api/admin/action:', err);
     } finally {
       setIsLoading(false);
     }
@@ -380,7 +380,7 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
   const fetchTelegramAdmins = useCallback(async () => {
     setIsTelegramLoading(true);
     try {
-      const res = await fetch('/api/admin/telegram-admins');
+      const res = await fetch('/api/admin/action?action=telegram_admins');
       if (res.ok) {
         const data = await res.json();
         setTelegramAdminsList(data.admins || []);
@@ -401,10 +401,11 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
     }
     setIsSubmittingTelegram(true);
     try {
-      const res = await fetch('/api/admin/telegram-admins', {
+      const res = await fetch('/api/admin/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'add_telegram_admin',
           email: telegramForm.email.trim(),
           telegramUserId: telegramForm.telegramChatId.trim(),
           name: telegramForm.name.trim(),
@@ -426,10 +427,10 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
   const handleRevokeTelegramAdmin = async (id, name) => {
     if (!window.confirm(`Revoke Telegram admin authorization for ${name}?`)) return;
     try {
-      const res = await fetch('/api/admin/telegram-admins', {
-        method: 'DELETE',
+      const res = await fetch('/api/admin/action', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ action: 'revoke_telegram_admin', id }),
       });
       if (res.ok) {
         showToast('Revoked Telegram admin privileges.');
@@ -460,10 +461,11 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
     if (!deletingPost?.id) return;
     setIsDeletingPost(true);
     try {
-      const res = await fetch('/api/admin/delete-post', {
+      const res = await fetch('/api/admin/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'delete_post',
           postId: deletingPost.id,
           reason: deletionReason.trim() || 'Violates campus community guidelines.',
         }),
@@ -950,10 +952,10 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                         if (!window.confirm(`Distribute ${weeklyCoinAmount} C-Coins to all active students?`)) return;
                         setIsDistributingCoins(true);
                         try {
-                          const res = await fetch('/api/distribute-coins', {
+                          const res = await fetch('/api/admin/action', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ amount: Number(weeklyCoinAmount) }),
+                            body: JSON.stringify({ action: 'distribute_coins', amount: Number(weeklyCoinAmount) }),
                           });
                           const result = await res.json();
                           if (res.ok) {
@@ -1117,10 +1119,10 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                                   <button
                                     onClick={async () => {
                                       if (!window.confirm(`Delete user @${user.username}?`)) return;
-                                      const res = await fetch('/api/delete-user', {
+                                      const res = await fetch('/api/admin/action', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ userId: user.id }),
+                                        body: JSON.stringify({ action: 'delete_user', userId: user.id }),
                                       });
                                       if (res.ok) {
                                         showToast('User removed.');

@@ -1,5 +1,13 @@
 {
   "rewrites": [
+    { "source": "/api/admin/stats", "destination": "/api/admin/action?action=stats" },
+    { "source": "/api/admin/economy", "destination": "/api/admin/action?action=economy" },
+    { "source": "/api/admin/delete-post", "destination": "/api/admin/action?action=delete_post" },
+    { "source": "/api/admin/telegram-admins", "destination": "/api/admin/action?action=telegram_admins" },
+    { "source": "/api/admin-stats", "destination": "/api/admin/action?action=stats" },
+    { "source": "/api/delete-user", "destination": "/api/admin/action?action=delete_user" },
+    { "source": "/api/distribute-coins", "destination": "/api/admin/action?action=distribute_coins" },
+    { "source": "/api/gift-coins", "destination": "/api/admin/action?action=gift_coins" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
