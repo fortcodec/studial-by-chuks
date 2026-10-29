@@ -679,7 +679,7 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                       <div className="h-9 w-28 rounded-lg bg-slate-200/80 dark:bg-[#24242B] animate-pulse my-0.5" />
                     ) : (
                       <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
-                        {stats.totalStudents.toLocaleString()}
+                        {((stats?.totalStudents) || 0).toLocaleString()}
                       </span>
                     )}
                     <span className="text-[11px] font-bold text-blue-600 dark:text-[#C084FC] bg-blue-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-full">
@@ -716,7 +716,7 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                       <div className="h-9 w-24 rounded-lg bg-slate-200/80 dark:bg-[#24242B] animate-pulse my-0.5" />
                     ) : (
                       <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-[#00FF7F] tabular-nums tracking-tight">
-                        {stats.activePosts.toLocaleString()}
+                        {((stats?.activePosts) || 0).toLocaleString()}
                       </span>
                     )}
                     <span className="text-[11px] font-bold text-emerald-700 dark:text-[#00FF7F] bg-emerald-50 dark:bg-[#00FF7F]/15 px-2 py-0.5 rounded-full">
@@ -753,7 +753,7 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                       <div className="h-9 w-32 rounded-lg bg-slate-200/80 dark:bg-[#24242B] animate-pulse my-0.5" />
                     ) : (
                       <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-amber-400 tabular-nums tracking-tight">
-                        {stats.totalCoins.toLocaleString()}
+                        {((stats?.totalCoins) || 0).toLocaleString()}
                       </span>
                     )}
                     <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">
@@ -784,7 +784,7 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
 
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
-                      {telegramAdminsCount}
+                      {((telegramAdminsCount) || 0).toLocaleString()}
                     </span>
                     <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full">
                       Bot Admins

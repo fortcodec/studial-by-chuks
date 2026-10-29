@@ -240,7 +240,7 @@ export default function AdminEconomyTab({ onShowToast }) {
               <div className="h-10 w-36 rounded-lg bg-slate-200/80 dark:bg-[#24242B] animate-pulse my-0.5" />
             ) : (
               <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
-                {(stats?.totalCoins ?? 0).toLocaleString()} <span className="text-xl font-bold text-amber-500">C</span>
+                {((stats?.totalCoins) || 0).toLocaleString()} <span className="text-xl font-bold text-amber-500">C</span>
               </span>
             )}
             <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/40">
@@ -276,7 +276,7 @@ export default function AdminEconomyTab({ onShowToast }) {
               <div className="h-10 w-36 rounded-lg bg-slate-200/80 dark:bg-[#24242B] animate-pulse my-0.5" />
             ) : (
               <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
-                {(stats?.totalBurned ?? 0).toLocaleString()} <span className="text-xl font-bold text-orange-500">C</span>
+                {((stats?.totalBurned) || 0).toLocaleString()} <span className="text-xl font-bold text-orange-500">C</span>
               </span>
             )}
             <span className="text-[11px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-800/40">
@@ -312,7 +312,7 @@ export default function AdminEconomyTab({ onShowToast }) {
               <div className="h-10 w-36 rounded-lg bg-slate-200/80 dark:bg-[#24242B] animate-pulse my-0.5" />
             ) : (
               <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
-                {(stats?.activeWallets ?? 0).toLocaleString()}
+                {((stats?.activeWallets) || 0).toLocaleString()}
               </span>
             )}
             <span className="text-[11px] font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/60 px-2 py-0.5 rounded-full border border-yellow-200 dark:border-yellow-800/40">
@@ -434,11 +434,11 @@ export default function AdminEconomyTab({ onShowToast }) {
                     </td>
                   </tr>
                 ))
-              ) : filteredTransactions?.length === 0 ? (
+              ) : (!filteredTransactions || filteredTransactions?.length === 0) ? (
                 <tr>
                   <td colSpan="4" className="py-12 text-center text-slate-400">
                     <Coins className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2 stroke-[1.5]" />
-                    <p className="font-bold">No transactions found</p>
+                    <p className="font-bold">No recent transactions</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                       {searchQuery || filterType !== 'all' ? 'Try adjusting your search query or filter.' : 'Transactions will appear here as users unlock materials or receive airdrops.'}
                     </p>
@@ -449,14 +449,8 @@ export default function AdminEconomyTab({ onShowToast }) {
                   const numAmt = Number(tx?.amount) || 0;
                   const isDebit = tx?.transaction_type === 'debit' || numAmt < 0;
                   const formattedDate = tx?.created_at
-                    ? new Date(tx.created_at).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : 'Recent';
+                    ? new Date(tx.created_at).toLocaleString()
+                    : 'N/A';
 
                   return (
                     <tr
@@ -512,7 +506,7 @@ export default function AdminEconomyTab({ onShowToast }) {
                             : 'text-emerald-600 dark:text-[#00FF7F]'
                         }`}>
                           {isDebit ? '-' : '+'}
-                          {Math.abs(numAmt).toLocaleString()} C
+                          {Math.abs(numAmt || 0).toLocaleString()} C
                         </span>
                       </td>
                     </tr>
@@ -572,9 +566,9 @@ export default function AdminEconomyTab({ onShowToast }) {
                     bg-slate-50 border-slate-200 dark:bg-[#24242B] dark:border-[#3F3F4E] dark:text-white focus:border-amber-400"
                 >
                   <option value="">-- Select from Active Student Directory --</option>
-                  {(users || []).map((u) => (
+                  {users?.map((u) => (
                     <option key={u?.id} value={u?.id}>
-                      {u?.full_name || u?.username} (@{u?.username}) — Balance: {u?.c_coins ?? 0} C
+                      {u?.full_name || u?.username} (@{u?.username}) — Balance: {((u?.c_coins) || 0).toLocaleString()} C
                     </option>
                   ))}
                 </select>
@@ -672,7 +666,7 @@ export default function AdminEconomyTab({ onShowToast }) {
                     disabled:opacity-50 shadow-md shadow-amber-500/20"
                 >
                   <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
-                  <span>{isSubmittingMint ? 'Minting...' : `Confirm & Mint ${mintAmount} C`}</span>
+                  <span>{isSubmittingMint ? 'Minting...' : `Confirm & Mint ${((mintAmount) || 0).toLocaleString()} C`}</span>
                 </button>
               </div>
 
