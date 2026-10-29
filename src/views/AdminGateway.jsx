@@ -60,11 +60,10 @@ export default function AdminGateway() {
   // Live Accurate Aggregate Statistics
   const [stats, setStats] = useState({
     totalStudents: 0,
-    totalProfiles: 0,
     activePosts: 0,
     totalCoins: 0,
   });
-  const [isStatsLoading, setIsStatsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState(null);
 
   // Telegram Admins
@@ -157,70 +156,37 @@ export default function AdminGateway() {
 
   // 2. Fetch True Aggregate Data via Backend API (Bypassing RLS with Service Role Key)
   const fetchDashboardStats = useCallback(async () => {
-    setIsStatsLoading(true);
+    setIsLoading(true);
     try {
-      // First attempt: Backend API route running with SUPABASE_SERVICE_ROLE_KEY
-      const res = await fetch('/api/admin-stats', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      // Connect to the service-role backend API route
+      const res = await fetch('/api/admin/stats');
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.stats) {
-          setStats({
-            totalStudents: data.stats.totalStudents || 0,
-            totalProfiles: data.stats.totalProfiles || 0,
-            activePosts: data.stats.activePosts || 0,
-            totalCoins: data.stats.totalCoins || 0,
-          });
-          setTelegramAdminsCount(data.stats.telegramAdmins || 0);
-          setLastRefreshed(new Date().toLocaleTimeString());
-          setIsStatsLoading(false);
-          return;
+      if (!res.ok) {
+        // Only trigger the red error toast if the fetch block catches an actual 500 error from the API route
+        if (res.status === 500) {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.error || 'Server Error (500): Failed to load statistics.', 'error');
         }
-      }
-
-      // Fallback: Secure RPC function if API serverless function unavailable in local preview
-      const { data: rpcStats, error: rpcError } = await supabase.rpc('get_admin_dashboard_stats');
-      if (!rpcError && rpcStats) {
-        setStats({
-          totalStudents: Number(rpcStats.totalStudents) || 0,
-          totalProfiles: Number(rpcStats.totalProfiles) || Number(rpcStats.totalStudents) || 0,
-          activePosts: Number(rpcStats.activePosts) || 0,
-          totalCoins: Number(rpcStats.totalCoins) || 0,
-        });
-        if (rpcStats.telegramAdmins !== undefined) {
-          setTelegramAdminsCount(Number(rpcStats.telegramAdmins));
-        }
-        setLastRefreshed(new Date().toLocaleTimeString());
-        setIsStatsLoading(false);
         return;
       }
 
-      // Direct queries if service role is enabled on current client
-      const [profilesRes, postsRes, coinsRes, teleRes] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('posts').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('c_coins'),
-        supabase.from('telegram_admins').select('*', { count: 'exact', head: true }).catch(() => ({ count: 0 })),
-      ]);
-
-      const sumCoins = coinsRes.data ? coinsRes.data.reduce((acc, row) => acc + (Number(row.c_coins) || 0), 0) : 0;
-
-      setStats({
-        totalStudents: profilesRes.count || 0,
-        totalProfiles: profilesRes.count || 0,
-        activePosts: postsRes.count || 0,
-        totalCoins: sumCoins,
-      });
-      setTelegramAdminsCount(teleRes.count || 0);
-      setLastRefreshed(new Date().toLocaleTimeString());
+      const data = await res.json();
+      if (data) {
+        // Map the fetched JSON data directly to the 'Total Students', 'Active Posts', and 'C-Coins' cards
+        setStats({
+          totalStudents: Number(data.totalStudents) || 0,
+          activePosts: Number(data.activePosts) || 0,
+          totalCoins: Number(data.totalCoins) || 0,
+        });
+        if (data.telegramAdmins !== undefined) {
+          setTelegramAdminsCount(Number(data.telegramAdmins) || 0);
+        }
+        setLastRefreshed(new Date().toLocaleTimeString());
+      }
     } catch (err) {
-      console.error('[Admin] Error fetching accurate stats:', err);
-      showToast('Could not refresh statistics from server.', 'error');
+      console.error('[Admin] Error fetching stats from /api/admin/stats:', err);
     } finally {
-      setIsStatsLoading(false);
+      setIsLoading(false);
     }
   }, []);
 
@@ -565,7 +531,7 @@ export default function AdminGateway() {
               title="Refresh live metrics bypassing RLS"
               className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#24242B] transition-colors"
             >
-              <RefreshCw className={`w-4 h-4 ${isStatsLoading ? 'animate-spin text-blue-600 dark:text-[#00FF7F]' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-600 dark:text-[#00FF7F]' : ''}`} />
             </button>
 
             {/* Profile Badge: 'Fortune James - SUPER ADMIN' accurately fetched from active session */}
@@ -634,9 +600,13 @@ export default function AdminGateway() {
                   </div>
 
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
-                      {isStatsLoading ? '...' : stats.totalStudents.toLocaleString()}
-                    </span>
+                    {isLoading ? (
+                      <div className="h-9 w-28 rounded-lg bg-slate-200/80 dark:bg-[#24242B] animate-pulse my-0.5" />
+                    ) : (
+                      <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+                        {stats.totalStudents.toLocaleString()}
+                      </span>
+                    )}
                     <span className="text-[11px] font-bold text-blue-600 dark:text-[#C084FC] bg-blue-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-full">
                       Verified
                     </span>
@@ -667,9 +637,13 @@ export default function AdminGateway() {
                   </div>
 
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-[#00FF7F] tabular-nums tracking-tight">
-                      {isStatsLoading ? '...' : stats.activePosts.toLocaleString()}
-                    </span>
+                    {isLoading ? (
+                      <div className="h-9 w-24 rounded-lg bg-slate-200/80 dark:bg-[#24242B] animate-pulse my-0.5" />
+                    ) : (
+                      <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-[#00FF7F] tabular-nums tracking-tight">
+                        {stats.activePosts.toLocaleString()}
+                      </span>
+                    )}
                     <span className="text-[11px] font-bold text-emerald-700 dark:text-[#00FF7F] bg-emerald-50 dark:bg-[#00FF7F]/15 px-2 py-0.5 rounded-full">
                       Live
                     </span>
@@ -700,9 +674,13 @@ export default function AdminGateway() {
                   </div>
 
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-amber-400 tabular-nums tracking-tight">
-                      {isStatsLoading ? '...' : stats.totalCoins.toLocaleString()}
-                    </span>
+                    {isLoading ? (
+                      <div className="h-9 w-32 rounded-lg bg-slate-200/80 dark:bg-[#24242B] animate-pulse my-0.5" />
+                    ) : (
+                      <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-amber-400 tabular-nums tracking-tight">
+                        {stats.totalCoins.toLocaleString()}
+                      </span>
+                    )}
                     <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">
                       C-Economy
                     </span>
