@@ -81,6 +81,13 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
   const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
   const [telegramAdminsList, setTelegramAdminsList] = useState([]);
   const [isTelegramLoading, setIsTelegramLoading] = useState(false);
+  const [telegramForm, setTelegramForm] = useState({ email: '', telegramChatId: '', name: '' });
+  const [isSubmittingTelegram, setIsSubmittingTelegram] = useState(false);
+
+  // Deleting Post Modal State
+  const [deletingPost, setDeletingPost] = useState(null);
+  const [deletionReason, setDeletionReason] = useState('Violates campus community guidelines (spam, offensive, or inappropriate content)');
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
 
   // Users State
   const [users, setUsers] = useState([]);
@@ -369,17 +376,111 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
     }
   };
 
-  // Handle Delete Post
-  const handleDeletePost = async (postId) => {
-    if (!window.confirm('Delete this post permanently from the campus feed?')) return;
+  // Telegram Admins Operations
+  const fetchTelegramAdmins = useCallback(async () => {
+    setIsTelegramLoading(true);
     try {
-      const { error } = await supabase.from('posts').delete().eq('id', postId);
-      if (error) throw error;
-      setPosts(prev => prev.filter(p => p.id !== postId));
-      showToast('Post removed.');
+      const res = await fetch('/api/admin/telegram-admins');
+      if (res.ok) {
+        const data = await res.json();
+        setTelegramAdminsList(data.admins || []);
+        setTelegramAdminsCount(data.count ?? data.admins?.length ?? 0);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch telegram admins:', e);
+    } finally {
+      setIsTelegramLoading(false);
+    }
+  }, []);
+
+  const handleAddTelegramAdmin = async (e) => {
+    e.preventDefault();
+    if (!telegramForm.telegramChatId.trim()) {
+      showToast('Please provide a Telegram Chat ID.', 'error');
+      return;
+    }
+    setIsSubmittingTelegram(true);
+    try {
+      const res = await fetch('/api/admin/telegram-admins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: telegramForm.email.trim(),
+          telegramUserId: telegramForm.telegramChatId.trim(),
+          name: telegramForm.name.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to authorize Telegram admin.');
+
+      showToast(data.message || 'Telegram Bot Admin authorized successfully!');
+      setTelegramForm({ email: '', telegramChatId: '', name: '' });
+      fetchTelegramAdmins();
+    } catch (err) {
+      showToast(err.message || 'Error authorizing Telegram admin.', 'error');
+    } finally {
+      setIsSubmittingTelegram(false);
+    }
+  };
+
+  const handleRevokeTelegramAdmin = async (id, name) => {
+    if (!window.confirm(`Revoke Telegram admin authorization for ${name}?`)) return;
+    try {
+      const res = await fetch('/api/admin/telegram-admins', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        showToast('Revoked Telegram admin privileges.');
+        fetchTelegramAdmins();
+      } else {
+        const d = await res.json();
+        showToast(d.error || 'Failed to revoke admin.', 'error');
+      }
+    } catch (e) {
+      showToast(e.message || 'Error revoking admin.', 'error');
+    }
+  };
+
+  // Open Delete Post Modal
+  const openDeletePostModal = (post) => {
+    setDeletingPost({
+      id: post.id || post.post_id,
+      user_id: post.user_id || post.profiles?.id,
+      content: post.content || post.post?.content || 'Post content',
+      username: post.profiles?.username || post.author?.username || 'user',
+    });
+    setDeletionReason('Violates campus community guidelines (spam, offensive, or inappropriate content)');
+  };
+
+  // Confirm Post Deletion via Backend API & Send Author Notification
+  const confirmDeletePost = async (e) => {
+    e?.preventDefault();
+    if (!deletingPost?.id) return;
+    setIsDeletingPost(true);
+    try {
+      const res = await fetch('/api/admin/delete-post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: deletingPost.id,
+          reason: deletionReason.trim() || 'Violates campus community guidelines.',
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete post.');
+
+      setPosts(prev => prev.filter(p => p.id !== deletingPost.id));
+      setPostReports(prev => prev.filter(r => r.post_id !== deletingPost.id));
+      showToast('Post deleted and author notified.');
+      setDeletingPost(null);
       fetchDashboardStats();
     } catch (err) {
-      showToast(err.message || 'Failed to delete post.', 'error');
+      showToast(err.message || 'Error removing post.', 'error');
+    } finally {
+      setIsDeletingPost(false);
     }
   };
 
@@ -767,10 +868,15 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                 </div>
 
                 {/* 4. Telegram Admins Card: Indigo Accent */}
-                <div className="relative overflow-hidden rounded-2xl p-6 backdrop-blur-xl transition-all duration-300 group
-                  bg-white/80 border border-indigo-200/80 shadow-lg shadow-indigo-500/5
-                  dark:bg-[#1A1A1F]/85 dark:border-indigo-500/30 dark:shadow-[0_0_24px_rgba(99,102,241,0.12)]">
-                  
+                <div 
+                  onClick={() => {
+                    setIsTelegramModalOpen(true);
+                    fetchTelegramAdmins();
+                  }}
+                  className="relative overflow-hidden rounded-2xl p-6 backdrop-blur-xl transition-all duration-300 group cursor-pointer hover:scale-[1.01] active:scale-[0.99]
+                    bg-white/80 border border-indigo-200/80 shadow-lg shadow-indigo-500/5 hover:border-indigo-400
+                    dark:bg-[#1A1A1F]/85 dark:border-indigo-500/30 dark:shadow-[0_0_24px_rgba(99,102,241,0.12)] dark:hover:border-indigo-400/60"
+                >
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Telegram Ops
@@ -791,9 +897,22 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
-                    Synchronized Telegram webhook relays
-                  </p>
+                  <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-[#2E2E38]">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Webhook moderation relays
+                    </p>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsTelegramModalOpen(true);
+                        fetchTelegramAdmins();
+                      }}
+                      className="text-[11px] font-extrabold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                    >
+                      Manage Bot Admins <ExternalLink className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
 
               </div>
@@ -1065,8 +1184,8 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <button
-                            onClick={() => handleDeletePost(report.post_id)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white hover:bg-red-700"
+                            onClick={() => openDeletePostModal({ id: report.post_id, user_id: report.post?.user_id, content: report.post?.content, profiles: report.reporter })}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white hover:bg-red-700 shadow-sm"
                           >
                             Delete Post
                           </button>
@@ -1109,8 +1228,9 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                         </span>
                       </div>
                       <button
-                        onClick={() => handleDeletePost(post.id)}
-                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg shrink-0"
+                        onClick={() => openDeletePostModal(post)}
+                        title="Delete post and notify author"
+                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg shrink-0 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -1320,6 +1440,258 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Post Deletion & Notification Modal (Feature 2) ──────────────── */}
+      {deletingPost && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-3xl p-6 sm:p-7 border shadow-2xl animate-in zoom-in-95
+            bg-white dark:bg-[#1A1A1F] border-slate-200 dark:border-[#2E2E38]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 flex items-center justify-center">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
+                    Remove Post & Notify Author
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Target: @{deletingPost.username}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDeletingPost(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#24242B]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Post Preview */}
+            <div className="p-3.5 rounded-xl mb-4 bg-slate-50 dark:bg-[#24242B] border border-slate-200 dark:border-[#3F3F4E]">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">
+                Post Content
+              </span>
+              <p className="text-xs text-slate-700 dark:text-slate-300 italic line-clamp-3">
+                "{deletingPost.content}"
+              </p>
+            </div>
+
+            <form onSubmit={confirmDeletePost} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Reason for deletion (Sent to user)
+                </label>
+                <textarea
+                  rows="3"
+                  required
+                  value={deletionReason}
+                  onChange={(e) => setDeletionReason(e.target.value)}
+                  placeholder="e.g. Hate speech, unauthorized advertisement, harassment..."
+                  className="w-full p-3 rounded-xl text-xs font-medium border outline-none
+                    bg-slate-50 border-slate-200 dark:bg-[#24242B] dark:border-[#3F3F4E] dark:text-white focus:border-red-500"
+                />
+              </div>
+
+              {/* Quick Presets */}
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  'Spam or unauthorized commercial advertising',
+                  'Harassment, toxic bullying, or hate speech',
+                  'Academic dishonesty / exam leakage',
+                  'Inappropriate or offensive content'
+                ].map((reasonText) => (
+                  <button
+                    key={reasonText}
+                    type="button"
+                    onClick={() => setDeletionReason(reasonText)}
+                    className="text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all
+                      bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200
+                      dark:bg-[#24242B] dark:hover:bg-[#2E2E38] dark:text-slate-300 dark:border-[#3F3F4E]"
+                  >
+                    {reasonText}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-[#2E2E38]">
+                <button
+                  type="button"
+                  onClick={() => setDeletingPost(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#24242B] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#2E2E38]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isDeletingPost}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/25 disabled:opacity-50"
+                >
+                  {isDeletingPost ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  <span>{isDeletingPost ? 'Removing...' : 'Confirm Deletion'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Telegram Admins Management Modal (Feature 3) ────────────────── */}
+      {isTelegramModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-xl rounded-3xl p-6 sm:p-7 border shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto
+            bg-white dark:bg-[#1A1A1F] border-slate-200 dark:border-[#2E2E38]">
+            
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 flex items-center justify-center border border-indigo-200 dark:border-indigo-500/30">
+                  <Send className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white">
+                    Telegram Bot Admin Relays
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Authorize Chat IDs for real-time campus moderation & bot commands
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsTelegramModalOpen(false)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#24242B]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Add New Telegram Admin Form */}
+            <div className="p-4 rounded-2xl mb-6 bg-slate-50 dark:bg-[#24242B] border border-slate-200 dark:border-[#3F3F4E]">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                Add New Telegram Admin
+              </h4>
+
+              <form onSubmit={handleAddTelegramAdmin} className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      Link Student Email (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="admin@campus.edu"
+                      value={telegramForm.email}
+                      onChange={(e) => setTelegramForm({ ...telegramForm, email: e.target.value })}
+                      className="w-full p-2.5 rounded-xl text-xs font-medium border outline-none
+                        bg-white dark:bg-[#1A1A1F] border-slate-200 dark:border-[#3F3F4E] dark:text-white focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      Telegram Chat ID (Required)
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 7070776035"
+                      value={telegramForm.telegramChatId}
+                      onChange={(e) => setTelegramForm({ ...telegramForm, telegramChatId: e.target.value })}
+                      className="w-full p-2.5 rounded-xl text-xs font-black border outline-none
+                        bg-white dark:bg-[#1A1A1F] border-slate-200 dark:border-[#3F3F4E] dark:text-white focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                    Display Name / Role Note
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Lead Moderator, Fortune"
+                    value={telegramForm.name}
+                    onChange={(e) => setTelegramForm({ ...telegramForm, name: e.target.value })}
+                    className="w-full p-2.5 rounded-xl text-xs font-medium border outline-none
+                      bg-white dark:bg-[#1A1A1F] border-slate-200 dark:border-[#3F3F4E] dark:text-white focus:border-indigo-500"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Tip: Send <span className="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">/myid</span> to @userinfobot on Telegram to find a user's Chat ID.
+                  </p>
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="submit"
+                    disabled={isSubmittingTelegram}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black
+                      bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/25 disabled:opacity-50"
+                  >
+                    {isSubmittingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                    <span>{isSubmittingTelegram ? 'Authorizing...' : 'Authorize Telegram Admin'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Authorized Telegram Admins Table */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                  Authorized Bot Relays ({telegramAdminsList.length})
+                </h4>
+                <button
+                  type="button"
+                  onClick={fetchTelegramAdmins}
+                  className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isTelegramLoading ? 'animate-spin' : ''}`} /> Refresh
+                </button>
+              </div>
+
+              {isTelegramLoading ? (
+                <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-indigo-600" /></div>
+              ) : telegramAdminsList.length === 0 ? (
+                <div className="p-6 text-center rounded-xl bg-slate-50 dark:bg-[#24242B] border border-slate-200 dark:border-[#3F3F4E]">
+                  <Send className="w-8 h-8 mx-auto text-slate-400 mb-2 stroke-[1.5]" />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">No Telegram Admins registered yet</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Use the form above to add your first Chat ID</p>
+                </div>
+              ) : (
+                <div className="rounded-xl border divide-y overflow-hidden border-slate-200 dark:border-[#3F3F4E] divide-slate-100 dark:divide-[#2E2E38]">
+                  {telegramAdminsList.map((adm) => (
+                    <div key={adm.id} className="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/60 dark:hover:bg-[#24242B]/50 transition-colors">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400 flex items-center justify-center font-black text-xs">
+                          {((adm.name || 'T')[0] || 'T').toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900 dark:text-white">
+                            {adm.name || 'Telegram Admin'}
+                          </p>
+                          <p className="text-[11px] font-mono text-slate-400">
+                            Chat ID: <span className="font-bold text-indigo-600 dark:text-indigo-400">{adm.telegram_user_id}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRevokeTelegramAdmin(adm.id, adm.name || adm.telegram_user_id)}
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       )}

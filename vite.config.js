@@ -245,6 +245,140 @@ export default defineConfig(({ mode }) => {
                 return res.end(JSON.stringify({ error: err?.message || 'Server error' }));
               }
             }
+
+            // Delete Post & Notify Author Dev API handler
+            if (req.url && req.url === '/api/admin/delete-post' && req.method === 'POST') {
+              let bodyStr = '';
+              req.on('data', chunk => { bodyStr += chunk; });
+              req.on('end', async () => {
+                try {
+                  const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL || env.VITE_SUPABASE_URL || env.SUPABASE_URL;
+                  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
+                  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+                    auth: { persistSession: false, autoRefreshToken: false }
+                  });
+
+                  const { postId, reason } = JSON.parse(bodyStr || '{}');
+                  if (!postId) {
+                    res.statusCode = 400;
+                    res.setHeader('Content-Type', 'application/json');
+                    return res.end(JSON.stringify({ error: 'Missing postId parameter.' }));
+                  }
+
+                  const removalReason = (reason || '').trim() || 'Violates campus community guidelines.';
+
+                  const { data: post } = await supabase.from('posts').select('id, user_id, content').eq('id', postId).maybeSingle();
+                  if (!post) {
+                    res.statusCode = 404;
+                    res.setHeader('Content-Type', 'application/json');
+                    return res.end(JSON.stringify({ error: 'Post not found.' }));
+                  }
+
+                  try { await supabase.from('post_reports').delete().eq('post_id', postId); } catch (_) {}
+                  await supabase.from('posts').delete().eq('id', postId);
+
+                  if (post.user_id) {
+                    try {
+                      await supabase.from('notifications').insert({
+                        user_id: post.user_id,
+                        title: 'Post Removed by Moderator',
+                        message: `Your post was removed by a moderator. Reason: ${removalReason}`,
+                        type: 'moderation',
+                        read: false,
+                      });
+                    } catch (_) {}
+                  }
+
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'application/json');
+                  return res.end(JSON.stringify({ success: true, message: 'Post was removed and author notified.', postId }));
+                } catch (err) {
+                  res.statusCode = 500;
+                  res.setHeader('Content-Type', 'application/json');
+                  return res.end(JSON.stringify({ error: err?.message || 'Server error deleting post' }));
+                }
+              });
+              return;
+            }
+
+            // Telegram Admins Dev API handler
+            if (req.url && (req.url === '/api/admin/telegram-admins' || req.url.startsWith('/api/admin/telegram-admins?'))) {
+              try {
+                const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL || env.VITE_SUPABASE_URL || env.SUPABASE_URL;
+                const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
+                const supabase = createClient(supabaseUrl, serviceRoleKey, {
+                  auth: { persistSession: false, autoRefreshToken: false }
+                });
+
+                if (req.method === 'GET') {
+                  const { data: admins } = await supabase.from('telegram_admins').select('*').order('created_at', { ascending: false });
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'application/json');
+                  return res.end(JSON.stringify({ admins: admins || [], count: admins?.length ?? 0 }));
+                }
+
+                if (req.method === 'POST') {
+                  let bodyStr = '';
+                  req.on('data', chunk => { bodyStr += chunk; });
+                  req.on('end', async () => {
+                    try {
+                      const { email, telegramUserId, name } = JSON.parse(bodyStr || '{}');
+                      const parsedId = parseInt(telegramUserId, 10);
+                      if (!parsedId || isNaN(parsedId)) {
+                        res.statusCode = 400;
+                        res.setHeader('Content-Type', 'application/json');
+                        return res.end(JSON.stringify({ error: 'Please provide a valid numeric Telegram Chat ID.' }));
+                      }
+
+                      let resolvedName = (name || '').trim();
+                      if (email?.trim()) {
+                        const { data: profile } = await supabase.from('profiles').select('full_name, username, email').ilike('email', email.trim()).maybeSingle();
+                        if (profile) resolvedName = resolvedName || profile.full_name || `@${profile.username}` || profile.email;
+                      }
+                      if (!resolvedName) resolvedName = `Admin-${String(parsedId).slice(-4)}`;
+
+                      const { data: newAdmin } = await supabase.from('telegram_admins').insert({
+                        telegram_user_id: parsedId,
+                        name: resolvedName
+                      }).select().maybeSingle();
+
+                      res.statusCode = 200;
+                      res.setHeader('Content-Type', 'application/json');
+                      return res.end(JSON.stringify({ success: true, message: `Authorized ${resolvedName} (ID: ${parsedId})`, admin: newAdmin }));
+                    } catch (pErr) {
+                      res.statusCode = 500;
+                      res.setHeader('Content-Type', 'application/json');
+                      return res.end(JSON.stringify({ error: pErr?.message || 'Failed to add Telegram admin.' }));
+                    }
+                  });
+                  return;
+                }
+
+                if (req.method === 'DELETE') {
+                  let bodyStr = '';
+                  req.on('data', chunk => { bodyStr += chunk; });
+                  req.on('end', async () => {
+                    try {
+                      const { id } = JSON.parse(bodyStr || '{}');
+                      await supabase.from('telegram_admins').delete().eq('id', id);
+                      res.statusCode = 200;
+                      res.setHeader('Content-Type', 'application/json');
+                      return res.end(JSON.stringify({ success: true, message: 'Revoked Telegram admin privileges.' }));
+                    } catch (dErr) {
+                      res.statusCode = 500;
+                      res.setHeader('Content-Type', 'application/json');
+                      return res.end(JSON.stringify({ error: dErr?.message || 'Failed to delete Telegram admin.' }));
+                    }
+                  });
+                  return;
+                }
+              } catch (err) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                return res.end(JSON.stringify({ error: err?.message || 'Server error' }));
+              }
+            }
+
             next();
           });
         }
