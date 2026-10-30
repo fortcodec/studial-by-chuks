@@ -1,8 +1,21 @@
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
 export async function middleware(request) {
-  // Wrap entire middleware in try/catch to guarantee zero 500 crashes
+  // 1. Immediate early exit for public routes and root before ANY Supabase call
+  const pathname = request.nextUrl.pathname;
+
+  if (
+    pathname === '/' ||
+    pathname.startsWith('/landing') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/update-password')
+  ) {
+    return NextResponse.next();
+  }
+
+  // 2. Fail-safe try/catch: Edge-compatible session check using @supabase/ssr
   try {
     let response = NextResponse.next({
       request: {
@@ -20,7 +33,6 @@ export async function middleware(request) {
       process.env.VITE_SUPABASE_ANON_KEY ||
       'sb_publishable_2L7mLcyDw_2f46RF1ivpkQ_de2Er5FB';
 
-    // Edge-compatible Supabase Server Client
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         getAll() {
@@ -40,26 +52,12 @@ export async function middleware(request) {
       },
     });
 
-    const { pathname } = request.nextUrl;
-
-    // 1. Explicit list of public routes that must never trigger a redirect loop
-    const publicRoutes = ['/landing', '/login', '/onboarding', '/update-password', '/'];
-    const isPublicRoute = publicRoutes.some((route) =>
-      route === '/' ? pathname === '/' : pathname.startsWith(route)
-    );
-
-    // If already on a public route, let request pass cleanly
-    if (isPublicRoute) {
-      return response;
-    }
-
-    // 2. Safely retrieve user session
     const {
       data: { user },
       error,
     } = await supabase.auth.getUser();
 
-    // 3. Safe Redirect: Only redirect if attempting to access protected paths without a session
+    // If not authenticated on a protected route, redirect to /login
     if (error || !user) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
@@ -67,9 +65,9 @@ export async function middleware(request) {
     }
 
     return response;
-  } catch (err) {
-    // If any error occurs in the edge runtime, fail open to avoid 500 MIDDLEWARE_INVOCATION_FAILED
-    console.error('[Middleware Error Caught]:', err);
+  } catch (error) {
+    // 3. Fail-safe: Always return NextResponse.next() on any error to prevent 500 MIDDLEWARE_INVOCATION_FAILED
+    console.error('[Middleware error suppressed]:', error);
     return NextResponse.next();
   }
 }
