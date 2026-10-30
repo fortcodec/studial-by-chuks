@@ -44,32 +44,33 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setMessage({ type: '', text: '' });
 
+    const identifier = formData.identifier.trim();
+
+    // Frontend validation: ensure user doesn't submit username instead of email
+    if (!identifier.includes('@')) {
+      setMessage({
+        type: 'error',
+        text: 'Please enter your registered email address, not your username.'
+      });
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const isPhone = formData.identifier.startsWith('+') && /\d/.test(formData.identifier);
-      
-      let authResponse;
-      if (isPhone) {
-        const phoneValue = formData.identifier.replace(/[\s-]/g, '');
-        authResponse = await supabase.auth.signInWithPassword({
-          phone: phoneValue,
-          password: formData.password,
-        });
-      } else {
-        authResponse = await supabase.auth.signInWithPassword({
-          email: formData.identifier,
-          password: formData.password,
-        });
-      }
+      const authResponse = await supabase.auth.signInWithPassword({
+        email: identifier,
+        password: formData.password,
+      });
 
       const { data, error } = authResponse;
 
       if (error) throw error;
 
       if (data?.user) {
-        const studentName = data.user.email ? data.user.email.split('@')[0] : data.user.phone;
+        const studentName = data.user.email ? data.user.email.split('@')[0] : 'Student';
         setMessage({ type: 'success', text: `Welcome ${studentName}` });
         
         // Intelligent Redirection based on Role
@@ -94,7 +95,10 @@ export default function Login() {
         }, 1500);
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Account not found or incorrect credentials. Please register first.' });
+      setMessage({
+        type: 'error',
+        text: error?.message || 'Account not found or incorrect credentials. Please register first.'
+      });
     } finally {
       setLoading(false);
     }
@@ -178,15 +182,15 @@ export default function Login() {
           <>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1 text-left">
-                <label className="block text-sm font-medium text-gray-700">Email or Phone Number</label>
+                <label className="block text-sm font-medium text-gray-700">Email Address</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 text-slate-500 dark:text-slate-400" size={20} />
                   <input 
-                    type="text"
+                    type="email"
                     name="identifier"
                     value={formData.identifier}
                     onChange={handleChange}
-                    placeholder="e.g., student@university.edu or +2348012345678"
+                    placeholder="e.g., student@university.edu"
                     className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50"
                     required
                   />

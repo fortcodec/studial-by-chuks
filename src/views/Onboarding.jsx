@@ -234,19 +234,15 @@ export default function Onboarding() {
         }
       }
       
-      // Kill auto-created session on signup just in case
-      await supabase.auth.signOut();
-
-      // Supabase returns a user but session is null if email confirmation is required
+      // If email confirmation is required, Supabase returns a user but session is null
       if (data?.user && !data?.session && !isPhone) {
         setIsVerificationRequired(true);
         setLoading(false);
         return;
       }
 
-      setMessage({ type: 'success', text: 'Account created successfully! Please sign in.' });
-      
-      setIsSuccess(true);
+      setMessage({ type: 'success', text: 'Account created successfully! Redirecting...' });
+      navigate('/feed');
     } catch (error) {
       setMessage({ type: 'error', text: error.message || 'An error occurred during registration.' });
       setLoading(false);

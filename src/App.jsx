@@ -74,6 +74,7 @@ function AppContent() {
               <Route element={<StudentGuard />}>
                 <Route element={<Layout />}>
                   <Route path="/" element={<Dashboard />} />
+                  <Route path="/feed" element={<Dashboard />} />
                   <Route path="/live" element={<LiveStudyRoom />} />
                   <Route path="/samuel" element={<AITutorView />} />
                   <Route path="/inbox" element={<Inbox />} />
