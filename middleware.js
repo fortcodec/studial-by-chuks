@@ -1,69 +1,81 @@
-// middleware.js - Next.js Supabase Authentication Middleware
-// Checks user session on server side before page renders and redirects unauthenticated visitors to /login.
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse } from 'next/server';
 
 export async function middleware(request) {
-  // Try to use NextResponse if environment provides Next.js server runtime
-  let NextResponse;
+  // Wrap entire middleware in try/catch to guarantee zero 500 crashes
   try {
-    const nextServer = await import('next/server');
-    NextResponse = nextServer.NextResponse;
-  } catch {
-    // In standalone or client-bundled environment, allow request to pass through
-    return;
-  }
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
 
-  const { pathname } = request.nextUrl;
+    const supabaseUrl =
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.VITE_SUPABASE_URL ||
+      'https://zhyvyxvfuiccknrxvrtj.supabase.co';
 
-  // 1. Define public routes that do not require authentication
-  const publicRoutes = ['/landing', '/login', '/onboarding', '/update-password', '/'];
+    const supabaseAnonKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.VITE_SUPABASE_ANON_KEY ||
+      'sb_publishable_2L7mLcyDw_2f46RF1ivpkQ_de2Er5FB';
 
-  // Check if current route is public or a static asset
-  const isPublicRoute = publicRoutes.some((route) =>
-    route === '/' ? pathname === '/' : pathname.startsWith(route)
-  );
+    // Edge-compatible Supabase Server Client
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    });
 
-  const isStaticAsset =
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/static') ||
-    pathname.includes('.');
+    const { pathname } = request.nextUrl;
 
-  if (isPublicRoute || isStaticAsset) {
+    // 1. Explicit list of public routes that must never trigger a redirect loop
+    const publicRoutes = ['/landing', '/login', '/onboarding', '/update-password', '/'];
+    const isPublicRoute = publicRoutes.some((route) =>
+      route === '/' ? pathname === '/' : pathname.startsWith(route)
+    );
+
+    // If already on a public route, let request pass cleanly
+    if (isPublicRoute) {
+      return response;
+    }
+
+    // 2. Safely retrieve user session
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    // 3. Safe Redirect: Only redirect if attempting to access protected paths without a session
+    if (error || !user) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return response;
+  } catch (err) {
+    // If any error occurs in the edge runtime, fail open to avoid 500 MIDDLEWARE_INVOCATION_FAILED
+    console.error('[Middleware Error Caught]:', err);
     return NextResponse.next();
   }
-
-  // 2. Check Supabase session via cookie tokens
-  let hasSession = false;
-
-  try {
-    // Check standard Supabase auth cookie tokens (sb-*-auth-token, supabase-auth-token)
-    const cookies = request.cookies;
-    const allCookies = cookies.getAll ? cookies.getAll() : [];
-    hasSession = allCookies.some((cookie) =>
-      cookie.name.includes('auth-token') || cookie.name.includes('sb-')
-    );
-  } catch (err) {
-    console.error('[Middleware] Cookie parsing error:', err);
-  }
-
-  // 3. Strict redirection if no active session is found
-  if (!hasSession) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, public assets
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
