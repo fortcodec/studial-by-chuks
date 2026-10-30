@@ -53,7 +53,9 @@ export default function AdminGuard() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (authStatus === 'unauthenticated' || authStatus === 'student') {
+    if (authStatus === 'unauthenticated') {
+      navigate('/login', { replace: true });
+    } else if (authStatus === 'student') {
       navigate('/', { replace: true });
     }
   }, [authStatus, navigate]);
