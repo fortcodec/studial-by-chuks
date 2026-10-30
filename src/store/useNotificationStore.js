@@ -13,28 +13,49 @@ export const useNotificationStore = create((set, get) => ({
 
     // Fetch initial counts
     try {
-      const [messagesRes, notifRes, txRes] = await Promise.all([
-        supabase
-          .from('messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('receiver_id', userId)
-          .eq('read', false), // Assuming there's a read column, or we just rely on realtime since there's no read status
-        supabase
-          .from('notifications')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('read', false),
-        supabase
-          .from('c_coin_transactions')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          // If we had a read column for tx, we'd filter here. Let's assume we want to know about new tx since session start or we'll just track realtime.
+      // Query messages safely: messages table uses (conversation_id, sender_id, content), not receiver_id/read
+      const fetchMessagesCount = async () => {
+        try {
+          const res = await supabase
+            .from('messages')
+            .select('id', { count: 'exact', head: true });
+          if (res.error) {
+            console.warn('[messages HEAD count query] Error:', res.error);
+            return { count: 0 };
+          }
+          return res;
+        } catch (mErr) {
+          console.warn('[messages HEAD count query] Exception:', mErr);
+          return { count: 0 };
+        }
+      };
+
+      const fetchNotifCount = async () => {
+        try {
+          const res = await supabase
+            .from('notifications')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId);
+          if (res.error) {
+            console.warn('[notifications HEAD count query] Error:', res.error);
+            return { count: 0 };
+          }
+          return res;
+        } catch (nErr) {
+          console.warn('[notifications HEAD count query] Exception:', nErr);
+          return { count: 0 };
+        }
+      };
+
+      const [messagesRes, notifRes] = await Promise.all([
+        fetchMessagesCount(),
+        fetchNotifCount()
       ]);
       
       set({ 
-        unreadMessagesCount: messagesRes.count || 0, // In studial, messages might not have read boolean.
-        unreadNotificationsCount: notifRes.count || 0,
-        unreadTransactionsCount: 0 // Will increment on new tx
+        unreadMessagesCount: messagesRes?.count || 0,
+        unreadNotificationsCount: notifRes?.count || 0,
+        unreadTransactionsCount: 0
       });
     } catch (err) {
       console.error('Error fetching initial notification counts:', err);

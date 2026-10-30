@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ThumbsUp, MessageSquare, Bookmark, Share2, Send, Bot, X, Loader2, MoreVertical, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { logCoinTransaction } from '../utils/supabaseHelpers';
 import { askSamuel, getSamuelProfileId } from '../utils/gemini';
 import { Avatar } from './Avatar';
 import ReactMarkdown from 'react-markdown';
@@ -159,10 +160,11 @@ export const PostCard = React.memo(function PostCard({
           try {
             await supabase.rpc('increment_coins', { user_id_param: currentUser.id, amount_param: 2 }).catch(() => {});
 
-            await supabase.from('c_coin_transactions').insert({
-              user_id: currentUser.id,
+            await logCoinTransaction({
+              userId: currentUser.id,
               amount: '+2 C',
-              description: 'Platform activity reward – Poll vote'
+              description: 'Platform activity reward – Poll vote',
+              transactionType: 'credit'
             });
           } catch (rewardErr) {
             console.error("Vote micro-reward failed (non-blocking):", rewardErr);

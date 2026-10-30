@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { Bell, Coins, Megaphone, Check, CheckCircle2, MessageSquare, Radio } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { supabase } from "../supabaseClient";
+import { logCoinTransaction, createNotification } from "../utils/supabaseHelpers";
 import { X, Loader2 } from "lucide-react";
 import { Avatar } from "./Avatar";
 import CCoinBadge from "./CCoinBadge";
@@ -180,17 +181,19 @@ export default function Layout() {
               last_login_reward: new Date(now).toISOString()
             }).eq('id', user.id);
             
-            // Log Transaction
-            await supabase.from('c_coin_transactions').insert({
-              user_id: user.id,
+            // Log Transaction safely
+            await logCoinTransaction({
+              userId: user.id,
               amount: '+2 C',
-              description: 'Daily Login Bonus'
+              description: 'Daily Login Bonus',
+              transactionType: 'credit'
             });
             
-            // Insert Inbox Receipt
-            await supabase.from('notifications').insert({
-              user_id: user.id,
+            // Insert Inbox Receipt safely
+            await createNotification({
+              userId: user.id,
               type: 'reward',
+              title: 'Daily Bonus',
               content: 'You received 2 C-Coins for logging in today!'
             });
             

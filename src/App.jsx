@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import AdminGuard from './components/AdminGuard';
 import StudentGuard from './components/StudentGuard';
 import SessionTimeout from './components/SessionTimeout';
+import { Toaster } from 'sonner';
 
 // Lazy load route components for code splitting
 const LandingPage = lazy(() => import('./views/LandingPage'));
@@ -108,6 +109,7 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <Toaster richColors position="top-right" />
       <AppContent />
     </ThemeProvider>
   );

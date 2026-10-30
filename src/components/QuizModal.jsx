@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient'; // Adjusted path to root src
+import { logCoinTransaction } from '../utils/supabaseHelpers';
 import QuizCard from './QuizCard';
 
 // Simulated AI API call
@@ -53,12 +54,13 @@ const QuizModal = ({ isOpen, onClose, postContent, currentUser }) => {
     if (finalScore === totalQs && currentUser?.id) {
       supabase.rpc('reward_quiz_coin', { target_user_id: currentUser.id })
         .then(() => {
-          // Log Transaction
-          supabase.from('c_coin_transactions').insert({
-            user_id: currentUser.id,
+          // Log Transaction safely
+          logCoinTransaction({
+            userId: currentUser.id,
             amount: '+1 C',
-            description: 'Quiz Reward'
-          }).catch(err => console.error(err));
+            description: 'Quiz Reward',
+            transactionType: 'credit'
+          });
         })
         .catch(err => console.error("Silent Error: RPC Exception", err));
     }

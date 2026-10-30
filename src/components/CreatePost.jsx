@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Edit3, Users, HelpCircle, FileText, Link as LinkIcon, BarChart2, Send, Loader2, X, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { askSamuel } from '../utils/gemini';
+import { logCoinTransaction, createNotification } from '../utils/supabaseHelpers';
 import { Avatar } from './Avatar';
 
 export default function CreatePost({ onPostCreated, currentUser: propCurrentUser }) {
@@ -177,11 +178,12 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
           return;
         }
 
-        // Log Transaction
-        await supabase.from('c_coin_transactions').insert({
-          user_id: currentUser.id,
+        // Log Transaction safely
+        await logCoinTransaction({
+          userId: currentUser.id,
           amount: `-${parsedBounty} C`,
-          description: 'Post Bounty'
+          description: 'Post Bounty',
+          transactionType: 'debit'
         });
       }
 
@@ -236,15 +238,17 @@ export default function CreatePost({ onPostCreated, currentUser: propCurrentUser
       try {
         await supabase.rpc('increment_coins', { user_id_param: currentUser.id, amount_param: 2 }).catch(() => {});
 
-        await supabase.from('c_coin_transactions').insert({
-          user_id: currentUser.id,
+        await logCoinTransaction({
+          userId: currentUser.id,
           amount: '+2 C',
-          description: 'Platform activity reward – New post'
+          description: 'Platform activity reward – New post',
+          transactionType: 'credit'
         });
 
-        await supabase.from('notifications').insert({
-          user_id: currentUser.id,
+        await createNotification({
+          userId: currentUser.id,
           type: 'reward',
+          title: 'Reward Earned',
           content: 'You earned 2 C-Coins for creating a post!'
         });
       } catch (rewardErr) {

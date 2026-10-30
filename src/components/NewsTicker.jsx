@@ -9,42 +9,37 @@ const FALLBACK_NEWS = [
 
 export default function LiveNewsTicker() {
   const [news, setNews] = useState([]);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    // 3-second fallback timer: if query fails or remains loading for > 3s, gracefully swap to static fallback
-    const fallbackTimer = setTimeout(() => {
-      if (isMounted) {
-        setNews((currentNews) => (currentNews.length > 0 ? currentNews : FALLBACK_NEWS));
-      }
-    }, 3000);
-
     const fetchNews = async () => {
       try {
-        // The Date.now() cache-buster forces the API to fetch fresh data
         const cacheBuster = Date.now();
         const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=https://punchng.com/feed?t=${cacheBuster}`);
         
         if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+          // If status is 403 or other non-OK status, silently hide
+          if (isMounted) setIsVisible(false);
+          return;
         }
 
         const data = await res.json();
         
         if (isMounted) {
-          if (data.items && data.items.length > 0) {
-            // Shuffle the news items so you get a different batch on every refresh
+          if (data?.items && data.items.length > 0) {
             const shuffledNews = data.items.sort(() => 0.5 - Math.random());
             setNews(shuffledNews.slice(0, 5));
+            setIsVisible(true);
           } else {
-            setNews(FALLBACK_NEWS);
+            setIsVisible(false);
           }
         }
       } catch (error) {
-        console.error("Failed to fetch live news:", error);
+        // Silently catch error and hide the banner completely to avoid empty black boxes
         if (isMounted) {
-          setNews(FALLBACK_NEWS);
+          setIsVisible(false);
         }
       }
     };
@@ -53,9 +48,12 @@ export default function LiveNewsTicker() {
 
     return () => {
       isMounted = false;
-      clearTimeout(fallbackTimer);
     };
   }, []);
+
+  if (!isVisible || !news || news.length === 0) {
+    return null;
+  }
 
   return (
     <div className="flex items-center w-full h-8 bg-black text-slate-900 dark:text-white overflow-hidden text-xs sm:text-sm border-b border-gray-800">
@@ -88,25 +86,21 @@ export default function LiveNewsTicker() {
 
       {/* The scrolling live data */}
       <div className="flex-1 overflow-hidden relative flex items-center h-full">
-        {news.length > 0 ? (
-          <div className="animate-ticker">
-            {news.map((item, index) => (
-              <span key={index} className="mx-6">
-                • 
-                <a 
-                  href={item.link} 
-                  target={item.link.startsWith('http') ? "_blank" : undefined}
-                  rel="noopener noreferrer" 
-                  className="ml-2 hover:text-yellow-400 hover:underline transition-colors"
-                >
-                  {item.title}
-                </a>
-              </span>
-            ))}
-          </div>
-        ) : (
-          <span className="mx-4 text-slate-400 animate-pulse">Loading live campus updates...</span>
-        )}
+        <div className="animate-ticker">
+          {news.map((item, index) => (
+            <span key={index} className="mx-6">
+              • 
+              <a 
+                href={item.link} 
+                target={item.link.startsWith('http') ? "_blank" : undefined}
+                rel="noopener noreferrer" 
+                className="ml-2 hover:text-yellow-400 hover:underline transition-colors"
+              >
+                {item.title}
+              </a>
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );

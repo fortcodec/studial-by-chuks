@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserPlus, Mail, Lock, BookOpen, ArrowLeft, Eye, EyeOff, Key, User, CheckCircle, ArrowRight, Loader2, XCircle, MailCheck } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const DEPARTMENTS = [
   "Computer Science", "Software Engineering", "Cybersecurity", "Information Technology",
@@ -241,8 +242,8 @@ export default function Onboarding() {
         return;
       }
 
-      setMessage({ type: 'success', text: 'Account created successfully! Redirecting...' });
-      navigate('/feed');
+      toast.success('Registration successful! Please log in to your new account.');
+      navigate('/login');
     } catch (error) {
       setMessage({ type: 'error', text: error.message || 'An error occurred during registration.' });
       setLoading(false);
@@ -421,7 +422,8 @@ export default function Onboarding() {
                       {filteredDepartments.map((dept, index) => (
                         <li 
                           key={index}
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault();
                             setFormData(prev => ({ ...prev, department: dept }));
                             setShowDeptDropdown(false);
                           }}

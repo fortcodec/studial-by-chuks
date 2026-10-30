@@ -35,6 +35,7 @@ import {
 import { supabase } from '../supabaseClient';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../components/ThemeProvider';
+import { logCoinTransaction } from '../utils/supabaseHelpers';
 import GiftUsers from '../components/GiftUsers';
 import AdminEconomyTab from '../components/admin/AdminEconomyTab';
 
@@ -358,10 +359,11 @@ export default function AdminGateway({ defaultTab = 'Dashboard' }) {
       if (error) throw error;
 
       if (diff !== 0) {
-        await supabase.from('c_coin_transactions').insert({
-          user_id: editingUser.id,
+        await logCoinTransaction({
+          userId: editingUser.id,
           amount: diff > 0 ? `+${diff} C` : `${diff} C`,
           description: diff > 0 ? 'Admin Grant (Credit)' : 'Admin Adjustment (Debit)',
+          transactionType: diff > 0 ? 'credit' : 'debit'
         });
       }
 

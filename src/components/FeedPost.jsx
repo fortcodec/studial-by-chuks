@@ -23,6 +23,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { logCoinTransaction } from '../utils/supabaseHelpers';
 import { Avatar } from './Avatar';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -337,10 +338,11 @@ export default function FeedPost({
         const newBalance = Math.max(0, userBalance - price);
         await supabase.from('profiles').update({ c_coins: newBalance }).eq('id', currentUser.id);
         
-        await supabase.from('c_coin_transactions').insert({
-          user_id: currentUser.id,
+        await logCoinTransaction({
+          userId: currentUser.id,
           amount: `-${price} C`,
           description: `Burned C-Coins for: ${materialData?.title || 'Course Material'}`,
+          transactionType: 'debit'
         });
 
         await supabase.from('unlocked_materials').insert({

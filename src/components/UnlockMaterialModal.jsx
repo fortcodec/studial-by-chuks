@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
+import { logCoinTransaction, createNotification } from '../utils/supabaseHelpers';
 import { 
   Lock, 
   AlertCircle, 
@@ -87,19 +88,20 @@ export default function UnlockMaterialModal({
 
         if (insertUnlockedError) throw insertUnlockedError;
 
-        // Log transaction in c_coin_transactions
-        await supabase.from('c_coin_transactions').insert({
-          user_id: userId,
+        // Log transaction in c_coin_transactions with schema safety and diagnostics
+        await logCoinTransaction({
+          userId: userId,
           amount: `-${price} C`,
-          description: `Unlocked: ${material.title || 'Study Material'}`
+          description: `Unlocked: ${material.title || 'Study Material'}`,
+          transactionType: 'debit'
         });
 
-        // Optional notification receipt
-        await supabase.from('notifications').insert({
-          user_id: userId,
+        // Optional notification receipt with schema safety and diagnostics
+        await createNotification({
+          userId: userId,
           type: 'reward',
           title: 'Material Unlocked',
-          content: `You spent ${price} C-Coins to unlock ${material.title}.`
+          content: `You spent ${price} C-Coins to unlock ${material.title || 'Study Material'}.`
         });
       }
 
