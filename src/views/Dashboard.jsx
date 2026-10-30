@@ -38,7 +38,16 @@ class ErrorBoundary extends Component {
 }
 
 export default function Dashboard() {
-  const { currentUser, setCurrentUser } = useOutletContext();
+  const { currentUser, setCurrentUser } = useOutletContext() || {};
+
+  // If user object evaluates to null/undefined or lacks an id, do not render dashboard UI
+  if (!currentUser || !currentUser.id) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] w-full">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
   
   const [posts, setPosts] = useState([]);
   const [quizOpen, setQuizOpen] = useState(false);

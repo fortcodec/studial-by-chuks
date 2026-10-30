@@ -16,8 +16,7 @@ export default function StudentGuard() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           if (isMounted) setIsAdmin(false);
-          // Explicit unauthenticated redirect
-          window.location.href = '/login';
+          navigate('/login', { replace: true });
           return;
         }
 
@@ -33,7 +32,7 @@ export default function StudentGuard() {
       } catch (error) {
         console.error('Error checking admin status:', error);
         if (isMounted) setIsAdmin(false);
-        window.location.href = '/login';
+        navigate('/login', { replace: true });
       } finally {
         if (isMounted) setIsLoading(false);
       }

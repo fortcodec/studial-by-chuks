@@ -18,11 +18,7 @@ const CreatePost = lazy(() => import("./CreatePost"));
 const CoinRewardModal = lazy(() => import("./CoinRewardModal"));
 
 export default function Layout() {
-  const [currentUser, setCurrentUser] = useState({
-    name: "Student",
-    c_coins: 0,
-    avatar: "",
-  });
+  const [currentUser, setCurrentUser] = useState(null);
   const [hasNotifications, setHasNotifications] = useState(true);
   const [showLoginReward, setShowLoginReward] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
