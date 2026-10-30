@@ -32,7 +32,7 @@ const PageLoader = () => (
   </div>
 );
 
-import { ThemeProvider } from './components/ThemeProvider';
+import { ThemeProvider } from 'next-themes';
 
 function AppContent() {
   const [session, setSession] = useState(null);
@@ -106,7 +106,7 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AppContent />
     </ThemeProvider>
   );

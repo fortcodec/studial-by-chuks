@@ -15,11 +15,11 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { useTheme } from '../components/ThemeProvider';
+import { useTheme } from 'next-themes';
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { isDark, toggleTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [recentPosts, setRecentPosts] = useState([]);
@@ -113,14 +113,28 @@ export default function LandingPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Theme Toggle Button */}
-          {mounted && (
+          {/* Theme Toggle Button (Hydration Safe) */}
+          {!mounted ? (
             <button
-              onClick={toggleTheme}
+              type="button"
+              aria-label="Theme toggle loading"
+              tabIndex={-1}
+              className="p-2.5 rounded-xl border transition-colors bg-white border-slate-200 dark:bg-[#1A1A1F] dark:border-[#2E2E38] shadow-sm pointer-events-none"
+            >
+              <span className="block w-[18px] h-[18px]" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setTheme((resolvedTheme || theme) === 'dark' ? 'light' : 'dark')}
               aria-label="Toggle Theme"
               className="p-2.5 rounded-xl border transition-colors bg-white hover:bg-slate-100 text-slate-700 border-slate-200 dark:bg-[#1A1A1F] dark:hover:bg-[#24242B] dark:text-slate-200 dark:border-[#2E2E38] shadow-sm"
             >
-              {isDark ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-blue-600" />}
+              {(resolvedTheme || theme) === 'dark' ? (
+                <Sun size={18} className="text-yellow-400" />
+              ) : (
+                <Moon size={18} className="text-blue-600" />
+              )}
             </button>
           )}
 

@@ -318,6 +318,7 @@ export default function Onboarding() {
                     placeholder="e.g., John Doe"
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50 text-gray-900"
                     required
+                    autoComplete="off"
                   />
                 </div>
 
@@ -335,6 +336,7 @@ export default function Onboarding() {
                           usernameStatus === 'available' ? 'border-green-300 focus:ring-green-200 focus:border-green-500' : 
                           'border-gray-300 focus:ring-primary-navy focus:border-primary-navy'}`}
                       required
+                      autoComplete="off"
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
                       {usernameStatus === 'checking' && <Loader2 className="w-5 h-5 text-slate-500 dark:text-slate-400 animate-spin" />}
@@ -452,6 +454,7 @@ export default function Onboarding() {
                             identifierStatus === 'available' ? 'border-green-300 focus:ring-green-200 focus:border-green-500' : 
                             'border-gray-300 focus:ring-primary-navy focus:border-primary-navy'}`}
                         required
+                        autoComplete="off"
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
                         {identifierStatus === 'checking' && <Loader2 className="w-5 h-5 text-slate-500 dark:text-slate-400 animate-spin" />}
@@ -478,6 +481,7 @@ export default function Onboarding() {
                       placeholder="••••••••"
                       className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-navy focus:border-primary-navy outline-none transition bg-gray-50"
                       required
+                      autoComplete="new-password"
                     />
                     <button 
                       type="button" 
